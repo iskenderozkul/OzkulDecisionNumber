@@ -5,16 +5,36 @@ communicating whether a piece of work meets a multi-parameter specification.
 
 **Try it online:** https://iskenderozkul.github.io/OzkulDecisionNumber/
 
-**Paper:** İ. Özkul, *The Özkul Decision Number: a signed, saturating and inflation-proof notation for
-communicating multi-parameter specification compliance* (manuscript, 2026).
+**Paper:** İ. Özkul, *The Özkul Decision Number: a signed, decomposable summary of multi-requirement specification
+compliance* (manuscript, 2026).
 
 ## What it does
-- Every requirement of a specification is mapped to a score on one fixed ruler: **+1** saturated acceptance,
-  **0** exactly at the limit, **−1** unacceptable.
-- The decision number is the **smallest** score: a surplus on one requirement can never hide a shortfall on another,
-  and adding easy requirements can never raise the result.
-- The owner **locks** the specification (SHA-256 fingerprint); the submitter only enters values; a reviewer
-  re-computes everything from the report.
+- Every requirement is mapped to a score on one fixed ruler: **+1** full score, **0** exactly at the limit,
+  **−1** unacceptable (veto).
+- Requirements are **mandatory**, **penalising** or **information only**.
+- **Sign rule:** A is negative **if and only if** a mandatory limit is violated. Penalising requirements can lower A
+  down to 0 (grey zone, "needs evaluation") but never make it negative.
+- The size of A combines the weakest mandatory score with the importance-weighted average of all scores
+  (share β, shown on the notation). A is exactly the sum of the parts drawn in the contribution bar.
+- The owner **locks** the specification (SHA-256 over a canonical JSON form; 12 characters shown on the notation),
+  the submitter only enters values, and the owner confirms the decision.
+
+## Tests
+```
+node tests/core.test.js     # sign rule, veto, jump at m = 0, rounding, monotonicity, decomposition, kN, SHA-256
+node tests/simulation.js    # simulation of Section 9.1 (fixed seed)
+```
+
+## Disclaimer / Sorumluluk reddi
+This software and the method are provided **"as is", without warranty of any kind**. The software and its
+calculations may contain errors. Verifying the results, making decisions and all consequences of those decisions
+are **entirely the user's responsibility**; the author accepts no liability. Check results independently, especially
+for safety-critical decisions. See also the warranty and liability sections of the Apache-2.0 licence.
+
+Bu yazılım ve yöntem **olduğu gibi, herhangi bir garanti olmaksızın** sunulmaktadır. Yazılımda ve hesaplarda hata
+bulunabilir. Sonuçların doğrulanması, kararların verilmesi ve bunlardan doğacak her türlü sonuç **tamamen kullanıcının
+sorumluluğundadır**; yazar hiçbir sorumluluk kabul etmez. Özellikle güvenlik açısından kritik kararlarda sonuçları
+bağımsız olarak kontrol edin.
 
 ## Use
 Open `index.html` in any current browser (works offline, sends no data to any server).

@@ -76,14 +76,19 @@ details.adv .grid{margin-top:10px}
 .policy label.opt.on{border-color:var(--page-ink);box-shadow:inset 3px 0 0 var(--page-ink)}
 .policy input[type=radio]{width:auto;margin-right:8px}
 .policy .d{display:block;font-size:13px;color:var(--page-muted);margin-top:4px}
+.unitbox{margin-top:10px;background:#F5F8F8;border-left:4px solid var(--page-accept);padding:8px 12px;font-size:13.5px}.unitbox ul{margin:4px 0 0 18px;padding:0}
+.exbanner{background:#EEF3F8;border:1px solid #C9D6E3;border-left:4px solid #3A6EA5;padding:10px 14px;margin:0 0 14px;font-size:14px}.exbanner b{display:block;margin-bottom:4px}
+details.why{grid-column:1/-1;margin-top:10px}.why-box{padding:14px 18px}.why-box svg{max-width:900px}.why-text{font-size:14.5px;line-height:1.55;max-width:900px}
+.chk{display:flex;align-items:center;gap:6px;font-weight:600}details.why{margin-top:6px}details.why summary{cursor:pointer;color:#3A6EA5;font-size:13.5px}
+.sumbox{background:#fff;border:1px solid var(--page-line);padding:12px 16px;margin:0 0 16px}.sumbox table.sum td,.sumbox table.sum th{text-align:left!important;font-size:13.5px}
 .lockbar{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--page-panel);border-left:4px solid var(--page-ink);margin:16px 0}
 .lockbar.ok{border-left-color:var(--page-accept)} .lockbar.bad{border-left-color:var(--page-reject)}
 .fp{font-family:var(--page-mono);font-size:12px;word-break:break-all;color:var(--page-ink-2)}
 .acc{color:var(--page-accept)} .rej{color:var(--page-reject)} .mut{color:var(--page-muted)}
 /* result */
-.result{background:#fff;border:1px solid var(--page-ink);padding:16px 18px;margin-bottom:18px;display:grid;grid-template-columns:auto minmax(220px,320px) minmax(0,1fr);gap:10px 26px;align-items:center}
+.result{background:#fff;border:1px solid var(--page-ink);padding:16px 18px;margin-bottom:18px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 26px;align-items:center}
 @media(max-width:900px){.result{grid-template-columns:1fr}}
-.mini svg{width:100%;height:auto;display:block}
+.mini{grid-column:1/-1;border-top:1px solid var(--page-line);padding-top:10px}.mini svg{width:100%;max-width:900px;height:auto;display:block}
 .restitle{grid-column:1/-1;border-bottom:1px solid var(--page-line);padding-bottom:8px;margin-bottom:2px}
 .restitle b{font-size:16px}.restitle span{display:block;font-size:13px;color:var(--page-muted)}
 .rev{grid-column:1/-1;border-top:1px solid var(--page-line);padding-top:10px;font-size:13.5px}
@@ -191,8 +196,11 @@ footer{border-top:1px solid var(--page-line);color:var(--page-muted);font-size:1
 </div>
 
 <div class="science"><div class="wrap" id="science"></div></div>
-<div class="wrap"><footer id="foot"></footer></div>
+<div class="wrap"><p id="disc" role="note" style="border:1px solid var(--page-line);border-left:4px solid #b26a00;padding:8px 12px;font-size:12.5px;margin:14px 0 0"></p><footer id="foot"></footer></div>
 
+<script>
+try { ['odn.lang','odn.spec','odn.inputs','odn.ev','odn.meta','odn.ex'].forEach(k => localStorage.removeItem(k)); } catch(e){}
+</script>
 <script>
 // ===== Özkul Decision Number — core (shared by UI and tests) =====
 const HN = (function () {
@@ -239,9 +247,9 @@ const HN = (function () {
   function invPhi(p) { let lo = -10, hi = 10; for (let i = 0; i < 100; i++) { const mid = (lo + hi) / 2; if (Phi(mid) < p) lo = mid; else hi = mid; } return (lo + hi) / 2; }
   const kN = (N, alpha) => Math.round(invPhi(Math.pow(1 - alpha, 1 / Math.max(1, N))) * 100) / 100;
   // scoring
-  const floor2 = v => Math.floor(v * 100 + 1e-9) / 100;
+  const floor2 = v => Math.floor(Math.round(v * 1e12) / 1e10) / 100; // round towards -1; the 1e-12 snap removes binary noise only
   const clip = v => Math.max(-1, Math.min(1, v));
-  function side(x, S, L, B) { const t = (x - L) / (B - L); return t >= 0 ? t : (x - L) / (L - S); }
+  function side(x, S, L, B) { if (B === L) return x === L ? 1 : ((x - L) * Math.sign(B - S || 1) >= 0 ? 1 : (x - L) / (L - S)); const t = (x - L) / (B - L); return t >= 0 ? t : (x - L) / (L - S); }
   const num = v => (v === '' || v === null || v === undefined || isNaN(+v)) ? null : +v;
   function validateSpec(s) {
     const e = [];
@@ -261,7 +269,7 @@ const HN = (function () {
       } else if (p.type === 'two') {
         const a = ['Slo', 'Llo', 'Blo', 'Bhi', 'Lhi', 'Shi'].map(k => num(p[k]));
         if (a.some(v => v === null)) e.push(tag + 'all six two-sided anchors are required.');
-        else if (!(a[0] < a[1] && a[1] < a[2] && a[2] <= a[3] && a[3] < a[4] && a[4] < a[5])) e.push(tag + 'two-sided anchors must satisfy S_lo < L_lo < B_lo \u2264 B_hi < L_hi < S_hi.');
+        else if (!(a[0] < a[1] && a[1] <= a[2] && a[2] <= a[3] && a[3] <= a[4] && a[4] < a[5] && a[1] < a[4])) e.push(tag + 'two-sided anchors must satisfy S_lo < L_lo \u2264 B_lo \u2264 B_hi \u2264 L_hi < S_hi.');
         if (p.scale === 'log' && a.some(v => v !== null && v <= 0)) e.push(tag + 'logarithmic scale needs positive anchors.');
       }
       if (num(p.u0) !== null && num(p.u0) < 0) e.push(tag + 'default uncertainty cannot be negative.');
@@ -332,7 +340,8 @@ const HN = (function () {
     const M = units.reduce((a, u) => a + u.wn * u.d, 0);
     const m = okM.length ? Math.min.apply(null, okM.map(r => r.d)) : null;
     const veto = okM.some(r => r.d <= -1);
-    let A, parts = [];
+    const critical = false; // reserved, not used
+    let A, parts = [], floored = false;
     if (veto) { A = -1; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
     else if (m === null) { A = M; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
     else if (m < 0) { // violation: sign locked negative. A = min( (1-b)m + bM , m(1 - b*max(0,M)) )
@@ -341,10 +350,12 @@ const HN = (function () {
       else { A = a2; const pos = units.filter(u => M > 0);
         parts = [{ key: 'base', label: 'base', v: m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: M > 0 ? -m * beta * u.wn * u.d : 0, d: u.d, unit: u }))); } }
     else { A = (1 - beta) * m + beta * M;
-      parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
+      parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u })));
+      if (A < 0) { // sign rule: penalising requirements may lower A to 0 but never make it negative while every mandatory limit is met
+        const cut = -A; parts.push({ key: 'floor', label: 'floor', v: cut }); floored = true; A = 0; } }
     A = Math.max(-1, Math.min(1, A)); A = floor2(A);
     const binding = m === null ? [] : okM.filter(r => r.d === m).map(r => r.p.name);
-    return { beta, N, n, A, m, M, parts, binding, veto, units };
+    return { beta, N, n, A, m, M, parts, binding, veto, critical, floored, units };
   }
   function decide(s, ag) {
     const tA = num(s.tauA), tR = num(s.tauR);
@@ -352,6 +363,7 @@ const HN = (function () {
     if (ag.n < ag.N) return 'NOT_APPROVABLE';
     const A = ag.A, mOk = ag.m === null || (s.letterA === 'E' ? ag.m > tA : ag.m >= tA);
     if (tA !== null && (s.letterA === 'E' ? A > tA : A >= tA) && mOk) return 'ACCEPT';
+    if (ag.critical) return 'REJECT';
     if (tR !== null && (s.letterR === 'E' ? A < tR : A <= tR)) return 'REJECT';
     return 'DISCRETION';
   }
@@ -362,9 +374,9 @@ const HN = (function () {
     rows.filter(r => r.status === 'ok' && kindOf(r.p) !== 'info').forEach(r => { const g = r.p.group || 'All parameters'; groups[g] = groups[g] === undefined ? r.d : Math.min(groups[g], r.d); });
     const verdict = decide(s, ag);
     const H = ag.A;
-    const reason = H === null ? null : ag.veto ? 'veto' : (ag.m !== null && ag.m < 0) ? 'violation' : (H < 0 ? 'combined' : (rows.some(r => r.status === 'ok' && kindOf(r.p) === 'soft' && r.d < 0) ? 'softpenalty' : 'ok'));
+    const reason = H === null ? null : ag.veto ? 'veto' : (ag.m !== null && ag.m < 0) ? 'violation' : (ag.floored ? 'floored' : (rows.some(r => r.status === 'ok' && kindOf(r.p) === 'soft' && r.d < 0) ? 'softpenalty' : 'ok'));
     const nearLimit = rows.filter(r => r.status === 'ok' && kindOf(r.p) === 'mand' && r.d >= 0 && r.d < 0.10).length;
-    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
+    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, critical: ag.critical, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
   }
   // scenario simulation for soft requirements: other values at 'typical' (+0.40 / near limit +0.05)
   function simulate(s) {
@@ -389,6 +401,8 @@ const HN = (function () {
   const fmt = v => v === null || v === undefined ? '\u2013' : (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v).toFixed(2);
   return { sha256, canon, kN, Phi, floor2, scoreParam, evaluate, simulate, sensitivity, aggregate, IMP, BETA, kindOf, weightOf, betaOf, validateSpec, kUsed, fmt, num };
 })();
+if (typeof module !== 'undefined') module.exports = HN;
+if (typeof session !== 'undefined') session.HN = HN;
 
 </script>
 <script>
@@ -396,7 +410,7 @@ const HN = (function () {
 const $ = s => document.querySelector(s);
 const esc = s => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = HN.num;
-let LANG = 'tr'; try { LANG = localStorage.getItem('odn.lang') || 'tr'; } catch(e){}
+let LANG = 'tr'; try { LANG = sessionStorage.getItem('odn.lang') || 'tr'; } catch(e){}
 const fmt = v => { const s = HN.fmt(v); return LANG==='tr' ? s.replace('.', ',') : s; };
 const nf = v => v===null||v===undefined||v==='' ? '' : (LANG==='tr' ? String(v).replace('.', ',') : String(v));
 const pn = v => { if (v===null||v===undefined) return v; const s = String(v).trim().replace(/\s/g,''); return s.indexOf(',')>=0 && s.indexOf('.')<0 ? s.replace(',', '.') : s.replace(/,/g,''); };
@@ -408,36 +422,36 @@ tr:{
  iTitle:'Bir işin şartnameye uyup uymadığını tek bir sayı söyler.',
  iP1:'Şartnamedeki her koşul aynı cetvele çevrilir. Sonuç, en zayıf koşulun puanıdır. Çünkü zincir en zayıf halkası kadar sağlamdır: bir koşuldaki fazlalık, başka bir koşuldaki eksikliği kapatamaz.',
  iP2:'<b>Dört adımda yöntem:</b> (1) Her koşul için üç değer yazılır: kabul edilemez (−1), sınır (0), yeterli (+1). (2) Bulunan değer, belirsizliği kadar sınıra doğru kaydırılıp bu cetvelde puanlanır. (3) Zorunlu bir koşul sınırı aşarsa sonuç eksidir; aşmıyorsa artıdır. Büyüklüğü en zayıf zorunlu koşul ile bütün koşulların önem ağırlıklı ortalaması belirler. (4) Şartname sahibinin eşikleri kabul, ret ya da kendi kararını belirler.<br><br>Şartnameyi yazan kişi kuralları kilitler. İşi yapan kişi yalnızca bulduğu değerleri girer ve sonucu hemen görür. Hakem ya da onaylayan kişi aynı hesabı tek tıkla tekrar yapabilir.',
- iF1:'tam puan, bundan iyisi fark etmez', iF2:'tam sınırda', iF3:'kesinlikle kabul edilemez', iUse:'<b>Nerelerde kullanılır?</b> Satın alma ve ihaleler · inşaat ve kontrol raporları · üretimde kalite kontrol · yazılım ve yapay zekâ modeli yayına alma · yatırım ve risk limitleri · ödev ve proje değerlendirme · ikinci el araç veya batarya alımı. Kural her yerde aynı: zorunlu bir koşul sağlanmazsa sonuç eksidir.', iSign:'<b>Neden eksi var?</b> İşaret “şartnameye uyuyor mu?” sorusunu, büyüklük “ne kadar?” sorusunu cevaplar. Artı ise bütün sınırlar sağlanmıştır ve sayı payın ne kadar olduğunu söyler. Eksi ise en az bir sınır aşılmıştır ve sayı aşımın ne kadar ciddi olduğunu söyler. −0,05 küçük bir düzeltmeyle ya da istisna onayıyla kurtarılabilecek bir iştir, −0,80 baştan ele alınması gereken bir iştir. 0–1 arası bir ölçekte sınır her şartnamede başka bir noktada kalırdı ve bu fark görünmezdi.',
- iDemoCap:'<b>Örnek: bir kirişin dört koşulu</b><table class="dt"><tr><th>Koşul</th><th>Tür</th><th>Sınır</th><th>Bulunan</th><th>Puan</th></tr><tr><td>Sehim</td><td>zorunlu</td><td>≤ 10 mm</td><td>8 mm</td><td class="acc">+0,40</td></tr><tr><td>Güvenlik katsayısı</td><td>zorunlu · Dayanım</td><td>≥ 1,5</td><td>1,80</td><td class="acc">+0,60</td></tr><tr><td>Gerilme</td><td>zorunlu · Dayanım</td><td>≤ 200 MPa</td><td>180 MPa</td><td class="acc">+0,40</td></tr><tr><td>Maliyet</td><td>puan düşürür</td><td>≤ 100 bin TL</td><td>120 bin TL</td><td class="rej">−0,40</td></tr></table><b>1. İşaret.</b> Bütün zorunlu koşullar sınır içinde, en zayıfı +0,40. Bu yüzden iş reddedilmez. Maliyet sınırı aşıyor, ama bu koşulun türü “puan düşürür”.<br><b>2. Büyüklük</b> (β = 0,5, eşit önem; gerilme ile güvenlik katsayısı aynı “Dayanım” grubunda olduğu için bir kez sayılır):<br>taban 0,5 × (+0,40) = +0,20 · sehim +0,07 · Dayanım +0,07 · maliyet −0,07 → <b>A = +0,26</b> (yuvarlama aşağı).<br><b>3. Karar.</b> A, kabul eşiği +0,60’ın altında, ret eşiği −0,20’nin üstünde: <b>karar şartname sahibinde</b>. Maliyet 100 bin TL’ye inerse A = +0,33, 70 bin TL’ye inerse +0,50 olur. Maliyet zorunlu olsaydı A = −0,38 olur ve iş reddedilirdi.',
+ iF1:'tam puan, bundan iyisi fark etmez', iF2:'tam sınırda', iF3:'kesinlikle kabul edilemez', iUse:'<b>Nerelerde kullanılır?</b> Satın alma ve ihaleler · inşaat ve kontrol raporları · üretimde kalite kontrol · yazılım ve yapay zekâ modeli yayına alma · yatırım ve risk limitleri · ödev ve proje değerlendirme · ikinci el araç veya batarya alımı. Kural her yerde aynı: zorunlu bir koşul sağlanmazsa sonuç eksidir.', iSign:'<b>Neden eksi var?</b> İşaret “şartnameye uyuyor mu?” sorusunu, büyüklük “ne kadar?” sorusunu cevaplar. Artı ise bütün sınırlar sağlanmıştır ve sayı payın ne kadar olduğunu söyler. Eksi ise en az bir sınır aşılmıştır ve sayı aşımın ne kadar ciddi olduğunu söyler. −0,05 küçük bir düzeltmeyle ya da sapma onayıyla kurtarılabilecek bir iştir, −0,80 baştan ele alınması gereken bir iştir. 0–1 arası bir ölçekte sınır her şartnamede başka bir noktada kalırdı ve bu fark görünmezdi.',
+ iDemoCap:'<b>Örnek: bir kirişin dört koşulu</b><table class="dt"><tr><th>Koşul</th><th>Tür</th><th>Sınır</th><th>Bulunan</th><th>Puan</th></tr><tr><td>Sehim</td><td>zorunlu</td><td>≤ 10 mm</td><td>8 mm</td><td class="acc">+0,40</td></tr><tr><td>Güvenlik katsayısı</td><td>zorunlu · Dayanım</td><td>≥ 1,5</td><td>1,80</td><td class="acc">+0,60</td></tr><tr><td>Gerilme</td><td>zorunlu · Dayanım</td><td>≤ 200 MPa</td><td>180 MPa</td><td class="acc">+0,40</td></tr><tr><td>Maliyet</td><td>puan düşürür</td><td>≤ 100 bin USD</td><td>120 bin USD</td><td class="rej">−0,40</td></tr></table><b>1. İşaret.</b> Bütün zorunlu koşullar sınır içinde, en zayıfı +0,40. Bu yüzden iş reddedilmez. Maliyet sınırı aşıyor, ama bu koşulun türü “puan düşürür”.<br><b>2. Büyüklük</b> (β = 0,5, eşit önem; gerilme ile güvenlik katsayısı aynı “Dayanım” grubunda olduğu için bir kez sayılır):<br>taban 0,5 × (+0,40) = +0,20 · sehim +0,07 · Dayanım +0,07 · maliyet −0,07 → <b>A = +0,26</b> (yuvarlama aşağı).<br><b>3. Karar.</b> A = +0,26 ve en zayıf zorunlu koşul m = +0,40, otomatik kabul eşiği +0,20’nin üstünde: <b>kabul</b>. Maliyet 100 bin USD’ye inerse A = +0,33, 70 bin USD’ye inerse +0,50 olur. Maliyet zorunlu olsaydı A = −0,38 olur ve iş reddedilirdi.',
  s1t:'Şartnameyi yaz', s1d:'Şartname sahibi', s2t:'Değerleri gir', s2d:'İşi yapan kişi', s3t:'Değerlendir ve onayla', s3d:'Şartname sahibi',
  exPick:'Makaledeki bir örneği aç…',
  specLead:'Her koşul için ne istediğinizi düz cümlelerle tanımlayın: hangi yön iyi, sınır ne, hangi değerden sonrası fark etmez, hangi değer kesinlikle kabul edilemez. Alttaki gri kutu, girdiğinizi bir cümle olarak geri okur. Kontrol edip kilitleyin.',
  specTitle:'Şartname adı', version:'Sürüm', owner:'Hazırlayan',
- param:'Koşul', name:'Koşulun adı', unit:'Birim', dir:'Hangisi iyi?',
- dUp:'Büyük olan iyi', dDown:'Küçük olan iyi', dTwo:'Bir aralıkta kalmalı', dBool:'Evet / hayır',
- upL:'En az (sınır)', upB:'Bu değerden sonrası fark etmez (tam puan)', upS:'Bu değer veya altı kesinlikle kabul edilemez',
- dnL:'En fazla (sınır)', dnB:'Bu değer veya altı tam puan (daha iyisi fark etmez)', dnS:'Bu değer veya üstü kesinlikle kabul edilemez',
- twL:'İzin verilen aralık', twB:'İdeal aralık (tam puan)', twS:'Kesinlikle kabul edilemez: altı / üstü', from:'en az', to:'en çok',
- advanced:'Ayrıntılar (isteğe bağlı)', group:'Grup (ör. Yapısal, Maliyet)', u0:'Varsayılan ölçüm belirsizliği (±)', vmin:'Geçerli en küçük değer', vmax:'Geçerli en büyük değer', mand:'Zorunlu koşul', defn:'Tanım ve ölçüm yöntemi', scale:'Ölçek', lin:'Doğrusal', log:'Logaritmik (çok geniş aralıklar için)',
- resTitle:'Özkul Karar Sayısı (A) · bakmanız gereken ana sonuç', resSub:'İşaret kararı verir: eksi ise iş kabul edilmiyor. Büyüklük, kabule ne kadar yakın olduğunu söyler. Bütün koşullar katkı çubuğunda görünür.',
- Ylab:'Kabule yakınlık (Y)', Ydef:'Y = bütün koşul puanlarının ortalaması. Karara katılmaz; işin bütününün ne kadar iyi olduğunu gösterir.', Amark:'A (karar)',
+ param:'Koşul', name:'Koşulun adı', unit:'Birim', dir:'Değerlendirme türü',
+ dUp:'Alt sınırlı: en az bir değer (ör. güvenlik katsayısı ≥ 1,5)', dDown:'Üst sınırlı: en fazla bir değer (ör. sehim ≤ 10 mm)', dTwo:'İdeal değer ve tolerans (ör. Ø20 ±0,10)', dBool:'Evet / hayır',
+ upLh:'Sayı girin: kabul edilebilecek en küçük değer (ör. güvenlik katsayısı için 1,5). Bu değer puan 0’dır.', upBh:'Sayı girin: bundan büyüğü daha iyi sayılmaz, tam puan (+1) alır (ör. 2,0).', upSh:'Sayı girin: işin hiçbir şekilde kabul edilemeyeceği değer (ör. güvenlik katsayısı 1,0). Bu değer ve altı −1 alır. Alt sınırdan küçük olmalı. Ne işe yaradığı aşağıdaki şekilde.', dnLh:'Sayı girin: izin verilen en büyük değer (ör. sehim için 10 mm). Bu değer puan 0’dır.', dnBh:'Sayı girin: bundan küçüğü daha iyi sayılmaz, tam puan (+1) alır (ör. 5 mm).', dnSh:'Sayı girin: işin hiçbir şekilde kabul edilemeyeceği değer (ör. sehim 15 mm). Bu değer ve üstü −1 alır. Üst sınırdan büyük olmalı. Ne işe yaradığı aşağıdaki şekilde.', upL:'Alt sınır (en az)', upB:'Tam puan değeri (bundan büyüğü daha iyi sayılmaz)', upS:'Kabul edilemez değer (isteğe bağlı)',
+ dnL:'Üst sınır (en fazla)', dnB:'Tam puan değeri (bundan küçüğü daha iyi sayılmaz)', dnS:'Kabul edilemez değer (isteğe bağlı)',
+ twT:'Anma (hedef) değeri', twTh:'Ulaşılmak istenen tam değer; ör. 20,00 mm çap. Tam puan (+1) bu değerde verilir.', twLh:'Tolerans: alt ve üst sınır. Bu aralığın içindeki her değer şartnameye uygundur (puan 0 veya üstü).', twSh:'Bu değerlerin dışı kesinlikle kabul edilemez (−1). Tolerans dışında puanın ne kadar hızlı düşeceğini belirler.', twAp:'Anma değerine yaklaşma', apBoth:'Her iki taraftan: anmaya yaklaştıkça puan artar', apLo:'Yalnızca alttan: anmanın altından yaklaşmak iyidir, üstü yalnızca uygun (0)', apHi:'Yalnızca üstten: anmanın üstünden yaklaşmak iyidir, altı yalnızca uygun (0)', twAph:'Ör. her iki taraf: mil çapı. Tek taraf: taşlama payı bırakılacak bir yüzey (malzeme fazlası tercih edilir) ya da sıkı geçme deliği (dar tarafa yaklaşmak tercih edilir).', twFb:'Tam puan bandı (toleransın %’si)', twFbh:'0 = yalnızca anma değeri tam puan alır. Ör. 25: anmadan tolerans sınırına olan mesafenin ilk %25’i tam puan alır, sonrası sınıra doğru düzgün azalır.', twFull:'Tam puan aldığı değer(ler)', twPrev:'Önizleme: tolerans içindeki değerlerin puanı (belirsizlik hariç)', score:'puan', twL:'Tolerans (izin verilen aralık): alt / üst', twB:'İdeal aralık (tam puan)', twS:'Kesinlikle kabul edilemez: altı / üstü', from:'en az', to:'en çok',
+ advanced:'Ayrıntılar (isteğe bağlı)', groupH:'İsteğe bağlı. Koşulları başlıklar altında toplar (ör. Yapısal, Dinamik, Maliyet). Hesabı değiştirmez; yalnızca sonuçta her grubun en zayıf koşulunu gösteren ağaç çizilir (bkz. örnek 9, uçak kanadı).', u0H:'İsteğe bağlı. Yüklenici belirsizlik girmezse kullanılacak değer, koşulun kendi biriminde (ör. ±0,01 mm). Değer bu kadar sınıra doğru kaydırılarak puanlanır. Bilmiyorsanız boş bırakın (0).', scaleH:'Doğrusal: çoğu koşul için doğrudur. Logaritmik: değerin çok geniş bir aralıkta değiştiği ve oranın önemli olduğu durumlar içindir (ör. yorulma ömrü 60 000–300 000 çevrim; 100 000’den 200 000’e çıkmak, 200 000’den 300 000’e çıkmaktan daha değerlidir).', defnH:'İsteğe bağlı ama önerilir. Koşulun nasıl ölçüleceğini yazın (ör. “3 noktadan mikrometre ile ölçülür, en büyük değer alınır”). Yüklenici ve hakem aynı şeyi ölçtüğünden emin olur; kilit koduna dahildir.', group:'Grup (ör. Yapısal, Maliyet)', u0:'Varsayılan ölçüm belirsizliği (±)', vmin:'Geçerli en küçük değer', vmax:'Geçerli en büyük değer', mand:'Zorunlu koşul', defn:'Tanım ve ölçüm yöntemi', scale:'Ölçek', lin:'Doğrusal', log:'Logaritmik (oran önemli, çok geniş aralık)',
+ resTitle:'Özkul Karar Sayısı (A) · bakmanız gereken ana sonuç', resSub:'İşareti yalnızca zorunlu koşullar belirler: eksi, en az bir zorunlu sınırın aşıldığı demektir; başka hiçbir koşul işareti çeviremez. Büyüklük, işin kabule ne kadar yakın olduğunu söyler. Bütün koşullar katkı çubuğunda görünür.',
+ Ylab:'Kabule yakınlık (Y)', Ydef:'Y = bütün koşul puanlarının ortalaması. Karara katılmaz; işin bütününün ne kadar iyi olduğunu gösterir.', Amark:'A (karar)', decFloor:'Taban kuralı: zorunlu sınırlar sağlandığı için A sıfırın altına inmez',  sAutoH:'Boş bırakılabilir: sistem otomatik bir değer kullanır (gri yazı). Bu değerde ve ötesinde puan −1 olur. Ne işe yaradığı aşağıdaki açıklamada.', autoPh:'otomatik: {0}', auto:'otomatik', read_auto:'(Kabul edilemez değer otomatik.)', sfVeto:'<b>−1’e ulaşırsa ne olur?</b> Zorunlu bir koşul kabul edilemez değere ulaşırsa sonuç doğrudan −1 olur (veto): diğer koşullar ne kadar iyi olursa olsun iş kesin reddedilir ve bu ret, hafif bir aşımdan farklı olarak düzeltmeyle kurtarılabilecek bir durum olarak gösterilmez.',  sfOk:'şartnameye uygun', sfBad:'sınır aşıldı', sfS1:'−1 noktası', sfFlat:'buradan ötesi hep −1', hardWhy:'Sınırın ötesinde puan nasıl hesaplanır? (açıklama)', sfS:'kabul edilemez (−1)', sfL:'sınır (0)', sfB:'tam puan (+1)', sfT:'Bu üç değer ne işe yarar?', sfIntro:'Üç değeri girince burada bir şekil çıkar ve “kabul edilemez değer”in ne işe yaradığını gösterir.', sfTxt:'<b>Puan nasıl hesaplanır?</b> Tam puan değerinde ({0}) puan +1, sınırda ({1}) 0’dır; aradaki değerler uzaklıkla orantılı puan alır. Sınır aşılırsa puan eksiye iner ve kabul edilemez değerde ({4}) −1 olur. Ör. {2} → −0,10 (hafif aşım), {3} → −0,50 (yolun yarısı). Kabul edilemez değerden ötesi ne kadar kötü olursa olsun hep −1’dir; tıpkı tam puan değerinden iyisinin hep +1 kalması gibi. Bu yüzden sonsuza giden bir aşım sorun yaratmaz.<br><b>Kabul edilemez değeri girmek zorunda mıyım?</b> Hayır. Boş bırakırsanız sistem onu sınırın öbür tarafına, sınır ile tam puan arasındaki mesafe kadar uzağa ({5}) koyar. Farklı bir değer yazarsanız (ör. maliyet bütçeyi %50 aşsa bile pazarlık edilebilir diyorsanız) onu kullanır.<br><b>Eksi puan ne işe yarar?</b> Sınırı aşan bir zorunlu koşul her zaman işin reddedilmesi demektir; bunu eksi puanın büyüklüğü değiştirmez. Büyüklük, aşımın ne kadar ciddi olduğunu söyler: “gereken düzeltme” bölümü buna göre hafif, orta düzeyde ya da kapsamlı düzeltme önerir. “Puan düşürür” türündeki bir koşulda ise eksi puan, sonucu ne kadar düşüreceğini belirler: bütçeyi az aşan maliyet sonucu az, çok aşan maliyet çok düşürür.',  clearQ:'Bütün koşullar ve değerler silinip boş bir şartname açılacak. Bu oturumda girdiğiniz bilgiler geri gelmez. Devam edilsin mi?', clearH:'Kendi şartnamenizi yazmak için bütün değerleri temizleyin. Girdikleriniz yalnızca bu oturum boyunca saklanır.',  oneSlope:'Sınır aşılırsa puan eksiye iner: sınırdan tam puan değerine olan mesafe kadar aşım −1 demektir. Ör. sınır 10, tam puan 5 ise 15 → −1. Ayrı bir “kabul edilemez değer” girmeniz gerekmez.',  triLeg:'Sınırını aşan puan düşüren koşul: kontrol edilmeli',  tipScore:'puan', tipVal:'Değerlendirilen değer: {0}', tipIdeal:'İdeal (tam puan) değer {0}; sapma: {1}', tipLim:'Sınır {0}; sınıra göre: {1}', tipWarn:'⚠ Puan düşüren koşul sınırını aşıyor. İşi tek başına reddettirmez ama kontrol edilmeli.', tipSoft:'Puan düşüren koşul: işi reddettirmez, yalnızca sonucu etkiler.', swT:'Kontrol edilmeli:', swIdeal:'idealden sapma', swTxt:'Puan düşüren bir koşul sınırını aşıyor. Sonuç yine olumlu, çünkü bu koşul tek başına ret sebebi değil; ama kabulden önce bu sapmaya bakılmalı. Ölçekteki turuncu ünlem işaretinin üzerine gelince ayrıntı görünür.',  toVer:'Değerlendirmeye geç (3. adım) →', toVerH:'Şartname sahibi sonucu ve kanıt notlarını 3. adımda inceleyip kararını onaylar.', verSum:'İncelenen sonuç', verIncomplete:'{0} zorunlu koşulun değeri eksik. Eksik değerlendirme onaylanamaz; 2. adımda tamamlayın.', decSession:'Bu karar yalnızca bu oturum boyunca saklanır. Kalıcı kayıt için ekran görüntüsü alın ya da karar kodunu not edin.',  betaEx:'Örnek (kiriş): en zayıf zorunlu koşul +0,40; diğer koşulların ortalaması +0,13 (maliyet sınırı aştığı için düşük). Yok seçilirse A = +0,40. Orta seçilirse A = 0,5 × 0,40 + 0,5 × 0,13 = +0,26. Yani “Orta”, iyi ya da kötü diğer koşulların sonuca yansımasını sağlar. Her koşulun bu ortalamadaki payını koşul kartındaki “Önem” belirler.',  kExpl:'k, değerin belirsizliğin kaç katı kadar sınıra doğru kaydırılacağıdır; bir olasılık değil, bir çarpandır. k = 0 kaydırma yok demektir (belirsizlik yok sayılır). k = 1 ve k = 2, ölçüm biliminde (GUM) yaygın kullanılan çarpanlardır. Belirsizlik ± değeri olarak verildiği ve tek tarafa (sınır tarafına) bakıldığı için k = 1 yaklaşık %84, k = 2 yaklaşık %98 güvenli taraf anlamına gelir (iki taraflı aralıkta k = 2 yaklaşık %95’tir; “%95” genelde bu yüzden söylenir).', impH2:'Önem ne işe yarar? Yalnızca sonucun büyüklüğünü etkiler: diğer koşulların ortalamaya katkısında bu koşulun payını belirler (ör. Yüksek 0,75, Orta 0,50). İşin reddedilip reddedilmeyeceğini etkilemez; onu “Koşul türü” belirler. “Diğer koşulların etkisi” Yok (β = 0) ise ya da sonuca katılan tek koşul varsa önemin hiçbir etkisi olmaz; bu durumda seçim kapalıdır.', impOff:'Etkisiz: β = 0 ya da tek koşul', twNomH:'İdeal değer ve tolerans: ideal (anma) değeri ve izin verilen alt / üst sınırı girin. Puan, değerin ideal değere ne kadar yaklaştığına göre oransal verilir: ideal değerde +1 (tam puan), tolerans sınırında 0 (uygun, en düşük puan), aradaki değerlerde uzaklıkla orantılı. Ör. ideal 25,00, sınırlar 24,80 / 25,20: 25,00 → +1, 24,90 → +0,50, 24,80 → 0. Tolerans dışı her değer şartnameye uymaz ve ret sebebidir. Yalnızca bir taraftan yaklaşılabiliyorsa o tarafın sınırını ideal değere eşit yazın (ör. 25,00 / 25,20: 25’in altı kabul edilmez).', numNeed:'Sayı girin',  dotTip:'bu koşulun kendi puanı. A bu puanlardan hesaplanır; otomatik kabul için en soldaki zorunlu noktanın da kabul eşiğini geçmesi gerekir', dotLeg:'Her nokta bir koşulun puanıdır (adını görmek için üzerine gelin)', exNow:'İncelenen örnek',  nominal:'anma', sumAcc:'Otomatik kabul için (kendi biriminde)', ruleBool:'Karar kuralı: evet/hayır sorusu. Bütün cevaplar evet ise GEÇTİ, biri hayır ise KALDI. Ara değer ve eşik yoktur.', ruleTxt:'Karar kuralı: bir zorunlu sınır aşılırsa (A < 0) ret. Bütün sınırlar sağlanmış ve A ile en zayıf zorunlu koşul {0} veya üstü ise otomatik kabul. 0 ile {0} arası değerlendirilmesi gerekir (gri bölge).', ruleTxtC:'Karar kuralı: A ve en zayıf zorunlu koşul {0} veya üstü ise otomatik kabul; 0 ile {0} arası değerlendirilmesi gerekir (gri bölge); {1} ile 0 arası sınır az aşılmış, şartlı kabul mümkün (şartname sahibi karar verir); {1} veya altı otomatik ret.', boolSub:'Evet/hayır sorusu: sonuç yalnızca +1 (geçti) ya da −1 (kaldı) olabilir.', V_PASS:'GEÇTİ', V_FAIL:'KALDI', boolOk:'Bütün cevaplar doğru/evet.', boolNo:'En az bir cevap yanlış/hayır.', boolNote:'Evet/hayır sorularında ara değer olmadığı için ölçek, eşikler ve katkı çubuğu gösterilmez.', uT:'Kabul eşiğinin koşulların kendi birimindeki karşılığı', uLine:'otomatik kabul için {1}; şartnameye uygunluk (sınır) için {2}', uNote:'Ölçüm belirsizliği varsa ölçülen değer belirsizlik kadar daha içeride olmalıdır, çünkü değer sınıra doğru kaydırılarak değerlendirilir. Bu kural tek koşul için de, çok koşul için de aynıdır: çok koşulda otomatik kabul için her zorunlu koşulun bu bandın içinde olması gerekir.', scaleT:'Karar ölçeği: A hangi bölgede?', sumT:'Şartname özeti (kilitli, değiştirilemez)', sumReq:'Koşul', sumType:'Tür', sumL:'Sınır / tolerans (0)', sumB:'Tam puan (+1)', sumS:'Kabul edilemez (−1)', sumU:'Varsayılan belirsizlik', tMand:'zorunlu', tSoft:'puan düşürür', tInfo:'bilgi', ruleNone:'Karar kuralı: otomatik kabul/ret yok, kararı şartname sahibi verir.', zRej:'OTOMATİK RET', zExc:'ŞARTLI KABUL MÜMKÜN\nsınır az aşıldı', zRev:'DEĞERLENDİRİLMESİ GEREKİR\n(gri bölge)', zAcc:'OTOMATİK KABUL', zAll:'Otomatik karar yok: karar şartname sahibinde', zLim:'0 = sınır', zTR:'ret eşiği', zTA:'kabul eşiği', decSum:'Toplam = karar sayısı',
  revT:'Sınırı aşan koşullar ve gereken düzeltme', revNone:'Bütün sınırlar sağlanıyor; düzeltme gerekmiyor.', revLine:'{0}: {1} → en az {2} gerekli (sınır). Fark: {3} ({4}).', revLineA:' Otomatik kabul için: {0}.',
- revSmall:'Küçük revizyon: gereken değişim %10’un altında.', revMid:'Orta revizyon: gereken değişim %10–30 arası.', revBig:'Büyük revizyon: gereken değişim %30’un üstünde; kolayca telafi edilemez.',
+ revSmall:'Küçük düzeltme: gereken değişim %10’un altında.', revMid:'Orta düzeyde düzeltme: gereken değişim %10–30 arası.', revBig:'Kapsamlı düzeltme: gereken değişim %30’un üstünde; kolayca telafi edilemez.',
  revBool:'{0}: “hayır” → “evet” olmalı.',
- kindQ:'Koşul türü', kMand:'Zorunlu: sınırı aşarsa iş reddedilir', kSoft:'Puan düşürür: tek başına ret ettirmez, sonucu düşürür', kInfo:'Yalnızca bilgi: sonuca katılmaz',
+ kindQ:'Koşul türü', kMand:'Zorunlu: sınırı aşarsa iş reddedilir', kSoft:'Puan düşürür: tek başına ret ettirmez, sonucu düşürür', kInfoT:'Yalnızca bilgi: sonuca katılmaz',
  impQ:'Önem', iDec:'Belirleyici', iHigh:'Yüksek', iMed:'Orta', iLow:'Düşük', iMin:'Tamamlayıcı', impW:'Ağırlık (elle)', impH:'Önem yalnızca diğer koşulların ortalamadaki payını belirler; ret yetkisini “Koşul türü” belirler. Ağırlıklar görelidir.',
  linkQ:'Bağlı grup', linkH:'Aynı fiziksel durumu ölçen koşullar (örneğin gerilme ve güvenlik katsayısı) için aynı grup adını yazın. Grup ortalamada bir kez sayılır, ret kararında her üye ayrı ayrı kontrol edilir.', linkP:'boş = bağımsız',
- wT:'Ağırlıklar ve diğer koşulların etkisi', wLead:'Kararın işaretini her zaman zorunlu koşullar belirler. Aşağıdaki ayarlar yalnızca sayının büyüklüğünü, yani kabule ne kadar yakın olduğunu etkiler.', eqBtn:'Hepsine eşit önem ver',
- betaQ:'Diğer koşulların sonuca etkisi', bNone:'Yok: yalnızca en zayıf zorunlu koşul belirler (en katı)', bSlight:'Az: diğer koşullar sonucu hafifçe yumuşatır', bBal:'Orta: dengeli (varsayılan)', bStrong:'Güçlü: diğer koşullar baskın, dikkatli kullanın', betaW:'β (elle, 0–0,75)',
- betaH:'β büyüdükçe iyi koşullar sonucu sıfıra yaklaştırır, kötü “puan düşürür” koşullar da sonucu eksiye çekebilir. β = 0 iken yalnızca en zayıf zorunlu koşul sayılır.',
+ wT:'Diğer koşulların sonuca etkisi', wLead:'Kabul ya da ret kararını her zaman zorunlu koşullar ve onların sınırları verir; bu ayar kararı değiştiremez. Yalnızca sayının büyüklüğünü, yani işin kabule ne kadar rahat girdiğini etkiler: sonuç yalnızca en zayıf zorunlu koşula mı bakacak, yoksa diğer koşulların ne kadar iyi olduğu da hesaba katılacak mı?', eqBtn:'Hepsine eşit önem ver',
+ betaQ:'Diğer koşulların sonuca etkisi', bNone:'Yok (β = 0): yalnızca en zayıf zorunlu koşul belirler (en katı)', bSlight:'Az (β = 0,25): diğer koşullar sonucu hafifçe yumuşatır', bBal:'Orta (β = 0,50, varsayılan): dengeli', bStrong:'Güçlü (β = 0,75): diğer koşullar baskın, dikkatli kullanın', betaW:'β (elle, 0–0,75)',
+ betaH:'Emin değilseniz varsayılanı (Orta) bırakın. En katı ve en basit seçim “Yok”tur: sonuç doğrudan en zayıf zorunlu koşulun puanıdır.',
  methQ:'Ağırlıkları nasıl belirlediniz?', mEq:'Hepsi eşit', mRank:'Önem sırasına göre (sıralama yöntemi)', mSwing:'Salınım yöntemi (kabul edilemezden yeterliye çıkışın değeri)', mCost:'Sonuç maliyeti / şiddet verisi', mMan:'Elle / uzman görüşü', methH:'Seçtiğiniz yöntem kilit koduna kaydedilir; hakem ağırlıkların nasıl belirlendiğini görür.',
- rankBtn:'Sıralamaya göre ağırlıkları hesapla', rankH:'Koşulları önem sırasına göre dizin (üstteki en önemli), ardından düğmeye basın. Ağırlıklar Barron–Barrett (1996) sıralama-ağırlık merkezi formülüyle hesaplanır.',
- simT:'Kilitlemeden önce: kötü senaryolar', simLead:'Her “puan düşürür” koşulu için sistem üç kötü durumu hesaplar. Diğer koşullar ya iyi (+0,40) ya da sınıra çok yakın (+0,05) varsayılır.', simCols:'Koşul|Durum|Diğerleri iyi|Diğerleri sınırda',
+ rankBtn:'Sıralamaya göre ağırlıkları hesapla', rankH:'“Sıralamaya göre” şu demektir: koşulları yukarıdaki listede önem sırasına koyarsınız (en üstteki en önemli); düğmeye basınca sistem bu sıradan sayısal ağırlık çıkarır. Sıra, koşulların sayfadaki sırasıdır. Ör. 3 koşul için ağırlıklar 0,61 · 0,28 · 0,11 olur; yani yalnızca “hangisi daha önemli” sorusunu yanıtlamanız yeter, sayı vermeniz gerekmez. Formül: Barron ve Barrett (1996) sıra-ağırlık merkezi. “Hepsine eşit önem ver” ise bütün ağırlıkları eşitler.',
+ simT:'Kilitlemeden önce: kötü senaryolar', simLead:'Bu tablo, “puan düşürür” türündeki her koşul kötü çıkarsa kararın ne olacağını kilitlemeden önce size gösterir. −0,25, −0,50 ve −1 bir yüzde ya da birim değildir: koşulun ortak cetveldeki puanıdır. 0 = sınırda, −1 = sizin yazdığınız “kesinlikle kabul edilemez” değer. Yani −0,25, sınırdan kabul edilemez değere giden yolun dörtte biri kadar kötü demektir; her satırda bunun koşulun kendi birimindeki karşılığı (ör. bin USD) yazılıdır. Diğer koşullar için iki durum varsayılır: “iyi” (her biri +0,40) ve “sınırda” (her biri +0,05). Senaryoları sistem kendisi oluşturur; seçilecek bir parametre yoktur. Tablo, “puan düşürür” türünü seçtiğiniz her koşul için otomatik çıkar. Sizin kararınız şudur: bu sonuçlar kabul edilebilir mi? Değilse koşulu “zorunlu” yapın, önemini ya da “diğer koşulların etkisi” ayarını değiştirin; uygunsa onay kutusunu işaretleyin.', simCols:'Koşul|Durum (puan)|Kendi biriminde|Diğerleri iyi (+0,40)|Diğerleri sınırda (+0,05)',
  sSlight:'Az kötü (−0,25)', sBad:'Kötü (−0,50)', sWorst:'Çok kötü (−1)', simNone:'“Puan düşürür” türünde koşul yok; simülasyon gerekmiyor.', simAck:'Bu senaryoları gördüm ve onaylıyorum', simNeed:'Kilitlemek için senaryoları onaylayın.',
  sensOk:'Duyarlılık: ağırlıklar ±%20 değişince karar değişmiyor.', sensBad:'Uyarı: karar ağırlık seçimine duyarlı. ({0})',
  decT2:'Katkı çubuğu: A bu parçaların toplamıdır', decBase:'En zayıf zorunlu koşul (taban)', decVeto:'Veto: zorunlu bir koşul kabul edilemez noktada', decH:'Sağa uzanan parçalar A’yı yükseltir, sola uzananlar düşürür. Parçaların toplamı üstteki A’ya eşittir.',
- rs_violation:'Sınır ihlali: zorunlu bir koşul sınırını aşıyor.', rs_combined:'Birleşik yetersizlik: zorunlu sınırlar sağlanıyor, ama payları “puan düşürür” koşulların kötülüğünü karşılamıyor.', rs_veto:'Veto: zorunlu bir koşul kabul edilemez noktaya ulaştı.', rs_softpenalty:'Zorunlu sınırlar sağlanıyor; “puan düşürür” bir koşul sonucu aşağı çekiyor.', rs_ok:'Bütün koşullar sınır içinde.',
+ rs_violation:'Sınır ihlali: zorunlu bir koşul sınırını aşıyor.', rs_floored:'Zorunlu sınırların hepsi sağlanıyor; puan düşüren koşullar sonucu sıfıra kadar indirdi. Sonuç eksi olamaz, ama kabul edilmeden önce değerlendirilmelidir.', rs_veto:'Veto: zorunlu bir koşul kabul edilemez noktaya ulaştı.', rs_softpenalty:'Zorunlu sınırlar sağlanıyor; “puan düşürür” bir koşul sonucu aşağı çekiyor.', rs_ok:'Bütün koşullar sınır içinde.',
  accGuard:'Otomatik kabul için en zayıf zorunlu koşulun da kabul eşiğini geçmesi gerekir ({0}).', wTag:'β {0}',
  exBadge:'Açıklama · Yöntemin nasıl çalıştığı. Örnek değerler kullanılır, aşağıdaki işinizle ilgisi yoktur.', appBadge:'Uygulama · Sizin şartnameniz, değerleriniz ve kararınız', sciBadge:'Bilimsel açıklama',
  lockCode:'Kilit kodu (SHA-256 parmak izi)', lockCodeH:'Bu kod, şartnamenin kilitlendiği andaki hâlini kanıtlar. Şartnamede tek bir harf değişirse kod tamamen değişir.',
@@ -449,52 +463,53 @@ tr:{
  contractor:'Yüklenici (firma / kişi)', evT:'Kanıt ve hesaplama', calc:'Hesaplama / açıklama', calcP:'Değeri nasıl bulduğunuzu kısaca yazın', files:'Kanıt dosyaları', filesH:'Rapor, ölçüm tutanağı, hesap tablosu… Her dosyanın parmak izi alınır; şartname sahibi dosyanın değişmediğini görebilir. 3 MB üstü dosyalar rapora gömülmez, yalnızca parmak izi kaydedilir.',
  sendT:'Yükleniciye gönder', sendLead:'Bu bağlantı kilitli şartnamenin tamamını içerir. Yüklenici bağlantıyı açınca doğrudan değer giriş ekranına gelir ve kuralları değiştiremez. Veri hiçbir sunucuya gitmez, bağlantının içinde taşınır.', copy:'Bağlantıyı kopyala', copied:'Kopyalandı', mail:'E-postayla gönder',
  mailSubj:'Şartname: {0} (sürüm {1})', mailBody:'Merhaba,\n\nAşağıdaki bağlantıdan şartnameyi açıp bulduğunuz değerleri ve kanıtları girebilirsiniz:\n{0}\n\nKilit kodu: {1}\n',
- retT:'Şartname sahibine gönder', retLead:'Raporu indirip şartname sahibine gönderin. Değerleriniz, hesaplamalarınız ve kanıt dosyalarınız raporun içindedir.', retLink:'Kanıt dosyası yoksa raporu bağlantı olarak da gönderebilirsiniz:', retTooBig:'Rapor, kanıt dosyaları nedeniyle bağlantı için büyük. Dosya olarak gönderin.', mailRep:'E-postayla bildir',
- mailRepSubj:'Rapor: {0} (sürüm {1})', mailRepBody:'Merhaba,\n\nŞartname için değerlerimi girdim. Sistemin sonucu: {0} ({1}).\nKilit kodu: {2}\n{3}\nRapor dosyasını ekte gönderiyorum.\n',
+ 
+ 
  evNone:'Kanıt eklenmemiş.', fileOk:'dosya değişmemiş', fileBad:'dosya değiştirilmiş', fileNoData:'yalnızca parmak izi', fileOpen:'indir', evRef:'Kanıt no',
- decT:'Kararınız', sysRec:'Sistemin önerisi (sizin koyduğunuz kurala göre): {0}', decAcc:'Kabul', decCond:'Şartlı kabul (istisna onayı)', decRej:'Ret', decNote:'Gerekçe / not', decBy:'Onaylayan (ad, unvan)', decSave:'Kararı kaydet ve indir',
- decDiff:'Bu karar sistemin önerisinden farklı ya da bir sınır ihlalini kabul ediyor. Gerekçe yazmanız zorunlu.', decNeed:'Bir karar seçin.', decDone:'Karar kaydedildi. Karar kodu: {0}', decMail:'Kararı yükleniciye e-postayla bildir',
+ decT:'Kararınız', sysRec:'Sistemin önerisi (sizin koyduğunuz kurala göre): {0}', decAcc:'Kabul', decCond:'Şartlı kabul (sapma onayı)', decRej:'Ret', decNote:'Gerekçe / not', decBy:'Onaylayan (ad, unvan)', decSave:'Kararı onayla',
+ decDiff:'Bu karar sistemin önerisinden farklı ya da bir sınır ihlalini kabul ediyor. Gerekçe yazmanız zorunlu.', decNeed:'Bir karar seçin.', decDone:'Karar onaylandı. Karar kodu: {0}', decMail:'Kararı yükleniciye e-postayla bildir',
  decMailSubj:'Karar: {0} · {1}', decMailBody:'Merhaba,\n\nRaporunuz değerlendirildi.\nKarar: {0}\nGerekçe: {1}\nRapor kodu: {2}\nKarar kodu: {3}\n', verifyFirst:'Rapor doğrulamadan geçmediği için karar verilemez.',
  sayTag:'Şöyle okunuyor:', inclQ:'Sınır değerinin kendisi', inclI:'Dahil: tam sınıra eşit değer kabul', inclE:'Hariç: tam sınıra eşit değer ret', inclLoQ:'Alt sınır değeri', inclHiQ:'Üst sınır değeri', rdI:' Tam {0} kabul edilir.', rdE:' Tam {0} kabul edilmez.', w_excl:'Tam sınırda ama sınır hariç tutulmuş: ret', addParam:'+ Koşul ekle', del:'Sil',
  polT:'Karar yetkisi: kararı kim verir?', polLead:'Sonuç sayısına göre kararı sistemin hemen mi vereceğini, yoksa sizin mi değerlendireceğinizi seçin. Otomatik kabul ve ret bölgelerinin dışında kalan her iş size gelir. Son onayı her durumda 3. adımda siz kaydedersiniz.',
  pComply:'Sınırları sağlayan kabul, sağlamayan ret', pComplyD:'Ara bölge yok. En basit kural. Satın alma, kalite kontrol gibi işler için uygundur.',
- pMargin:'Kabul için güvenlik payı iste', pMarginD:'Sınırları sağlayan ama payı yetersiz kalan iş size kalır. Sınırı aşan iş her zaman otomatik ret olur.',
- pTol:'İstisna (sapma onayı) imkânı tanı', pTolD:'Sınırı hafifçe aşan iş otomatik ret olmaz, size kalır. Kabul ederseniz bu bir istisna onayıdır.',
+ pMargin:'Kabulden önce değerlendirme bölgesi tanımla (gri bölge)', pMarginD:'Çok koşullu işlerde yararlıdır. Bütün sınırları sağlayan ama sonucu belirlediğiniz değerin altında kalan iş otomatik kabul edilmez; “değerlendirilmesi gerekir” olarak size gelir. Sınırı aşan iş her zaman ret olur. Tek bir kesin toleransın kontrol edildiği işlerde (ör. bir çap ölçüsü) gerekmez; orada ilk seçenek yeterlidir.',
+ pTol:'Şartlı kabule (sapma onayı) izin ver', pTolD:'Sınırı çok az aşan iş otomatik ret olmaz, size kalır (ör. kullanımı etkilemeyen küçük bir boyut hatası). Reddedebilir, düzelttirebilir ya da gerekçesini yazarak şartlı kabul edebilirsiniz. Ret eşiği ne kadar aşımın “az” sayıldığını belirler: −0,10, sınırdan kabul edilemez değere giden yolun %10’u demektir.',
  pManual:'Karar her zaman bende', pManualD:'Otomatik kabul veya ret yok. Sayı yalnızca bilgi verir.',
- tauA:'Otomatik kabul için en az pay', tauR:'Bu değer veya altı otomatik ret', tauAh:'0 ile 1 arası. Örneğin 0,20, en zayıf koşulda en az %20 pay demektir.', tauRh:'0 ile −1 arası. Örneğin −0,10, sınırın hafif aşılmasına izin verir.',
- uncT:'Ölçüm belirsizliği', uncLead:'Ölçülen değer, belirsizliği kadar sınıra doğru kaydırılarak değerlendirilir. Böylece belirsizlik sonucu olduğundan iyi göstermez.',
- u_none:'Hesaba katma (k = 0)', u_k1:'Standart belirsizlik kadar (k = 1)', u_k2:'Yaklaşık %95 güven (k = 2)', u_fw:'Çok koşullu güvenli: toplam risk en fazla %5 (k otomatik)',
- lockBtn:'Kontrol ettim, şartnameyi kilitle', lockHint:'Kilitlenen şartname değiştirilemez. Değişiklik için yeni sürüm açılır ve yeni bir parmak izi oluşur.',
- locked:'Kilitli', draft:'Taslak: henüz kilitlenmedi', altered:'Uyarı: kilitlendikten sonra değiştirilmiş', newVer:'Yeni sürüm aç (kopya)', dlSpec:'Kilitli şartnameyi indir', imp:'Şartname dosyası yükle', newBlank:'Boş şartname', goSub:'Değer girişine geç →', fixFirst:'Kilitlemeden önce kırmızı uyarıları düzeltin.',
+ tauA:'Değerlendirme bölgesinin üst sınırı (bu değer ve üstü otomatik kabul)', tauR:'Bu değer veya altı otomatik ret', tauAh:'0 ile 1 arası. Örneğin 0,20: A ve en zayıf zorunlu koşul +0,20 veya üstündeyse otomatik kabul; 0 ile +0,20 arası “değerlendirilmesi gerekir” (gri bölge). +0,20, en zayıf koşulun sınırdan tam puan değerine giden yolun %20’sini geçmesi demektir; değer girme ekranında bunun her koşulun kendi birimindeki karşılığı yazılır.', tauRh:'0 ile −1 arası. Örneğin −0,10: −0,10 ve altı otomatik ret. −0,10 ile 0 arası sınır az aşılmıştır; iş otomatik reddedilmez, ancak gerekçesi yazılarak şartlı kabul (sapma onayı) edilebilir.',
+ uncT:'Ölçüm belirsizliği', uncLead:'Her ölçümde bir miktar belirsizlik vardır. Örneğin bir çap 20,04 mm ölçüldü ve ölçüm aletinin belirsizliği ±0,03 mm ise gerçek çap 20,01 ile 20,07 mm arasında herhangi bir değer olabilir. Sistem güvenli tarafta kalmak için en kötü ihtimali kullanır: değeri belirsizlik kadar sınıra doğru kaydırır (bu örnekte 20,07 mm) ve puanı buna göre hesaplar. Böylece ölçüm belirsizliği işin olduğundan daha iyi görünmesine yol açmaz. Aşağıdan bu kaydırmanın büyüklüğünü seçin: belirsizliğin 1 katı (olağan), 2 katı (yaklaşık %95 güven) ya da çok koşullu işler için otomatik.',
+ u_none:'Hesaba katma (k = 0: ölçülen değer olduğu gibi kullanılır)', u_k1:'Belirsizliğin 1 katı kadar kaydır (k = 1, olağan; yaklaşık %84 güvenli taraf)', u_k2:'Belirsizliğin 2 katı kadar kaydır (k = 2, yaklaşık %98 güvenli taraf)', u_fw:'Çok koşullu: toplam yanılma riski en fazla %5 olacak şekilde k otomatik seçilir',
+ lockedHint:'Şartname kilitli. Değer girişine geçebilir ya da değiştirmek için yeni bir sürüm açabilirsiniz.', lockBtn:'Kontrol ettim, şartnameyi kilitle', lockHint:'Kilitlenen şartname değiştirilemez. Değişiklik için yeni sürüm açılır ve yeni bir parmak izi oluşur.',
+ locked:'Kilitli', draft:'Taslak: henüz kilitlenmedi', altered:'Uyarı: kilitlendikten sonra değiştirilmiş', newVer:'Yeni sürüm aç (kopya)', dlSpec:'Kilitli şartnameyi indir', imp:'Şartname dosyası yükle', newBlank:'Bütün değerleri temizle', goSub:'Değer girişine geç →', fixFirst:'Kilitlemeden önce kırmızı uyarıları düzeltin.',
  fixList:'Düzeltilmesi gerekenler:',
- noLock:'Önce bir şartname kilitlenmeli. 1. adımda kilitleyin, kilitli bir şartname dosyası yükleyin ya da yukarıdan bir örnek açın.',
+ noLock:'Önce bir şartname kilitlenmeli. 1. adımda şartnameyi yazıp kilitleyin ya da yukarıdan bir örnek seçin.',
  subLead:'Yalnızca bulduğunuz değerleri, hesaplamanızı ve kanıtlarınızı girin. Sonuç siz yazarken güncellenir. Kuralları değiştiremezsiniz.',
  value:'Bulunan değer', unc:'± belirsizlik', ev:'Kanıt / rapor no', samples:'Örnek sayısı', yes:'evet', no:'hayır', choose:'seçin',
  w_full:'Tam puan: bundan iyisi kararı değiştirmez', w_ok:'Sınır sağlandı: tam puana giden yolun %{0}\'i', w_zero:'Tam sınırda, pay yok', w_bad:'Sınır aşıldı: kabul edilemez noktaya giden yolun %{0}\'i', w_black:'Kesinlikle kabul edilemez', w_miss:'Değer girilmedi', w_inv:'Geçersiz: {0}', binding:'en zayıf koşul',
  inv_range:'geçerli aralığın dışında', inv_neg:'belirsizlik negatif', inv_log:'log ölçekte pozitif olmalı',
- V_ACCEPT:'KABUL', V_REJECT:'RET', V_DISCRETION:'KARAR SİZDE', V_NOT_APPROVABLE:'ONAYLANAMAZ', V_EMPTY:'Zorunlu koşul yok',
+ V_ACCEPT:'KABUL', V_REJECT:'RET', V_DISCRETION:'DEĞERLENDİRİLMESİ GEREKİR', V_NOT_APPROVABLE:'ONAYLANAMAZ', V_EMPTY:'Zorunlu koşul yok',
  why_acc:'Bütün koşullar sağlandı. En zayıf koşul: {0} ({1}).', why_rejV:'En az bir koşul sınırı aşıyor: {0} ({1}).', why_rejM:'Sınırlar sağlandı ama {0} ({1}) istenen payın altında ve kural bunu ret sayıyor.',
- why_dis_pos:'Bütün sınırlar sağlandı ama otomatik kabul için istenen pay yok. En zayıf koşul: {0} ({1}).', why_dis_neg:'{0} sınırı aşıyor ({1}). Kural bu durumu size bırakıyor.',
+ why_dis_pos:'Bütün sınırlar sağlandı, ama sonuç şartname sahibinin tanımladığı değerlendirme bölgesinde (gri bölge). Kabulden önce bir kez daha bakılmalı. En zayıf koşul: {0} ({1}). Şartname sahibi kabul edebilir, yeniden ölçüm ya da ek kanıt isteyebilir.', why_dis_neg:'SINIR AZ AŞILDI: {0} ({1}). İş şartnameye uymuyor. Şartname sahibi bu küçük aşımlar için şartlı kabule izin vermiş: iş reddedilebilir, düzeltilip yeniden sunulabilir ya da kullanımı etkilemiyorsa gerekçesi yazılarak şartlı kabul (sapma onayı) edilebilir.',
  why_na:'{0} zorunlu koşulun değeri eksik ya da geçersiz. Eksik inceleme onaylanamaz.', why_none:'Henüz değer girilmedi.',
- sev_s:'Hafif aşım: küçük bir düzeltme ya da istisna onayıyla kurtarılabilir.', sev_m:'Belirgin aşım: düzeltme gerekir.', sev_l:'Ciddi aşım: kabul edilemez noktaya yakın, iş baştan ele alınmalı.', sev_x:'Kabul edilemez noktaya ulaşıldı.', concession:'Dikkat: bu iş en az bir sınırı aşıyor. Kabul ederseniz bu bir istisna (sapma) onayı olur ve gerekçesiyle kaydedilmelidir.',
- readN:'{0}/{1} koşul incelendi · sürüm {2} · parmak izi {3}', dlRep:'Raporu indir', dlRepH:'Rapor, kilitli şartnameyi, girdiğiniz değerleri, sonucu ve raporun parmak izini içerir. Hakeme bu dosyayı gönderin.',
- scaleCap:'Siyah: otomatik ret · Gri: karar sizde · Beyaz: otomatik kabul. Bölgeleri şartname sahibi belirler.', profCap:'Her koşul aynı cetvelde. Sonuç, en soldaki çubuktur.', treeCap:'Her kutu, altındakilerin en küçüğüdür. Koyu yol en zayıf koşula gider.',
- verLead:'Yükleniciden gelen rapor dosyasını yükleyin ya da gelen bağlantıyı açın. Araç önce şartnamenin ve raporun değiştirilmediğini, puanların doğru hesaplandığını kontrol eder. Ardından değerleri ve kanıtları inceleyip kararınızı kaydedersiniz.',
+ sev_s:'Hafif aşım: küçük bir düzeltme ya da şartlı kabul (sapma onayı) ile kurtarılabilir.', sev_m:'Belirgin aşım: düzeltme gerekir.', sev_l:'Ciddi aşım: kabul edilemez noktaya yakın, iş baştan ele alınmalı.', sev_x:'Kabul edilemez noktaya ulaşıldı.', concession:'Dikkat: bu iş en az bir sınırı aşıyor. Kabul ederseniz bu bir şartlı kabul (sapma onayı) olur ve gerekçesiyle kaydedilmelidir.',
+ readN:'{0}/{1} koşul incelendi · sürüm {2} · parmak izi {3}', 
+ scaleCap:'Bu sayılar milimetre, MPa ya da dolar değildir: her koşulun sınırı 0, tam puan değeri +1 olacak şekilde ölçeklenmiş ortak bir cetveldir. Eksi = en az bir sınır aşıldı → ret. 0 ile kabul eşiği arası = sınırlar sağlandı ama pay az → değerlendirilmesi gerekir (gri bölge). Kabul eşiği ve üstü = güvenli payla sağlandı → otomatik kabul. Kabul eşiği +0,20, en zayıf koşulun sınırdan tam puan değerine olan yolun en az %20’sini geçmesi demektir; aşağıda her koşul için kendi biriminde karşılığı verilmiştir.', scaleCapC:'Bu sayılar koşulların kendi birimleri değildir; sınır 0, tam puan +1 olan ortak bir cetveldir. Siyah: otomatik ret. Turuncu: sınır az aşıldı; şartname sahibi bu durumda şartlı kabule izin vermiştir (karar ondadır, gerekçe yazılır). Gri (değerlendirilmesi gerekir): sınırlar sağlandı ama pay az. Beyaz: otomatik kabul.', profCap:'Her koşul aynı cetvelde. Sonuç, en soldaki çubuktur.', treeCap:'Her kutu, altındakilerin en küçüğüdür. Koyu yol en zayıf koşula gider.',
+ verLead:'2. adımda girilen değerlerin sonucunu ve kanıt notlarını inceleyin, sonra kararınızı seçip onaylayın. Bu sürümde dosya yükleme ve indirme yoktur; girdiğiniz her şey yalnızca bu oturum boyunca saklanır. Sayfa yeniden açıldığında her şey başlangıç durumuna döner.',
  verFile:'Rapor dosyası seç', verPaste:'veya rapor metnini yapıştırın', verBtn:'Yapıştırılanı doğrula', PASS:'BAŞARILI', FAIL:'HATALI',
  c_notRep:'Bu bir Özkul raporu değil.', c_json:'Metin geçerli JSON değil.', c_spec:'Şartname, kilitlendiği hâliyle aynı (parmak izi tutuyor)', c_specBad:'Şartname kilitlendikten sonra değiştirilmiş (parmak izi tutmuyor)',
  c_rep:'Rapor gönderildikten sonra değiştirilmemiş', c_repBad:'Rapor değiştirilmiş (rapor parmak izi tutmuyor)', c_rules:'Şartname kurallara uygun', c_rulesBad:'Şartname kurallara aykırı: {0}',
  c_H:'Sonuç sayısı yeniden hesaplandı: {0} (raporda {1})', c_V:'Karar yeniden hesaplandı: {0} (raporda {1})', c_n:'İnceleme oranı: {0} (raporda {1})', c_sc:'{0} koşulun puanı tek tek tutuyor', c_scBad:'Puanı tutmayan koşullar: {0}',
  verOK:'Rapor tutarlı. Sonuç: {0}', verBad:'Raporda tutarsızlık var. Kabul etmeyin, kaynağını sorun.',
- read_up:'Büyük olan iyi. {0} altı sınırı aşar; {1} ve üstü tam puan; {2} ve altı kesinlikle kabul edilemez.',
- read_dn:'Küçük olan iyi. {0} üstü sınırı aşar; {1} ve altı tam puan; {2} ve üstü kesinlikle kabul edilemez.',
+ read_up:'Alt sınırlı. {0} altı sınırı aşar; {1} ve üstü tam puan; {2} ve altı kesinlikle kabul edilemez (−1, veto).',
+ read_dn:'Üst sınırlı. {0} üstü sınırı aşar; {1} ve altı tam puan; {2} ve üstü kesinlikle kabul edilemez (−1, veto).',
  read_two:'{0} ile {1} arasında kalmalı. {2}–{3} arası tam puan; {4} ve altı ya da {5} ve üstü kesinlikle kabul edilemez.',
- read_bool:'Evet ise tam puan (+1), hayır ise kesinlikle kabul edilemez (−1).', read_inc:'Değerleri girin…', read_log:' Logaritmik ölçek.',
- e_name:'Koşula bir ad verin.', e_need:'Üç değerin hepsini girin.', e_need6:'Altı aralık değerinin hepsini girin.',
- e_up:'"Büyük olan iyi" seçtiniz. Bu durumda kabul edilemez değer < sınır < tam puan değeri olmalı. Yönü mü değerleri mi yanlış girdiniz?',
- e_dn:'"Küçük olan iyi" seçtiniz. Bu durumda kabul edilemez değer > sınır > tam puan değeri olmalı. Yönü mü değerleri mi yanlış girdiniz?',
- e_two:'Sıra şöyle olmalı: kabul edilemez alt < izin alt < ideal alt ≤ ideal üst < izin üst < kabul edilemez üst.', e_log:'Logaritmik ölçekte değerler pozitif olmalı.', e_none:'En az bir koşul ekleyin.', e_tauA:'Otomatik kabul payı 0 ile 1 arasında olmalı.', e_tauR:'Otomatik ret değeri 0 ile −1 arasında olmalı.',
+ read_nom:'İdeal değer {0}: tam puan (+1). Tolerans {1}–{2}: içindeki her değer uygundur; puan ideale yaklaştıkça oransal artar, sınırlarda 0. Tolerans dışı uygun değildir.', ap_both:' Anmaya her iki taraftan yaklaştıkça puan artar.', ap_lo:' Yalnızca alttan yaklaşma ödüllendirilir; anmanın üstündeki uygun değerler 0 puan alır.', ap_hi:' Yalnızca üstten yaklaşma ödüllendirilir; anmanın altındaki uygun değerler 0 puan alır.', read_bool:'Evet ise tam puan (+1), hayır ise kesinlikle kabul edilemez (−1).', read_inc:'Değerleri girin…', read_log:' Logaritmik ölçek.',
+ e_name:'Koşula bir ad verin.', e_need:'Üç değerin hepsini girin: sınır, tam puan değeri, kabul edilemez değer.', e_need6:'İdeal değeri, alt sınırı ve üst sınırı girin.',
+ e_up:'Değerler sırası yanlış. Alt sınırlı koşulda: kabul edilemez değer < alt sınır < tam puan değeri olmalı (ör. 1,0 < 1,5 < 2,0).',
+ e_dn:'Değerler sırası yanlış. Üst sınırlı koşulda: tam puan değeri < üst sınır < kabul edilemez değer olmalı (ör. 5 < 10 < 15).',
+ e_two:'Değerler sırası yanlış: alt sınır ≤ ideal değer ≤ üst sınır olmalı ve alt sınır üst sınırdan küçük olmalı (ör. 19,90 ≤ 20,00 ≤ 20,10).', e_log:'Logaritmik ölçekte değerler pozitif olmalı.', e_u0big:'Varsayılan ölçüm belirsizliği, sınır ile tam puan değeri arasındaki farktan büyük: ölçüm yöntemi bu koşulu ayırt edemez. Belirsizliği ya da değerleri kontrol edin.', e_none:'En az bir koşul ekleyin.', e_tauA:'Otomatik kabul payı 0 ile 1 arasında olmalı.', e_tauR:'Otomatik ret değeri 0 ile −1 arasında olmalı.',
  sciT:'Bilimsel açıklama', sciLead:'Bu bölüm hakemler ve yöntemi ayrıntısıyla incelemek isteyenler içindir. Tam metin ve ispatlar makalede yer alır.',
- foot:'Özkul Karar Sayısı · başvuru uygulaması v1.6 · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
+ disc:'Sorumluluk reddi: Bu uygulama ve yöntem olduğu gibi, herhangi bir garanti olmaksızın sunulmaktadır. Yazılımda ve hesaplarda hata bulunabilir. Sonuçların doğrulanması, kararların verilmesi ve bunlardan doğacak her türlü sonuç tamamen kullanıcının sorumluluğundadır; yazar hiçbir sorumluluk kabul etmez. Güvenlik açısından kritik kararlarda sonuçları bağımsız olarak kontrol edin.',
+ foot:'Özkul Karar Sayısı · başvuru uygulaması v1.7 · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
  kInfo:'k = {0}', defaultTitle:'Yeni şartname'
 },
 en:{
@@ -503,35 +518,35 @@ en:{
  iP1:'Every requirement is put on the same ruler, and the result is the score of the weakest requirement. A chain is only as strong as its weakest link, so a surplus on one requirement can never cover a shortfall on another.',
  iP2:'<b>The method in four steps:</b> (1) For each requirement write three values: unacceptable (−1), limit (0), good enough (+1). (2) Each value found is moved towards the limit by its uncertainty and scored on this ruler. (3) If a mandatory requirement fails, the result is negative; otherwise positive. Its size combines the weakest mandatory score with the importance-weighted average of all scores. (4) The owner’s thresholds decide: accept, reject or the owner’s own judgement.<br><br>The specification owner writes the rules and locks them. The person doing the work only enters the values found and sees the result at once. A reviewer or approver can repeat the whole calculation with one click.',
  iF1:'full score; better makes no difference', iF2:'exactly at the limit', iF3:'unacceptable', iUse:'<b>Where can it be used?</b> Purchasing and tenders · construction and inspection reports · manufacturing quality control · software and AI release gates · investment and risk limits · coursework and project grading · buying a used car or battery. The rule is the same everywhere: if a mandatory requirement is not met, the result is negative.', iSign:'<b>Why a minus side?</b> The sign answers “does it meet the specification?”, the size answers “by how much?”. Plus means every limit is met and the number is the margin. Minus means at least one limit is exceeded and the number is the depth of the violation. −0.05 can be rescued by a small fix or a concession; −0.80 needs to be rethought. On a 0–1 scale the limit would sit at a different point in every specification and this difference would be hidden.',
- iDemoCap:'<b>Example: four requirements of a beam</b><table class="dt"><tr><th>Requirement</th><th>Type</th><th>Limit</th><th>Found</th><th>Score</th></tr><tr><td>Deflection</td><td>mandatory</td><td>≤ 10 mm</td><td>8 mm</td><td class="acc">+0.40</td></tr><tr><td>Safety factor</td><td>mandatory · Strength</td><td>≥ 1.5</td><td>1.80</td><td class="acc">+0.60</td></tr><tr><td>Stress</td><td>mandatory · Strength</td><td>≤ 200 MPa</td><td>180 MPa</td><td class="acc">+0.40</td></tr><tr><td>Cost</td><td>penalising</td><td>≤ 100 kTL</td><td>120 kTL</td><td class="rej">−0.40</td></tr></table><b>1. Sign.</b> All mandatory requirements are within their limits; the weakest is +0.40, so the work is not rejected. Cost exceeds its limit, but its type is “penalising”.<br><b>2. Size</b> (β = 0.5, equal importance; stress and safety factor are in one “Strength” group and count once):<br>base 0.5 × (+0.40) = +0.20 · deflection +0.07 · Strength +0.07 · cost −0.07 → <b>A = +0.26</b> (rounded down).<br><b>3. Decision.</b> A is below the acceptance threshold +0.60 and above the rejection threshold −0.20: <b>the owner decides</b>. Cost at 100 kTL gives A = +0.33, at 70 kTL +0.50. Had cost been mandatory, A = −0.38 and the work would be rejected.',
+ iDemoCap:'<b>Example: four requirements of a beam</b><table class="dt"><tr><th>Requirement</th><th>Type</th><th>Limit</th><th>Found</th><th>Score</th></tr><tr><td>Deflection</td><td>mandatory</td><td>≤ 10 mm</td><td>8 mm</td><td class="acc">+0.40</td></tr><tr><td>Safety factor</td><td>mandatory · Strength</td><td>≥ 1.5</td><td>1.80</td><td class="acc">+0.60</td></tr><tr><td>Stress</td><td>mandatory · Strength</td><td>≤ 200 MPa</td><td>180 MPa</td><td class="acc">+0.40</td></tr><tr><td>Cost</td><td>penalising</td><td>≤ 100 kUSD</td><td>120 kUSD</td><td class="rej">−0.40</td></tr></table><b>1. Sign.</b> All mandatory requirements are within their limits; the weakest is +0.40, so the work is not rejected. Cost exceeds its limit, but its type is “penalising”.<br><b>2. Size</b> (β = 0.5, equal importance; stress and safety factor are in one “Strength” group and count once):<br>base 0.5 × (+0.40) = +0.20 · deflection +0.07 · Strength +0.07 · cost −0.07 → <b>A = +0.26</b> (rounded down).<br><b>3. Decision.</b> A = +0.26 and the weakest mandatory requirement m = +0.40 are above the automatic-acceptance threshold +0.20: <b>accepted</b>. Cost at 100 kUSD gives A = +0.33, at 70 kUSD +0.50. Had cost been mandatory, A = −0.38 and the work would be rejected.',
  s1t:'Write the specification', s1d:'Specification owner', s2t:'Enter results', s2d:'Person doing the work', s3t:'Review and decide', s3d:'Specification owner',
  exPick:'Open an example from the paper…',
  specLead:'Describe each requirement in plain terms: which direction is better, where the limit is, beyond which value nothing improves, and which value is unacceptable. The grey box reads your entry back as a sentence. Check it, then lock.',
  specTitle:'Specification name', version:'Version', owner:'Prepared by',
- param:'Requirement', name:'Requirement name', unit:'Unit', dir:'Which is better?',
- dUp:'Higher is better', dDown:'Lower is better', dTwo:'Must stay within a range', dBool:'Yes / no',
- upL:'At least (limit)', upB:'Beyond this value nothing improves (full score)', upS:'This value or lower is unacceptable',
- dnL:'At most (limit)', dnB:'This value or lower gets full score', dnS:'This value or higher is unacceptable',
- twL:'Allowed range', twB:'Ideal range (full score)', twS:'Unacceptable: below / above', from:'from', to:'to',
- advanced:'Details (optional)', group:'Group (e.g. Structural, Cost)', u0:'Default measurement uncertainty (±)', vmin:'Smallest valid value', vmax:'Largest valid value', mand:'Mandatory', defn:'Definition and measurement method', scale:'Scale', lin:'Linear', log:'Logarithmic (very wide ranges)',
- resTitle:'Özkul Decision Number (A) · the main result to look at', resSub:'The sign decides: negative means the work is not accepted. The size tells how close it is to acceptance. Every requirement appears in the contribution bar.',
- Ylab:'Closeness to acceptance (Y)', Ydef:'Y = average of all requirement scores. It is not part of the decision; it shows how good the work is as a whole.', Amark:'A (decision)',
+ param:'Requirement', name:'Requirement name', unit:'Unit', dir:'Type of evaluation',
+ dUp:'Lower limit: at least a value (e.g. safety factor ≥ 1.5)', dDown:'Upper limit: at most a value (e.g. deflection ≤ 10 mm)', dTwo:'Ideal value and tolerance (e.g. Ø20 ±0.10)', dBool:'Yes / no',
+ upLh:'Enter a number: the smallest acceptable value (e.g. 1.5 for a safety factor). This value scores 0.', upBh:'Enter a number: anything above it is not better; it scores full (+1) (e.g. 2.0).', upSh:'Enter a number: the value at which the work is unacceptable whatever else (e.g. safety factor 1.0). This value or lower scores −1. Must be below the lower limit. See the picture below for what it does.', dnLh:'Enter a number: the largest allowed value (e.g. 10 mm deflection). This value scores 0.', dnBh:'Enter a number: anything below it is not better; it scores full (+1) (e.g. 5 mm).', dnSh:'Enter a number: the value at which the work is unacceptable whatever else (e.g. deflection 15 mm). This value or higher scores −1. Must be above the upper limit. See the picture below for what it does.', upL:'Lower limit (at least)', upB:'Full-score value (higher is not better)', upS:'Unacceptable value (optional)',
+ dnL:'Upper limit (at most)', dnB:'Full-score value (lower is not better)', dnS:'Unacceptable value (optional)',
+ twT:'Nominal (target) value', twTh:'The exact value aimed at, e.g. a 20.00 mm diameter. Full score (+1) is given here.', twLh:'Tolerance: lower and upper limit. Every value inside complies (score 0 or higher).', twSh:'Outside these values is unacceptable (−1). Sets how fast the score falls outside the tolerance.', twAp:'Approach to the nominal value', apBoth:'From both sides: the closer to nominal the higher the score', apLo:'From below only: approaching from below is better; above nominal merely complies (0)', apHi:'From above only: approaching from above is better; below nominal merely complies (0)', twAph:'E.g. both sides: a shaft diameter. One side: a surface that must keep grinding allowance (extra material preferred), or an interference-fit bore (the tight side preferred).', twFb:'Full-score band (% of tolerance)', twFbh:'0 = only the nominal value scores full. E.g. 25: the first 25 % of the distance from nominal to each tolerance limit scores full; beyond that the score falls evenly to the limit.', twFull:'Full score at', twPrev:'Preview: scores inside the tolerance (without uncertainty)', score:'score', twL:'Tolerance (allowed range): lower / upper', twB:'Ideal range (full score)', twS:'Unacceptable: below / above', from:'from', to:'to',
+ advanced:'Details (optional)', groupH:'Optional. Collects requirements under headings (e.g. Structural, Dynamic, Cost). It does not change the calculation; it only draws a tree showing each group’s weakest requirement (see example 9, aircraft wing).', u0H:'Optional. The value used when the contractor enters no uncertainty, in the requirement’s own unit (e.g. ±0.01 mm). The value is moved towards the limit by this amount before scoring. Leave empty (0) if unknown.', scaleH:'Linear: right for most requirements. Logarithmic: for values that vary over a very wide range where ratios matter (e.g. fatigue life 60 000–300 000 cycles; going from 100 000 to 200 000 is worth more than from 200 000 to 300 000).', defnH:'Optional but recommended. Write how the requirement is measured (e.g. “micrometer at 3 points, largest value taken”). Contractor and reviewer then measure the same thing; it is part of the lock code.', group:'Group (e.g. Structural, Cost)', u0:'Default measurement uncertainty (±)', vmin:'Smallest valid value', vmax:'Largest valid value', mand:'Mandatory', defn:'Definition and measurement method', scale:'Scale', lin:'Linear', log:'Logarithmic (ratios matter, very wide range)',
+ resTitle:'Özkul Decision Number (A) · the main result to look at', resSub:'Only mandatory requirements set the sign: minus means at least one mandatory limit is exceeded; no other requirement can flip it. The size tells how close the work is to acceptance. Every requirement appears in the contribution bar.',
+ Ylab:'Closeness to acceptance (Y)', Ydef:'Y = average of all requirement scores. It is not part of the decision; it shows how good the work is as a whole.', Amark:'A (decision)', decFloor:'Floor rule: mandatory limits are met, so A does not go below zero',  sAutoH:'May be left empty: the system uses an automatic value (grey text). At and beyond this value the score is −1. See the explanation below for what it does.', autoPh:'automatic: {0}', auto:'automatic', read_auto:'(Unacceptable value automatic.)', sfVeto:'<b>What happens at −1?</b> If a mandatory requirement reaches its unacceptable value the result becomes −1 directly (veto): however good the other requirements are, the work is rejected outright, and unlike a slight excess this rejection is not presented as something a correction can rescue.',  sfOk:'complies', sfBad:'limit exceeded', sfS1:'−1 point', sfFlat:'beyond this always −1', hardWhy:'How is the score computed beyond the limit? (explanation)', sfS:'unacceptable (−1)', sfL:'limit (0)', sfB:'full score (+1)', sfT:'What do these three values do?', sfIntro:'Once the three values are entered, a picture appears here showing what the “unacceptable value” does.', sfTxt:'<b>How is the score computed?</b> At the full-score value ({0}) the score is +1, at the limit ({1}) it is 0, and values in between score in proportion to their distance. Beyond the limit the score turns negative and reaches −1 at the unacceptable value ({4}). E.g. {2} → −0.10 (slight), {3} → −0.50 (half way). Beyond the unacceptable value it stays −1 however bad, just as anything better than the full-score value stays +1. So an excess that grows without bound causes no problem.<br><b>Do I have to enter the unacceptable value?</b> No. If left empty, the system places it on the other side of the limit at the same distance as the full-score value ({5}). If you enter another value (e.g. cost may still be negotiated even 50 % over budget), that value is used.<br><b>What is the negative score for?</b> A mandatory requirement over its limit always means rejection; the size of the negative score does not change that. The size tells how serious the excess is: the “correction needed” section proposes a minor, moderate or major correction from it. For a penalising requirement the negative score sets how much it lowers the result: cost slightly over budget lowers it a little, far over budget a lot.',  clearQ:'All requirements and values will be deleted and an empty specification opened. What you entered in this session cannot be recovered. Continue?', clearH:'Clear all values to write your own specification. What you enter is kept only for this session.',  oneSlope:'If the limit is exceeded the score goes negative: an excess equal to the distance from limit to full score means −1. E.g. limit 10, full score 5: 15 → −1. No separate “unacceptable value” is needed.',  triLeg:'Penalising requirement over its limit: check it',  tipScore:'score', tipVal:'Value evaluated: {0}', tipIdeal:'Ideal (full-score) value {0}; deviation: {1}', tipLim:'Limit {0}; relative to limit: {1}', tipWarn:'⚠ A penalising requirement exceeds its limit. It cannot reject the work alone, but it should be checked.', tipSoft:'Penalising requirement: cannot reject the work, only affects the result.', swT:'Should be checked:', swIdeal:'deviation from ideal', swTxt:'A penalising requirement exceeds its limit. The result is still positive because this requirement alone is not a reason for rejection, but the deviation should be looked at before acceptance. Hover over the orange exclamation mark on the scale for details.',  toVer:'Go to review (step 3) →', toVerH:'The specification owner reviews the result and evidence notes in step 3 and confirms the decision.', verSum:'Result under review', verIncomplete:'{0} mandatory requirement value(s) missing. An incomplete review cannot be approved; complete it in step 2.', decSession:'This decision is kept only for this session. For a permanent record take a screenshot or note the decision code.',  betaEx:'Example (beam): weakest mandatory requirement +0.40; average of the other requirements +0.13 (low because cost exceeds its limit). With None, A = +0.40. With Balanced, A = 0.5 × 0.40 + 0.5 × 0.13 = +0.26. So “Balanced” lets the other requirements, good or bad, show in the result. Each requirement’s share in that average is set by “Importance” on its card.',  kExpl:'k is how many times the uncertainty the value is moved towards the limit; it is a multiplier, not a probability. k = 0 means no shift (uncertainty ignored). k = 1 and k = 2 are the usual factors in metrology (GUM). Because the uncertainty is given as ± and only the side towards the limit matters, k = 1 is about 84 % and k = 2 about 98 % on the safe side (for a two-sided interval k = 2 is about 95 %, which is why “95 %” is usually quoted).', impH2:'What does importance do? It only affects the size of the result: it sets this requirement’s share in the average of the other requirements (e.g. High 0.75, Medium 0.50). It does not affect whether the work is rejected; the requirement type does. If “effect of the other requirements” is None (β = 0), or only one requirement counts, importance has no effect and the choice is disabled.', impOff:'No effect: β = 0 or a single requirement', twNomH:'Ideal value and tolerance: enter the ideal (nominal) value and the allowed lower / upper limit. The score is proportional to how close the value is to the ideal: +1 (full score) at the ideal, 0 (compliant, lowest score) at a tolerance limit, and in proportion to the distance in between. E.g. ideal 25.00, limits 24.80 / 25.20: 25.00 → +1, 24.90 → +0.50, 24.80 → 0. Any value outside the tolerance does not comply and is a reason for rejection. If the ideal may be approached from one side only, set that side’s limit equal to the ideal (e.g. 25.00 / 25.20: below 25 is not accepted).', numNeed:'Enter a number',  dotTip:'this requirement’s own score. A is computed from these scores; for automatic acceptance the leftmost mandatory dot must also pass the threshold', dotLeg:'Each dot is one requirement’s score (hover to see its name)', exNow:'Example being examined',  nominal:'nominal', sumAcc:'For automatic acceptance (own unit)', ruleBool:'Decision rule: yes/no question. PASS if every answer is yes, FAIL if any is no. There are no intermediate values or thresholds.', ruleTxt:'Decision rule: if a mandatory limit is exceeded (A < 0) the work is rejected. If all limits are met and both A and the weakest mandatory requirement reach {0}, it is accepted automatically. Between 0 and {0} it needs evaluation (grey zone).', ruleTxtC:'Decision rule: automatic accept if A and the weakest mandatory requirement reach {0}; between 0 and {0} needs evaluation (grey zone); between {1} and 0 limit slightly exceeded, conditional acceptance possible (owner decides); {1} or lower automatic reject.', boolSub:'Yes/no question: the result can only be +1 (pass) or −1 (fail).', V_PASS:'PASS', V_FAIL:'FAIL', boolOk:'All answers are correct / yes.', boolNo:'At least one answer is wrong / no.', boolNote:'Yes/no questions have no intermediate values, so the scale, thresholds and contribution bar are not shown.', uT:'What the acceptance threshold means in each requirement’s own unit', uLine:'automatic acceptance needs {1}; compliance (limit) needs {2}', uNote:'If there is measurement uncertainty, the measured value must lie further inside by that uncertainty, because it is moved towards the limit before scoring. The rule is the same for one requirement or many: with several, every mandatory requirement must lie inside its band for automatic acceptance.', scaleT:'Decision scale: which zone is A in?', sumT:'Specification summary (locked, cannot be changed)', sumReq:'Requirement', sumType:'Type', sumL:'Limit / tolerance (0)', sumB:'Full score (+1)', sumS:'Unacceptable (−1)', sumU:'Default uncertainty', tMand:'mandatory', tSoft:'penalising', tInfo:'information', ruleNone:'Decision rule: no automatic accept or reject; the owner decides.', zRej:'AUTOMATIC REJECT', zExc:'CONDITIONAL ACCEPTANCE POSSIBLE\nlimit slightly exceeded', zRev:'NEEDS EVALUATION\n(grey zone)', zAcc:'AUTOMATIC ACCEPT', zAll:'No automatic decision: the owner decides', zLim:'0 = limit', zTR:'reject at', zTA:'accept at', decSum:'Sum = decision number',
  revT:'Requirements over their limit and the correction needed', revNone:'All limits are met; no correction needed.', revLine:'{0}: {1} → at least {2} needed (limit). Change: {3} ({4}).', revLineA:' For automatic acceptance: {0}.',
- revSmall:'Small revision: required change below 10 %.', revMid:'Moderate revision: required change 10–30 %.', revBig:'Major revision: required change above 30 %; not easily recoverable.',
+ revSmall:'Minor revision: required change below 10 %.', revMid:'Moderate revision: required change 10–30 %.', revBig:'Major revision: required change above 30 %; not easily recoverable.',
  revBool:'{0}: “no” must become “yes”.',
- kindQ:'Requirement type', kMand:'Mandatory: exceeding the limit rejects the work', kSoft:'Penalising: does not reject alone, lowers the result', kInfo:'Information only: not part of the result',
+ kindQ:'Requirement type', kMand:'Mandatory: exceeding the limit rejects the work', kSoft:'Penalising: does not reject alone, lowers the result', kInfoT:'Information only: not part of the result',
  impQ:'Importance', iDec:'Decisive', iHigh:'High', iMed:'Medium', iLow:'Low', iMin:'Minor', impW:'Weight (manual)', impH:'Importance only sets the share in the average of the other requirements; the right to reject is set by the requirement type. Weights are relative.',
  linkQ:'Linked group', linkH:'Use the same group name for requirements that measure the same physical state (e.g. stress and safety factor). The group counts once in the average; each member is still checked for rejection.', linkP:'empty = independent',
- wT:'Weights and the effect of the other requirements', wLead:'The sign of the decision is always set by the mandatory requirements. The settings below only affect its size, i.e. how close the work is to acceptance.', eqBtn:'Give all equal importance',
- betaQ:'Effect of the other requirements on the result', bNone:'None: only the weakest mandatory requirement decides (strictest)', bSlight:'Slight: others soften the result a little', bBal:'Balanced (default)', bStrong:'Strong: others dominate, use with care', betaW:'β (manual, 0–0.75)',
- betaH:'A larger β lets good requirements pull the result towards zero, and lets bad penalising requirements pull it below zero. With β = 0 only the weakest mandatory requirement counts.',
+ wT:'Effect of the other requirements on the result', wLead:'Acceptance or rejection is always decided by the mandatory requirements and their limits; this setting cannot change that. It only affects the size of the number, i.e. how comfortably the work is accepted: should the result look only at the weakest mandatory requirement, or also at how good the others are?', eqBtn:'Give all equal importance',
+ betaQ:'Effect of the other requirements on the result', bNone:'None (β = 0): only the weakest mandatory requirement decides (strictest)', bSlight:'Slight (β = 0.25): the others soften the result a little', bBal:'Balanced (β = 0.50, default)', bStrong:'Strong (β = 0.75): the others dominate, use with care', betaW:'β (manual, 0–0.75)',
+ betaH:'If unsure, keep the default (Balanced). The strictest and simplest choice is “None”: the result is simply the score of the weakest mandatory requirement.',
  methQ:'How did you set the weights?', mEq:'All equal', mRank:'By rank order', mSwing:'Swing method (value of moving from unacceptable to sufficient)', mCost:'Consequence cost / severity data', mMan:'Manual / expert judgement', methH:'The method is stored in the lock code; reviewers see how the weights were set.',
- rankBtn:'Compute weights from rank order', rankH:'Order the requirements by importance (top = most important), then press the button. Weights use the Barron–Barrett (1996) rank-order-centroid formula.',
- simT:'Before locking: bad scenarios', simLead:'For each penalising requirement the system computes three bad cases. The other requirements are assumed either good (+0.40) or very close to their limit (+0.05).', simCols:'Requirement|Case|Others good|Others at limit',
+ rankBtn:'Compute weights from rank order', rankH:'“By rank” means: you put the requirements in order of importance in the list above (top = most important); pressing the button turns that order into numerical weights. The order is the order on the page. E.g. for 3 requirements the weights become 0.61 · 0.28 · 0.11, so you only need to say which is more important, not give numbers. Formula: Barron and Barrett (1996) rank-order centroid. “Give all equal importance” makes all weights equal.',
+ simT:'Before locking: bad scenarios', simLead:'This table shows, before locking, what the decision would be if each penalising requirement turned out badly. −0.25, −0.50 and −1 are not percentages or units: they are the requirement’s score on the common ruler. 0 = at the limit, −1 = the “unacceptable” value you entered. So −0.25 means a quarter of the way from the limit to the unacceptable value; each row shows what this is in the requirement’s own unit (e.g. kUSD). For the other requirements two situations are assumed: “good” (each +0.40) and “at the limit” (each +0.05). The system builds the scenarios itself; there is no parameter to choose. The table appears automatically for every requirement you set as penalising. Your decision is whether these outcomes are acceptable. If not, make the requirement mandatory or change its importance or the “effect of the other requirements”; if yes, tick the box.', simCols:'Requirement|Case (score)|In its own unit|Others good (+0.40)|Others at limit (+0.05)',
  sSlight:'Slightly bad (−0.25)', sBad:'Bad (−0.50)', sWorst:'Very bad (−1)', simNone:'No penalising requirements; no simulation needed.', simAck:'I have seen these scenarios and approve them', simNeed:'Approve the scenarios to lock.',
  sensOk:'Sensitivity: the decision does not change when weights move by ±20 %.', sensBad:'Warning: the decision is sensitive to the weights. ({0})',
  decT2:'Contribution bar: A is the sum of these parts', decBase:'Weakest mandatory requirement (base)', decVeto:'Veto: a mandatory requirement is at the unacceptable point', decH:'Parts to the right raise A, parts to the left lower it. The parts add up to the A shown above.',
- rs_violation:'Limit violation: a mandatory requirement exceeds its limit.', rs_combined:'Combined shortfall: mandatory limits are met, but their margin does not cover the penalising requirements.', rs_veto:'Veto: a mandatory requirement reached the unacceptable point.', rs_softpenalty:'Mandatory limits are met; a penalising requirement pulls the result down.', rs_ok:'All requirements are within limits.',
+ rs_violation:'Limit violation: a mandatory requirement exceeds its limit.', rs_floored:'All mandatory limits are met; penalising requirements have pulled the result down to zero. The result cannot be negative, but it must be evaluated before acceptance.', rs_veto:'Veto: a mandatory requirement reached the unacceptable point.', rs_softpenalty:'Mandatory limits are met; a penalising requirement pulls the result down.', rs_ok:'All requirements are within limits.',
  accGuard:'Automatic acceptance also requires the weakest mandatory requirement to pass the threshold ({0}).', wTag:'β {0}',
  exBadge:'Explanation · how the method works. Example values, not related to your work below.', appBadge:'Application · your specification, values and decision', sciBadge:'Scientific description',
  lockCode:'Lock code (SHA-256 fingerprint)', lockCodeH:'This code proves the state of the specification when it was locked. If a single character changes, the code changes completely.',
@@ -543,83 +558,130 @@ en:{
  contractor:'Contractor (company / person)', evT:'Evidence and calculation', calc:'Calculation / explanation', calcP:'Briefly describe how you obtained the value', files:'Evidence files', filesH:'Report, test record, calculation sheet… Each file is fingerprinted so the owner can see it was not changed. Files above 3 MB are not embedded; only their fingerprint is recorded.',
  sendT:'Send to the contractor', sendLead:'This link carries the complete locked specification. When the contractor opens it, the value-entry screen opens directly and the rules cannot be changed. No data goes to any server; it travels inside the link.', copy:'Copy link', copied:'Copied', mail:'Send by e-mail',
  mailSubj:'Specification: {0} (version {1})', mailBody:'Hello,\n\nPlease open the specification with the link below and enter your values and evidence:\n{0}\n\nLock code: {1}\n',
- retT:'Send to the specification owner', retLead:'Download the report and send it to the specification owner. Your values, calculations and evidence files are inside the report.', retLink:'Without evidence files you can also send the report as a link:', retTooBig:'The report is too large for a link because of the evidence files. Send it as a file.', mailRep:'Notify by e-mail',
- mailRepSubj:'Report: {0} (version {1})', mailRepBody:'Hello,\n\nI have entered my values for the specification. System result: {0} ({1}).\nLock code: {2}\n{3}\nThe report file is attached.\n',
+ 
+ 
  evNone:'No evidence attached.', fileOk:'file unchanged', fileBad:'file altered', fileNoData:'fingerprint only', fileOpen:'download', evRef:'Evidence no.',
- decT:'Your decision', sysRec:'System recommendation (from the rule you set): {0}', decAcc:'Accept', decCond:'Conditional acceptance (concession)', decRej:'Reject', decNote:'Justification / note', decBy:'Approved by (name, title)', decSave:'Save and download decision',
- decDiff:'This decision differs from the system recommendation or accepts a violated limit. A justification is required.', decNeed:'Choose a decision.', decDone:'Decision saved. Decision code: {0}', decMail:'Notify the contractor by e-mail',
+ decT:'Your decision', sysRec:'System recommendation (from the rule you set): {0}', decAcc:'Accept', decCond:'Conditional acceptance (concession)', decRej:'Reject', decNote:'Justification / note', decBy:'Approved by (name, title)', decSave:'Confirm decision',
+ decDiff:'This decision differs from the system recommendation or accepts a violated limit. A justification is required.', decNeed:'Choose a decision.', decDone:'Decision confirmed. Decision code: {0}', decMail:'Notify the contractor by e-mail',
  decMailSubj:'Decision: {0} · {1}', decMailBody:'Hello,\n\nYour report has been reviewed.\nDecision: {0}\nJustification: {1}\nReport code: {2}\nDecision code: {3}\n', verifyFirst:'The report did not pass verification, so no decision can be recorded.',
  sayTag:'Reads as:', inclQ:'The limit value itself', inclI:'Included: a value exactly at the limit passes', inclE:'Excluded: a value exactly at the limit fails', inclLoQ:'Lower limit value', inclHiQ:'Upper limit value', rdI:' Exactly {0} passes.', rdE:' Exactly {0} fails.', w_excl:'Exactly at the limit, but the limit is excluded: fails', addParam:'+ Add requirement', del:'Delete',
  polT:'Decision authority: who decides?', polLead:'Choose whether the system decides at once from the result or you review it. Everything outside the automatic-accept and automatic-reject zones comes to you. You record the final approval in step 3 in every case.',
  pComply:'Meets all limits = accept, otherwise reject', pComplyD:'No grey zone. The simplest rule; suits purchasing and quality control.',
- pMargin:'Require a safety margin for acceptance', pMarginD:'Work that meets the limits but lacks the margin is left to you. Work that exceeds a limit is always rejected.',
- pTol:'Allow concessions (deviation approval)', pTolD:'Work that slightly exceeds a limit is not rejected automatically; it is left to you. Accepting it is a formal concession.',
+ pMargin:'Define an evaluation zone before acceptance (grey zone)', pMarginD:'Useful when many requirements are combined. Work that meets every limit but whose result is below the value you set is not accepted automatically; it comes to you as “needs evaluation”. Work that exceeds a limit is always rejected. Not needed when a single exact tolerance is checked (e.g. a diameter); the first option is enough there.',
+ pTol:'Allow conditional acceptance (concession)', pTolD:'Work that exceeds a limit only slightly is not rejected automatically; it is left to you (e.g. a small dimensional error that does not affect use). You may reject it, have it reworked, or accept it conditionally with a written justification. The reject threshold sets how much is “slight”: −0.10 means 10 % of the way from the limit to the unacceptable value.',
  pManual:'I always decide', pManualD:'No automatic accept or reject. The number only informs.',
- tauA:'Minimum margin for automatic acceptance', tauR:'This value or lower is rejected automatically', tauAh:'Between 0 and 1. 0.20 means at least 20 % margin on the weakest requirement.', tauRh:'Between 0 and −1. −0.10 tolerates a slight exceedance.',
- uncT:'Measurement uncertainty', uncLead:'Each measured value is moved towards its limit by its uncertainty before scoring, so uncertainty can never make a result look better than it is.',
- u_none:'Ignore (k = 0)', u_k1:'One standard uncertainty (k = 1)', u_k2:'About 95 % confidence (k = 2)', u_fw:'Safe for many requirements: total risk at most 5 % (k automatic)',
- lockBtn:'I have checked it — lock the specification', lockHint:'A locked specification cannot be edited. A change opens a new version with a new fingerprint.',
- locked:'Locked', draft:'Draft — not locked yet', altered:'Warning: changed after locking', newVer:'Open a new version (copy)', dlSpec:'Download locked specification', imp:'Load a specification file', newBlank:'Blank specification', goSub:'Go to entering results →', fixFirst:'Fix the red messages before locking.',
+ tauA:'Upper end of the evaluation zone (this value or higher is accepted automatically)', tauR:'This value or lower is rejected automatically', tauAh:'Between 0 and 1. E.g. 0.20: if A and the weakest mandatory requirement reach +0.20 the work is accepted automatically; between 0 and +0.20 it “needs evaluation” (grey zone). +0.20 means the weakest requirement has gone 20 % of the way from its limit to its full-score value; the entry screen shows what this means in each requirement’s own unit.', tauRh:'Between 0 and −1. E.g. −0.10: −0.10 or lower is rejected automatically. Between −0.10 and 0 a limit is slightly exceeded; the work is not rejected automatically but can only be accepted conditionally with a written justification (concession).',
+ uncT:'Measurement uncertainty', uncLead:'Every measurement has some uncertainty. If a diameter reads 20.04 mm and the instrument’s uncertainty is ±0.03 mm, the true diameter may be anywhere from 20.01 to 20.07 mm. To stay on the safe side the system uses the worst case: it moves the value towards the limit by the uncertainty (20.07 mm here) and scores that. So uncertainty can never make the work look better than it is. Choose below how large this shift is: 1× the uncertainty (usual), 2× (about 95 % confidence), or automatic for many requirements.',
+ u_none:'Ignore (k = 0: the measured value is used as it is)', u_k1:'Shift by 1× the uncertainty (k = 1, usual; about 84 % on the safe side)', u_k2:'Shift by 2× the uncertainty (k = 2, about 98 % on the safe side)', u_fw:'Many requirements: k is chosen automatically so that the total risk of error is at most 5 %',
+ lockedHint:'The specification is locked. Go to entering results, or open a new version to change it.', lockBtn:'I have checked it — lock the specification', lockHint:'A locked specification cannot be edited. A change opens a new version with a new fingerprint.',
+ locked:'Locked', draft:'Draft — not locked yet', altered:'Warning: changed after locking', newVer:'Open a new version (copy)', dlSpec:'Download locked specification', imp:'Load a specification file', newBlank:'Clear all values', goSub:'Go to entering results →', fixFirst:'Fix the red messages before locking.',
  fixList:'To fix:',
- noLock:'A specification must be locked first. Lock one in step 1, load a locked specification file, or open an example above.',
+ noLock:'A specification must be locked first. Write and lock it in step 1, or pick an example above.',
  subLead:'Enter only the values you found, your calculation and your evidence. The result updates as you type. The rules cannot be changed here.',
  value:'Value found', unc:'± uncertainty', ev:'Evidence / report no.', samples:'Samples', yes:'yes', no:'no', choose:'choose',
  w_full:'Full score: better would not change the decision', w_ok:'Limit met: {0} % of the way to full score', w_zero:'Exactly at the limit, no margin', w_bad:'Limit exceeded: {0} % of the way to unacceptable', w_black:'Unacceptable', w_miss:'No value yet', w_inv:'Invalid: {0}', binding:'weakest',
  inv_range:'outside the valid range', inv_neg:'negative uncertainty', inv_log:'must be positive on a log scale',
- V_ACCEPT:'ACCEPTED', V_REJECT:'REJECTED', V_DISCRETION:'YOUR DECISION', V_NOT_APPROVABLE:'NOT APPROVABLE', V_EMPTY:'No mandatory requirements',
+ V_ACCEPT:'ACCEPTED', V_REJECT:'REJECTED', V_DISCRETION:'NEEDS EVALUATION', V_NOT_APPROVABLE:'NOT APPROVABLE', V_EMPTY:'No mandatory requirements',
  why_acc:'All requirements are met. Weakest: {0} ({1}).', why_rejV:'At least one requirement exceeds its limit: {0} ({1}).', why_rejM:'Limits are met, but {0} ({1}) is below the required margin and the rule treats this as rejection.',
- why_dis_pos:'All limits are met, but the margin required for automatic acceptance is missing. Weakest: {0} ({1}).', why_dis_neg:'{0} exceeds its limit ({1}). The rule leaves this case to you.',
+ why_dis_pos:'All limits are met, but the result lies in the evaluation zone defined by the owner (grey zone). It should be looked at once more before acceptance. Weakest: {0} ({1}). The owner may accept it or ask for re-measurement or more evidence.', why_dis_neg:'LIMIT SLIGHTLY EXCEEDED: {0} ({1}). The work does not comply. The owner has allowed conditional acceptance for small exceedances: the work can be rejected, reworked and resubmitted, or—if it does not affect use—accepted conditionally with a written justification (concession).',
  why_na:'{0} mandatory requirement(s) missing or invalid. An incomplete review cannot be approved.', why_none:'No values entered yet.',
  sev_s:'Slight exceedance: a small fix or a concession could rescue it.', sev_m:'Clear exceedance: correction needed.', sev_l:'Severe exceedance: close to unacceptable; rethink the work.', sev_x:'The unacceptable point has been reached.', concession:'Note: this work exceeds at least one limit. Accepting it is a concession (deviation approval) and should be recorded with a justification.',
- readN:'{0}/{1} requirements checked · version {2} · fingerprint {3}', dlRep:'Download report', dlRepH:'The report contains the locked specification, your values, the result and its own fingerprint. Send this file to the reviewer.',
- scaleCap:'Black: automatic reject · Grey: your decision · White: automatic accept. The owner sets the zones.', profCap:'Every requirement on the same ruler. The result is the leftmost bar.', treeCap:'Each box is the minimum of the boxes below it. The dark path leads to the weakest requirement.',
- verLead:'Load the report file from the contractor or open the link you received. The tool first checks that neither the specification nor the report was altered and that every score is correct. Then you review values and evidence and record your decision.',
+ readN:'{0}/{1} requirements checked · version {2} · fingerprint {3}', 
+ scaleCap:'These numbers are not millimetres, MPa or dollars: every requirement is rescaled so that its limit is 0 and its full-score value +1. Minus = at least one limit exceeded → reject. Between 0 and the acceptance threshold = limits met but the margin is small → needs evaluation (grey zone). At or above the threshold = met with a safe margin → automatic accept. A threshold of +0.20 means the weakest requirement has gone at least 20 % of the way from its limit to its full-score value; its meaning in each requirement’s own unit is given below.', scaleCapC:'These numbers are not the requirements’ own units; it is a common ruler with the limit at 0 and full score at +1. Black: automatic reject. Orange: limit slightly exceeded; the owner allows conditional acceptance here (the owner decides and records why). Grey (needs evaluation): limits met, small margin. White: automatic accept.', profCap:'Every requirement on the same ruler. The result is the leftmost bar.', treeCap:'Each box is the minimum of the boxes below it. The dark path leads to the weakest requirement.',
+ verLead:'Review the result and evidence notes of the values entered in step 2, then choose your decision and confirm it. This version has no file upload or download; everything you enter is kept only for this session. When the page is opened again everything returns to its initial state.',
  verFile:'Choose report file', verPaste:'or paste the report text', verBtn:'Verify pasted text', PASS:'PASS', FAIL:'FAIL',
  c_notRep:'This is not an Özkul report.', c_json:'The text is not valid JSON.', c_spec:'Specification is exactly as locked (fingerprint matches)', c_specBad:'Specification changed after locking (fingerprint does not match)',
  c_rep:'Report unchanged since it was produced', c_repBad:'Report was altered (report fingerprint does not match)', c_rules:'Specification follows the rules', c_rulesBad:'Specification breaks the rules: {0}',
  c_H:'Result recomputed: {0} (report says {1})', c_V:'Decision recomputed: {0} (report says {1})', c_n:'Completeness: {0} (report says {1})', c_sc:'All {0} requirement scores match', c_scBad:'Scores that do not match: {0}',
  verOK:'Report is consistent. Result: {0}', verBad:'The report is inconsistent. Do not accept it; ask for its source.',
- read_up:'Higher is better. Below {0} fails the limit; {1} or more scores full; {2} or less is unacceptable.',
- read_dn:'Lower is better. Above {0} fails the limit; {1} or less scores full; {2} or more is unacceptable.',
+ read_up:'Lower limit. Below {0} the limit is exceeded; {1} or more scores full; {2} or less is unacceptable (−1, veto).',
+ read_dn:'Upper limit. Above {0} the limit is exceeded; {1} or less scores full; {2} or more is unacceptable (−1, veto).',
  read_two:'Must stay between {0} and {1}. {2}–{3} scores full; {4} or less, or {5} or more, is unacceptable.',
- read_bool:'Yes scores full (+1); no is unacceptable (−1).', read_inc:'Enter the values…', read_log:' Logarithmic scale.',
- e_name:'Give the requirement a name.', e_need:'Enter all three values.', e_need6:'Enter all six range values.',
- e_up:'You chose "higher is better", so unacceptable < limit < full-score value. Is the direction or a value wrong?',
- e_dn:'You chose "lower is better", so unacceptable > limit > full-score value. Is the direction or a value wrong?',
- e_two:'Order must be: unacceptable low < allowed low < ideal low ≤ ideal high < allowed high < unacceptable high.', e_log:'Values must be positive on a log scale.', e_none:'Add at least one requirement.', e_tauA:'Automatic-acceptance margin must be between 0 and 1.', e_tauR:'Automatic-rejection value must be between 0 and −1.',
+ read_nom:'Ideal value {0}: full score (+1). Tolerance {1}–{2}: every value inside complies; the score rises in proportion towards the ideal and is 0 at the limits. Outside the tolerance does not comply.', ap_both:' Approaching the nominal from either side raises the score.', ap_lo:' Only approach from below is rewarded; compliant values above nominal score 0.', ap_hi:' Only approach from above is rewarded; compliant values below nominal score 0.', read_bool:'Yes scores full (+1); no is unacceptable (−1).', read_inc:'Enter the values…', read_log:' Logarithmic scale.',
+ e_name:'Give the requirement a name.', e_need:'Enter all three values: limit, full-score value, unacceptable value.', e_need6:'Enter the ideal value, the lower limit and the upper limit.',
+ e_up:'Wrong order of values. For a lower limit: unacceptable value < lower limit < full-score value (e.g. 1.0 < 1.5 < 2.0).',
+ e_dn:'Wrong order of values. For an upper limit: full-score value < upper limit < unacceptable value (e.g. 5 < 10 < 15).',
+ e_two:'Wrong order of values: lower limit ≤ ideal value ≤ upper limit, and the lower limit must be below the upper limit (e.g. 19.90 ≤ 20.00 ≤ 20.10).', e_log:'Values must be positive on a log scale.', e_u0big:'The default measurement uncertainty is larger than the gap between the limit and the full-score value: the measurement cannot tell good from bad here. Check the uncertainty or the values.', e_none:'Add at least one requirement.', e_tauA:'Automatic-acceptance margin must be between 0 and 1.', e_tauR:'Automatic-rejection value must be between 0 and −1.',
  sciT:'Scientific description', sciLead:'This section is for reviewers and readers who want the details. Full text and proofs are in the paper.',
- foot:'Özkul Decision Number · reference implementation v1.6 · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
+ disc:'Disclaimer: This tool and method are provided as is, without warranty of any kind. The software and its calculations may contain errors. Verifying the results, making decisions and all consequences of them are entirely the user\u2019s responsibility; the author accepts no liability. Check results independently for safety-critical decisions.',
+ foot:'Özkul Decision Number · reference implementation v1.7 · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
  kInfo:'k = {0}', defaultTitle:'New specification'
 }};
 const t = (k, ...a) => { let s = (T[LANG] && T[LANG][k]) || T.en[k] || k; a.forEach((v, i) => s = s.split('{'+i+'}').join(v)); return s; };
 
 // ---------------- examples ----------------
 let uid = 0; const newId = () => 'p' + Date.now().toString(36) + (uid++);
-const P1 = (g,name,unit,S,L,B,o) => Object.assign({id:newId(),group:g,name,unit,type:'one',dir:(B!==null&&L!==null&&B<L)?'down':'up',scale:'lin',S,L,B,u0:null,vmin:null,vmax:null,mandatory:true,definition:''},o||{});
-const base = (title, params, o) => Object.assign({title, version:'1', owner:'Özkul (makale, Bölüm 8)', betaLevel:'balanced', beta:null, wMethod:'eq', ack:true, policy:'tol', coverage:'k', k:1, alpha:0.05, tauA:0.6, letterA:'I', tauR:-0.2, letterR:'I', params, lock:null}, o||{});
+const P1 = (g,name,unit,S,L,B,o) => { const q = Object.assign({id:newId(),group:g,name,unit,type:'one',dir:(B!==null&&L!==null&&B<L)?'down':'up',scale:'lin',S,L,B,u0:null,vmin:null,vmax:null,mandatory:true,definition:''},o||{}); q.Sset = q.S!==null && q.S!==undefined; if (!q.Sset && q.L!==null && q.B!==null) q.S = autoS(q); return q; };
+const base = (title, params, o) => Object.assign({title, version:'1', owner:'Özkul (makale, Bölüm 8)', betaLevel:'balanced', beta:null, wMethod:'eq', ack:true, policy:'tol', coverage:'k', k:1, alpha:0.05, tauA:0.2, letterA:'I', tauR:0, letterR:'E', params, lock:null}, o||{});
 function examples(){
   const E = [];
+  const add = (n, key, tr, en, dtr, den, spec, inputs) => E.push({key, n, tr:n+'. '+tr, en:n+'. '+en, dtr, den, spec, inputs});
+  // 1 — one yes/no requirement
   {const p=[{id:newId(),group:'',name:'Cevap doğru mu? / Answer correct',unit:'',type:'bool',scale:'lin',mandatory:true,definition:'5 + 3 = ?'}];
-   E.push({key:'edu',tr:'Eğitim: 5 + 3 = 8',en:'Education: 5 + 3 = 8',spec:base('5 + 3',p),inputs:{[p[0].id]:{value:'yes'}}});}
-  {const p=[Object.assign(P1('','Çap / Diameter','mm'),{type:'two',dir:null,S:null,L:null,B:null,Slo:19.80,Llo:19.90,Blo:19.95,Bhi:20.05,Lhi:20.10,Shi:20.20,u0:0.03})];
-   E.push({key:'cnc',tr:'İmalat: torna çapı',en:'Machining: turned diameter',spec:base('Ø20 mil / shaft',p),inputs:{[p[0].id]:{value:20.04,u:0.03,n:5,ev:'CMM-0412'}}});}
-  {const p=[P1('Yapısal','Sehim / Deflection','mm',15,10,5,{kind:'mand'}),P1('Yapısal','Güvenlik katsayısı / Safety factor','',1.0,1.5,2.0,{kind:'mand',link:'Dayanım'}),P1('Yapısal','Gerilme / Stress','MPa',250,200,150,{kind:'mand',link:'Dayanım'}),P1('Maliyet','Maliyet / Cost','bin TL',150,100,70,{kind:'soft'})];
-   E.push({key:'beam',tr:'Kiriş (maliyet puan düşürür)',en:'Beam (cost penalises)',spec:base('Kiriş / Beam',p),inputs:{[p[0].id]:{value:8},[p[1].id]:{value:1.80},[p[2].id]:{value:180},[p[3].id]:{value:120}}});}
-  {const p=[P1('','Sağlık durumu SOH / State of health','%',60,70,85,{u0:2}),P1('','Hücre gerilim farkı / Cell imbalance','mV',100,50,20,{u0:5})];
-   E.push({key:'bat',tr:'Batarya sağlığı',en:'Battery health',spec:base('Batarya / Battery',p),inputs:{[p[0].id]:{value:78,u:2},[p[1].id]:{value:35,u:5}}});}
-  {const p=[P1('Getiri','Sharpe oranı / Sharpe ratio','',0.3,0.5,1.5),P1('Risk','Maks. düşüş / Max drawdown','%',40,30,10),P1('Risk','Oynaklık / Volatility','%',35,25,12),P1('Getiri','Yıllık getiri / Annual return','%',0,5,15)];
-   E.push({key:'fin',tr:'Portföy riski',en:'Portfolio risk',spec:base('Portföy / Portfolio',p),inputs:{[p[0].id]:{value:1.2},[p[1].id]:{value:18},[p[2].id]:{value:14},[p[3].id]:{value:22}}});}
+   add(1,'edu','Eğitim: 5 + 3 = 8 (1 koşul, evet/hayır)','Education: 5 + 3 = 8 (1 requirement, yes/no)',
+     'Tek bir evet/hayır sorusu. Sonuç yalnızca GEÇTİ (+1) ya da KALDI (−1) olabilir; ara değer, eşik ve gri bölge yoktur.',
+     'A single yes/no question. The result can only be PASS (+1) or FAIL (−1); there are no intermediate values, thresholds or grey zone.',
+     base('5 + 3',p,{policy:'comply',tauA:0,letterA:'I',tauR:0,letterR:'E'}),{[p[0].id]:{value:'yes'}});}
+  // 2 — shaft: nominal diameter (both sides) + surface roughness; exact tolerances, no grey zone
+  {const p=[Object.assign(P1('','Çap / Diameter','mm'),{type:'two',dir:null,S:null,L:null,B:null,T:20.00,fb:0,appr:'both',Slo:19.80,Llo:19.90,Blo:20.00,Bhi:20.00,Lhi:20.10,Shi:20.20,u0:0.01,definition:'Anma 20,00 mm, tolerans ±0,10 mm; anmaya iki taraftan yaklaştıkça daha iyi. / Nominal 20.00 mm, ±0.10 mm; closer to nominal from either side is better.'}),
+             P1('','Yüzey pürüzlülüğü Ra / Surface roughness Ra','µm',3.2,1.6,0.8,{u0:0.1})];
+   add(2,'cnc','İmalat: Ø20 mil (2 koşul, kesin tolerans)','Machining: Ø20 shaft (2 requirements, exact tolerances)',
+     'Çap için anma değeri 20,00 mm’dir; tolerans içindeki her değer uygundur ve 20,00’a yaklaştıkça puan artar. Kesin toleranslar olduğu için gri bölge kullanılmaz: tolerans içinde ise kabul, dışında ise ret.',
+     'The diameter has a nominal of 20.00 mm; every value inside the tolerance complies and the score rises towards 20.00. Because the tolerances are exact, no grey zone is used: inside the tolerance is accepted, outside is rejected.',
+     base('Ø20 mil / shaft',p,{policy:'comply',tauA:0,letterA:'I',tauR:0,letterR:'E'}),{[p[0].id]:{value:20.03,u:0.01},[p[1].id]:{value:1.2,u:0.1}});}
+  // 3 — ML model
   {const p=[P1('Kalite','Doğruluk / Accuracy','%',85,90,97),P1('Kalite','Duyarlılık / Recall','%',80,88,95),P1('Hizmet','Gecikme / Latency','ms',400,200,100)];
-   E.push({key:'ai',tr:'Yapay zekâ modeli (gecikme yüzünden ret)',en:'ML model (rejected on latency)',spec:base('Model',p),inputs:{[p[0].id]:{value:96},[p[1].id]:{value:93},[p[2].id]:{value:800}}});}
+   add(3,'ai','Yapay zekâ modeli (3 koşul, gecikme yüzünden ret)','ML model (3 requirements, rejected on latency)',
+     'Doğruluk ve duyarlılık çok iyi, ama gecikme kabul edilemez değerin de ötesinde (veto). İyi koşullar kötü bir zorunlu koşulu telafi edemez.',
+     'Accuracy and recall are very good, but latency is beyond the unacceptable value (veto). Good requirements cannot make up for a bad mandatory one.',
+     base('Model',p),{[p[0].id]:{value:96},[p[1].id]:{value:93},[p[2].id]:{value:800}});}
+  // 4 — beam with penalising cost
+  {const p=[P1('Yapısal','Sehim / Deflection','mm',15,10,5,{kind:'mand'}),P1('Yapısal','Güvenlik katsayısı / Safety factor','',1.0,1.5,2.0,{kind:'mand',link:'Dayanım'}),P1('Yapısal','Gerilme / Stress','MPa',250,200,150,{kind:'mand',link:'Dayanım'}),P1('Maliyet','Maliyet / Cost','bin USD',150,100,70,{kind:'soft'})];
+   add(4,'beam','Kiriş (4 koşul, maliyet puan düşürür)','Beam (4 requirements, cost penalises)',
+     'Üç yapısal koşul zorunlu, maliyet “puan düşürür” türünde. Maliyet sınırı aşıyor ama işi tek başına reddettirmez; yalnızca sonucu düşürür.',
+     'Three structural requirements are mandatory; cost is penalising. Cost exceeds its limit but cannot reject the work alone; it only lowers the result.',
+     base('Kiriş / Beam',p),{[p[0].id]:{value:8},[p[1].id]:{value:1.80},[p[2].id]:{value:180},[p[3].id]:{value:120}});}
+  // 5 — clinical trial (statistics / health)
+  {const p=[P1('Etkililik','Kan basıncı düşüşü / Blood-pressure reduction','mmHg',0,5,10,{u0:1.2,definition:'Plaseboya göre ortalama sistolik düşüş; ± değeri standart hata. / Mean systolic reduction vs placebo; ± is the standard error.'}),
+            P1('Etkililik','Yanıt veren hasta oranı / Responder rate','%',30,50,70,{u0:3}),
+            P1('Güvenlik','Ciddi yan etki oranı / Serious adverse events','%',10,5,1,{u0:0.8}),
+            P1('Güvenlik','Bırakma oranı / Dropout rate','%',30,20,10,{u0:2}),
+            P1('Yöntem','İstatistiksel güç / Statistical power','%',60,80,90,{definition:'Planlanan örneklemle etkiyi bulma olasılığı. / Probability of detecting the effect with the planned sample.'})];
+   add(5,'med','Sağlık: ilaç denemesi (5 koşul, istatistiksel belirsizlik)','Health: drug trial (5 requirements, statistical uncertainty)',
+     'Bir tansiyon ilacının klinik denemesi. Değerler istatistiksel tahminlerdir; her birinin standart hatası belirsizlik olarak girilir ve değer güvenli tarafa kaydırılır. Etkililik iyi, ama ciddi yan etki oranı sınıra yakın; bu yüzden sonuç değerlendirme bölgesine düşer.',
+     'A clinical trial of a blood-pressure drug. The values are statistical estimates; each standard error is entered as the uncertainty and the value is moved to the safe side. Efficacy is good, but the serious-adverse-event rate is close to its limit, so the result falls in the evaluation zone.',
+     base('Klinik deneme / Clinical trial',p,{alpha:0.05,coverage:'alpha'}),{[p[0].id]:{value:8.5,u:1.2},[p[1].id]:{value:62,u:3},[p[2].id]:{value:3.1,u:0.8},[p[3].id]:{value:14,u:2},[p[4].id]:{value:85}});}
+  // 6 — battery
+  {const p=[P1('Kapasite','Sağlık durumu SOH / State of health','%',60,70,85,{u0:2}),P1('Kapasite','İç direnç / Internal resistance','mΩ',120,90,60,{u0:3}),P1('Denge','Hücre gerilim farkı / Cell imbalance','mV',100,50,20,{u0:5}),
+            P1('Güvenlik','En yüksek hücre sıcaklığı / Max cell temperature','°C',60,45,35,{u0:1}),P1('Güvenlik','Yalıtım direnci / Insulation resistance','MΩ',0.5,1,5,{scale:'log'}),P1('Geçmiş','Çevrim sayısı / Cycle count','çevrim',3000,2000,500,{kind:'soft'})];
+   add(6,'bat','Batarya sağlığı (6 koşul)','Battery health (6 requirements)',
+     'İkinci el bir elektrikli araç bataryasının değerlendirmesi. Bütün güvenlik koşulları sağlanıyor; en zayıf koşul hücre gerilim farkı. Çevrim sayısı yalnızca puanı düşürür.',
+     'Assessment of a used electric-vehicle battery. All safety requirements are met; the weakest is cell imbalance. Cycle count only lowers the score.',
+     base('Batarya / Battery',p),{[p[0].id]:{value:78,u:2},[p[1].id]:{value:72,u:3},[p[2].id]:{value:35,u:5},[p[3].id]:{value:39,u:1},[p[4].id]:{value:3.2},[p[5].id]:{value:1400}});}
+  // 7 — laptop purchase (one multi-parameter example)
+  {const p=[P1('Performans','İşlemci puanı / CPU benchmark','puan',8000,12000,20000),P1('Performans','Bellek / RAM','GB',8,16,32),P1('Performans','Depolama / Storage','GB',256,512,1024),
+            P1('Kullanım','Pil ömrü / Battery life','saat',5,8,14),P1('Kullanım','Ağırlık / Weight','kg',2.2,1.8,1.2),P1('Hizmet','Garanti / Warranty','yıl',1,2,3),P1('Maliyet','Fiyat / Price','USD',2500,2000,1500,{kind:'soft'})];
+   add(7,'pc','Bilgisayar alımı (7 koşul, satın alma)','Laptop purchase (7 requirements, procurement)',
+     'Bir kurumun dizüstü bilgisayar ihalesi. Altı teknik koşul zorunlu, fiyat “puan düşürür”. Teklif bütün teknik sınırları sağlıyor; ağırlık sınıra çok yakın olduğu için sonuç değerlendirme bölgesinde.',
+     'A company tender for laptops. Six technical requirements are mandatory; price is penalising. The offer meets every technical limit; weight is very close to its limit, so the result is in the evaluation zone.',
+     base('Dizüstü alımı / Laptop purchase',p),{[p[0].id]:{value:15500},[p[1].id]:{value:32},[p[2].id]:{value:1024},[p[3].id]:{value:11},[p[4].id]:{value:1.75},[p[5].id]:{value:3},[p[6].id]:{value:1900}});}
+  // 8 — portfolio
+  {const p=[P1('Getiri','Sharpe oranı / Sharpe ratio','',0.3,0.5,1.5),P1('Getiri','Yıllık getiri / Annual return','%',0,5,15),P1('Risk','Maks. düşüş / Max drawdown','%',40,30,10),P1('Risk','Oynaklık / Volatility','%',35,25,12),
+            P1('Risk','Tek hisse payı / Single-stock weight','%',20,10,5),P1('Likidite','Günlük işlem hacmi oranı / Liquidity ratio','%',50,25,10),P1('Maliyet','Yönetim gideri / Fee','%',2.5,1.5,0.5,{kind:'soft'}),P1('Uyum','ESG puanı / ESG score','puan',30,50,80,{kind:'soft'})];
+   add(8,'fin','Portföy riski (8 koşul)','Portfolio risk (8 requirements)',
+     'Bir yatırım fonunun risk kontrolü. Yüksek getiri risk sınırlarını gizleyemez: en zayıf koşul belirleyicidir.',
+     'Risk control of an investment fund. A high return cannot hide the risk limits: the weakest requirement decides.',
+     base('Portföy / Portfolio',p),{[p[0].id]:{value:1.2},[p[1].id]:{value:22},[p[2].id]:{value:18},[p[3].id]:{value:14},[p[4].id]:{value:7},[p[5].id]:{value:15},[p[6].id]:{value:1.1},[p[7].id]:{value:64}});}
+  // 9 — wing
   {const p=[P1('Yapısal','Gerilme / Stress','MPa',420,350,250),P1('Yapısal','Sehim / Deflection','mm',600,500,300),P1('Yapısal','Burkulma / Buckling','',0.9,1.0,1.5),
      P1('Dinamik','Çırpınma payı / Flutter margin','%',0,15,35),P1('Dinamik','Mod ayrımı / Mode separation','%',5,10,25),
      P1('Yorulma','Yorulma ömrü / Fatigue life','uçuş',60000,100000,300000,{scale:'log'}),P1('Yorulma','Hasar toleransı / Damage tolerance','uçuş',2000,4000,8000),
-     P1('Kütle ve maliyet','Kütle / Mass','kg',5200,5000,4600),P1('Kütle ve maliyet','Maliyet / Cost','M€',30,25,20)];
+     P1('Kütle ve maliyet','Kütle / Mass','kg',5200,5000,4600),P1('Kütle ve maliyet','Maliyet / Cost','M USD',30,25,20)];
    const v=[315,396,1.09,23.2,14.05,114200,5200,4912,22.75]; const inp={}; p.forEach((q,i)=>inp[q.id]={value:v[i]});
-   E.push({key:'wing',tr:'Uçak kanadı (temsilî, ağaç)',en:'Aircraft wing (illustrative, tree)',spec:base('Kanat / Wing',p),inputs:inp});}
-  {const p=[P1('','Depolama / Storage','GB',256,512,1024),P1('','Fiyat / Price','TL',50000,40000,30000)];
-   const sp=base('Dizüstü alımı / Laptop purchase',p,{policy:'comply',tauA:0,letterA:'I',tauR:0,letterR:'E'});
-   [['A',512,32000],['B',1024,38000],['C',2048,46000]].forEach(o => E.push({key:'pc'+o[0],tr:'Bilgisayar alımı: teklif '+o[0],en:'Laptop purchase: offer '+o[0],spec:sp,inputs:{[p[0].id]:{value:o[1]},[p[1].id]:{value:o[2]}}}));}
+   add(9,'wing','Uçak kanadı (9 koşul, temsilî)','Aircraft wing (9 requirements, illustrative)',
+     'Dokuz koşullu bir kanat tasarımı. Bütün sınırlar sağlanıyor ve A kabul eşiğinin üzerinde, ama yorulma ömrü sınıra yakın (en zayıf koşul). Otomatik kabul için en zayıf koşulun da eşiği geçmesi gerektiğinden sonuç “değerlendirilmesi gerekir”.',
+     'A nine-requirement wing design. All limits are met and A is above the acceptance threshold, but fatigue life is close to its limit (weakest). Because automatic acceptance also requires the weakest requirement to pass, the result “needs evaluation”.',
+     base('Kanat / Wing',p),inp);}
   return E;
 }
 const EX = examples();
@@ -627,21 +689,21 @@ const EX = examples();
 // ---------------- state ----------------
 const blankSpec = () => base(t('defaultTitle'), [P1('','','',null,null,null)], {owner:'', policy:'comply', tauA:0, letterA:'I', tauR:0, letterR:'E', coverage:'k', k:2});
 let spec, inputs = {};
-try { const s = JSON.parse(localStorage.getItem('odn.spec')||'null'); spec = s && s.params ? s : null; inputs = JSON.parse(localStorage.getItem('odn.inputs')||'{}')||{}; } catch(e){}
+try { const s = JSON.parse(sessionStorage.getItem('odn.spec')||'null'); spec = s && s.params ? s : null; inputs = JSON.parse(sessionStorage.getItem('odn.inputs')||'{}')||{}; } catch(e){}
 if (!spec) { const ex = EX.find(e => e.key==='beam'); spec = JSON.parse(JSON.stringify(ex.spec)); inputs = JSON.parse(JSON.stringify(ex.inputs)); spec.lock = null; }
-const save = () => { try { localStorage.setItem('odn.spec', JSON.stringify(spec)); localStorage.setItem('odn.inputs', JSON.stringify(inputs)); localStorage.setItem('odn.lang', LANG); } catch(e){} };
-const NUMF = ['S','L','B','Slo','Llo','Blo','Bhi','Lhi','Shi','u0','vmin','vmax','w'];
+const save = () => { try { sessionStorage.setItem('odn.spec', JSON.stringify(spec)); sessionStorage.setItem('odn.inputs', JSON.stringify(inputs)); sessionStorage.setItem('odn.lang', LANG); } catch(e){} };
+const NUMF = ['S','L','B','Slo','Llo','Blo','Bhi','Lhi','Shi','u0','vmin','vmax','w','T','fb'];
 function body(s){
   return {title:s.title||'', version:String(s.version||''), owner:s.owner||'', policy:s.policy||'custom', coverage:s.coverage, k:num(s.k), alpha:num(s.alpha),
     tauA:num(s.tauA), letterA:s.letterA||'I', tauR:num(s.tauR), letterR:s.letterR||'I', betaLevel:s.betaLevel||'balanced', beta:num(s.beta), wMethod:s.wMethod||'eq', ack:!!s.ack,
-    params:s.params.map(p => { const q = {id:p.id, group:p.group||'', name:p.name||'', unit:p.unit||'', type:p.type, dir:p.type==='one'?(p.dir||null):null, scale:p.scale||'lin', mandatory:(p.kind||(p.mandatory===false?'info':'mand'))!=='info', kind:p.kind||(p.mandatory===false?'info':'mand'), imp:p.imp||'medium', w:num(p.w), link:(p.link||'').trim(), definition:p.definition||'', incl:p.type==='one'?(p.incl||'I'):null, inclLo:p.type==='two'?(p.inclLo||'I'):null, inclHi:p.type==='two'?(p.inclHi||'I'):null};
+    params:s.params.map(p => { const q = {id:p.id, group:p.group||'', name:p.name||'', unit:p.unit||'', type:p.type, dir:p.type==='one'?(p.dir||null):null, scale:p.scale||'lin', mandatory:(p.kind||(p.mandatory===false?'info':'mand'))!=='info', kind:p.kind||(p.mandatory===false?'info':'mand'), imp:p.imp||'medium', w:num(p.w), link:(p.link||'').trim(), definition:p.definition||'', incl:p.type==='one'?(p.incl||'I'):null, hard:p.type==='one'?!!p.hard:null, appr:p.type==='two'?(p.appr||'both'):null, inclLo:p.type==='two'?(p.inclLo||'I'):null, inclHi:p.type==='two'?(p.inclHi||'I'):null};
       NUMF.forEach(f => q[f] = num(p[f])); return q; })};
 }
 const fingerprint = s => HN.sha256(HN.canon(body(s)));
 const engineSpec = s => { const b = body(s); return Object.assign({}, b, {alpha: b.coverage==='alpha' ? b.alpha : null}); };
 let EV = {}; // evidence per parameter: {calc, files:[{name,size,sha,data?}]}
-try { EV = JSON.parse(localStorage.getItem('odn.ev')||'{}') || {}; } catch(e){}
-let META = {}; try { META = JSON.parse(localStorage.getItem('odn.meta')||'{}') || {}; } catch(e){}
+try { EV = JSON.parse(sessionStorage.getItem('odn.ev')||'{}') || {}; } catch(e){}
+let META = {}; try { META = JSON.parse(sessionStorage.getItem('odn.meta')||'{}') || {}; } catch(e){}
 let view = spec.lock ? 'sub' : 'spec';
 let PENDREP = null;
 (function(){ const hsh = location.hash || '';
@@ -657,9 +719,10 @@ function readback(p){
   const has = (...k) => k.every(f => num(p[f])!==null), v = f => nf(p[f])+U(p);
   if (p.type==='bool') return t('read_bool');
   const lg = p.scale==='log' ? t('read_log') : '';
+  if (p.type==='two' && has('Slo','Llo','Blo','Bhi','Lhi','Shi') && +p.Blo===+p.Bhi) return t('read_nom', v('Blo'), v('Llo'), v('Lhi'))+lg;
   if (p.type==='two') return has('Slo','Llo','Blo','Bhi','Lhi','Shi') ? t('read_two', v('Llo'), v('Lhi'), nf(p.Blo), v('Bhi'), v('Slo'), v('Shi'))+t(p.inclLo==='E'?'rdE':'rdI', v('Llo'))+t(p.inclHi==='E'?'rdE':'rdI', v('Lhi'))+lg : t('read_inc');
   if (!has('S','L','B')) return t('read_inc');
-  return (p.dir==='down' ? t('read_dn', v('L'), v('B'), v('S')) : t('read_up', v('L'), v('B'), v('S')))+t(p.incl==='E'?'rdE':'rdI', v('L'))+lg;
+  return (p.dir==='down' ? t('read_dn', v('L'), v('B'), v('S')) : t('read_up', v('L'), v('B'), v('S')))+(p.Sset?'':' '+t('read_auto'))+t(p.incl==='E'?'rdE':'rdI', v('L'))+lg;
 }
 function paramErrors(p){
   const e = [], n = f => num(p[f]);
@@ -669,10 +732,12 @@ function paramErrors(p){
     if ([S,L,B].some(x => x===null)) e.push(t('e_need'));
     else if (p.dir==='down' ? !(S>L && L>B) : !(S<L && L<B)) e.push(t(p.dir==='down'?'e_dn':'e_up'));
     if (p.scale==='log' && [S,L,B].some(x => x!==null && x<=0)) e.push(t('e_log'));
+    if (S!==null&&L!==null&&B!==null && num(p.u0)!==null && +p.u0 >= Math.abs(B-L)) e.push(t('e_u0big'));
   } else if (p.type==='two') {
-    const a = ['Slo','Llo','Blo','Bhi','Lhi','Shi'].map(n);
-    if (a.some(x => x===null)) e.push(t('e_need6'));
-    else if (!(a[0]<a[1] && a[1]<a[2] && a[2]<=a[3] && a[3]<a[4] && a[4]<a[5])) e.push(t('e_two'));
+    const T = num(p.T)!==null ? n('T') : n('Blo'), lo = n('Llo'), hi = n('Lhi');
+    if ([T,lo,hi].some(x => x===null)) e.push(t('e_need6'));
+    else if (!(lo<=T && T<=hi && lo<hi)) e.push(t('e_two'));
+    if (p.scale==='log' && [T,lo,hi].some(x => x!==null && x<=0)) e.push(t('e_log'));
   }
   return e;
 }
@@ -696,9 +761,43 @@ function word(x){
   if (d<=-1) return '<span class="rej">'+t('w_black')+'</span>';
   return '<span class="rej">'+t('w_bad', Math.round(-d*100))+'</span>';
 }
+function autoS(p){ const L = num(p.L), B = num(p.B); if (L===null || B===null || L===B) return null; if (p.scale==='log' && L>0 && B>0) return +(L*L/B).toPrecision(6); return +(L - (B - L)).toFixed(6); }
+function syncOne(p){ if (p.type!=='one') return; const L = num(p.L), B = num(p.B); if (L===null || B===null || L===B) return; p.dir = B > L ? 'up' : 'down'; if (!p.Sset) p.S = autoS(p); }
+function slopeFig(p){
+  const S = num(p.S), L = num(p.L), B = num(p.B); if ([S,L,B].some(v => v===null) || paramErrors(p).length) return '<div class="explain">'+t('sfIntro')+'</div>';
+  const up = B > L, ext = L + (L - B) * 0.6, xs = [B + (B - L) * 0.35, B, L, S, S + (S - L) * 0.45];
+  const lo = Math.min(...xs), hi = Math.max(...xs), Wd = 900, Hd = 260, x0 = 70, x1 = 870, X = v => up ? x1 - (v-lo)/(hi-lo)*(x1-x0) : x0 + (v-lo)/(hi-lo)*(x1-x0), Y = d => 30 + (1-d)/2*150, u = p.unit ? ' '+esc(p.unit) : '';
+  const sc = v => { const q = Object.assign({}, p, {u0:0, hard:false}); const r = HN.scoreParam(q, {value:v, u:0}, 0); return r.status==='ok' ? r.d : null; };
+  let path = ''; for (let k = 0; k <= 160; k++) { const v = lo + (hi-lo)*k/160, d = sc(v); if (d===null) continue; path += (path?' L':'M')+X(v).toFixed(1)+' '+Y(d).toFixed(1); }
+  let g = '<svg viewBox="0 0 '+Wd+' '+Hd+'" width="100%" role="img" aria-label="score">';
+  g += '<rect x="'+Math.min(X(L),X(xs[4]))+'" y="30" width="'+Math.abs(X(xs[4])-X(L))+'" height="150" fill="#FBEAEA"/><rect x="'+Math.min(X(L),X(xs[0]))+'" y="30" width="'+Math.abs(X(xs[0])-X(L))+'" height="150" fill="#E8F3F3"/>';
+  g += '<text x="'+((X(L)+X(xs[0]))/2)+'" y="168" font-size="15" font-weight="700" text-anchor="middle" fill="'+C.acc+'">'+esc(t('sfOk'))+'</text><text x="'+((X(L)+X(xs[4]))/2)+'" y="48" font-size="15" font-weight="700" text-anchor="middle" fill="'+C.rej+'">'+esc(t('sfBad'))+'</text>';
+  [1,0,-1].forEach(d => { g += '<line x1="'+x0+'" x2="'+x1+'" y1="'+Y(d)+'" y2="'+Y(d)+'" stroke="'+(d===0?C.ink:C.line)+'" stroke-width="'+(d===0?1.2:.8)+'"/><text x="'+(x0-10)+'" y="'+(Y(d)+5)+'" font-size="14" text-anchor="end" fill="'+C.muted+'" font-family="'+MONO+'">'+fmt(d)+'</text>'; });
+  g += '<path d="'+path+'" fill="none" stroke="'+C.ink+'" stroke-width="3"/>';
+  const mark = (v, d, col, lab) => { g += '<circle cx="'+X(v)+'" cy="'+Y(d)+'" r="6" fill="'+col+'"/><line x1="'+X(v)+'" x2="'+X(v)+'" y1="'+Y(d)+'" y2="198" stroke="'+col+'" stroke-dasharray="4 3"/><text x="'+X(v)+'" y="218" font-size="14" font-weight="700" text-anchor="middle" fill="'+col+'">'+esc(lab)+'</text><text x="'+X(v)+'" y="238" font-size="14" text-anchor="middle" fill="'+C.ink+'" font-family="'+MONO+'">'+nf(+v.toFixed(4))+u+'</text>'; };
+  mark(B, 1, C.acc, t('sfB')); mark(L, 0, C.ink, t('sfL')); mark(S, -1, C.rej, t('sfS'));
+  g += '<text x="'+X(xs[4])+'" y="'+(Y(-1)-10)+'" font-size="13" text-anchor="'+(up?'start':'end')+'" fill="'+C.rej+'">'+esc(t('sfFlat'))+'</text>';
+  g += '</svg>';
+  const half = L + (S - L)/2, q1 = L + (S - L)*0.1;
+  return '<div class="explain why-box"><div class="chart">'+g+'</div><div class="why-text">'+t('sfTxt', nf(B)+u, nf(L)+u, nf(+q1.toFixed(4))+u, nf(+half.toFixed(4))+u, nf(S)+u, nf(+Math.abs(L-B).toFixed(4))+u)+'</div><div class="why-text" style="margin-top:8px">'+t('sfVeto')+'</div></div>';
+}
+function syncTwo(p){
+  if (p.type!=='two') return;
+  const T = num(p.T), lo = num(p.Llo), hi = num(p.Lhi); if (T===null || lo===null || hi===null) return;
+  const w = Math.max(T-lo, hi-T) || 1;
+  p.appr = 'both'; p.fb = 0; p.Blo = T; p.Bhi = T;
+  p.Slo = +(lo - w).toFixed(6); p.Shi = +(hi + w).toFixed(6);
+}
+function twoPreview(p){
+  if (paramErrors(p).length) return '';
+  const lo=+p.Llo, hi=+p.Lhi, n=8, pts=[];
+  for (let k=0;k<=n;k++) pts.push(lo + (hi-lo)*k/n);
+  const sc = x => { const q = Object.assign({}, p, {u0:0}); const r = HN.scoreParam(q, {value:x, u:0}, 0); return r.status==='ok' ? r.d : null; };
+  return '<div class="hint" style="margin-top:8px"><b>'+t('twPrev')+'</b></div><div class="chart"><table class="dt" style="width:auto"><tr><th>'+esc(p.unit||'')+'</th>'+pts.map(x => '<th class="mono">'+nf(+x.toFixed(4))+'</th>').join('')+'</tr><tr><th>'+t('score')+'</th>'+pts.map(x => { const d = sc(x); return '<td class="mono '+(d!==null&&d<0?'rej':'acc')+'">'+(d===null?'–':fmt(d))+'</td>'; }).join('')+'</tr></table></div>';
+}
 function inclExample(p, f, sgn){
   const L = num(p[f]); if (L===null) return '';
-  const dec = Math.max(0, ...['S','L','B','Slo','Llo','Blo','Bhi','Lhi','Shi'].map(k => { const v = p[k]; if (v===null||v===undefined||v==='') return 0; const q = String(v).split('.'); return q[1]?q[1].length:0; }));
+  const dec = Math.max(2, ...['S','L','B','Slo','Llo','Blo','Bhi','Lhi','Shi'].map(k => { const v = p[k]; if (v===null||v===undefined||v==='') return 0; const q = String(v).split('.'); return q[1]?q[1].length:0; }));
   const step = Math.pow(10, -Math.max(dec, 0)) * (dec===0 ? 1 : 1);
   const next = +(L + sgn*step).toFixed(Math.max(dec,0));
   const inc = f==='L' ? p.incl : (f==='Llo' ? p.inclLo : p.inclHi);
@@ -713,20 +812,20 @@ function meter(d){
 // ---------------- static texts ----------------
 function paintStatic(){
   document.documentElement.lang = LANG;
-  $('#brand').innerHTML = esc(t('brand'))+'<small>'+esc(t('brandSmall'))+'</small>';
+  $('#brand').innerHTML = esc(t('brand'))+' <span style="font-size:12px;font-weight:600;padding:1px 7px;border:1px solid currentColor;border-radius:10px;opacity:.75;vertical-align:middle">'+(LANG==='tr'?'sürüm ':'version ')+'1.7</span><small>'+esc(t('brandSmall'))+'</small>';
   ['iTitle','iP1','iF1','iF2','iF3','s1t','s1d','s2t','s2d','s3t','s3d'].forEach(k => { const el = document.getElementById(k); if (el) el.textContent = t(k); });
   $('#iSign').innerHTML = t('iSign'); $('#iDemoCap').innerHTML = t('iDemoCap'); $('#iP2').innerHTML = t('iP2'); $('#iUse').innerHTML = t('iUse');
   $('#exBadge').textContent = t('exBadge'); $('#appBadge').textContent = t('appBadge');
-  $('#foot').textContent = t('foot');
+  $('#foot').textContent = t('foot'); $('#disc').textContent = t('disc');
   document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l===LANG));
   $('#exSel').innerHTML = '<option value="">'+esc(t('exPick'))+'</option>' + EX.map(e => '<option value="'+e.key+'">'+esc(e[LANG])+'</option>').join('');
-  $('#demoScale').innerHTML = scaleSVG(0.26, 0.6, -0.2, 'A', [0.4,0.6,0.4,-0.4]);
+  $('#demoScale').innerHTML = scaleSVG(0.26, 0.2, 0, 'A', [0.4,0.6,0.4,-0.4]);
   $('#science').innerHTML = scienceHTML();
 }
 document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { LANG = b.dataset.l; save(); paintStatic(); render(); }));
 document.querySelectorAll('nav.steps button').forEach(b => b.addEventListener('click', () => { view = b.dataset.v; render(); }));
 $('#exSel').addEventListener('change', e => { const ex = EX.find(x => x.key===e.target.value); if (!ex) return;
-  spec = JSON.parse(JSON.stringify(ex.spec)); spec.lock = {fingerprint: fingerprint(spec), lockedAt: new Date().toISOString()}; inputs = JSON.parse(JSON.stringify(ex.inputs)); EV = {}; saveEv();
+  spec = JSON.parse(JSON.stringify(ex.spec)); spec.lock = {fingerprint: fingerprint(spec), lockedAt: new Date().toISOString()}; CUR_EX = ex.key; try { sessionStorage.setItem('odn.ex', ex.key); sessionStorage.removeItem('odn.dec'); } catch(e){} CUR_DEC = null; inputs = JSON.parse(JSON.stringify(ex.inputs)); EV = {}; saveEv();
   save(); view = 'sub'; render(); e.target.value=''; });
 
 function render(){
@@ -743,6 +842,8 @@ function renderSpec(){
   h += lockBar();
   h += '<div class="grid g3"><div><label>'+t('specTitle')+'</label>'+mi('title')+'</div><div><label>'+t('version')+'</label>'+mi('version')+'</div><div><label>'+t('owner')+'</label>'+mi('owner')+'</div></div>';
   h += '<h3>'+t('param')+'</h3>';
+  const nUsed = spec.params.filter(q => (q.kind||(q.mandatory===false?'info':'mand'))!=='info').length;
+  const impOff = HN.betaOf ? (HN.betaOf(engineSpec(spec))===0 || nUsed<2) : nUsed<2;
   spec.params.forEach((p,i) => {
     const pi = (f, cls) => '<input data-p="'+i+'" data-f="'+f+'" class="'+(cls||'')+'" value="'+esc(NUMF.includes(f)?nf(p[f]):(p[f]||''))+'"'+dis+'>';
     const kind = p.type==='one' ? (p.dir==='down'?'down':'up') : p.type;
@@ -750,14 +851,21 @@ function renderSpec(){
     let a = '';
     const isel = (f, q) => '<div><label>'+t(q)+'</label><select data-p="'+i+'" data-f="'+f+'"'+dis+'><option value="I"'+(p[f]!=='E'?' selected':'')+'>'+t('inclI')+'</option><option value="E"'+(p[f]==='E'?' selected':'')+'>'+t('inclE')+'</option></select></div>';
     if (kind==='up' || kind==='down') { const pre = kind==='up'?'up':'dn';
-      a = '<div class="grid g3"><div><label>'+t(pre+'L')+'</label>'+pi('L','num')+'</div><div><label>'+t(pre+'B')+'</label>'+pi('B','num')+'</div><div><label>'+t(pre+'S')+'</label>'+pi('S','num')+'</div></div><div class="grid g3" style="margin-top:10px">'+isel('incl','inclQ')+'<div class="hint" style="grid-column:span 2;align-self:end">'+inclExample(p,'L',p.dir==='down'?-1:1)+'</div></div>';
+      a = '<div class="grid g3"><div><label>'+t(pre+'L')+'</label>'+pi('L','num')+'<div class="hint">'+t(pre+'Lh')+'</div></div><div><label>'+t(pre+'B')+'</label>'+pi('B','num')+'<div class="hint">'+t(pre+'Bh')+'</div></div><div><label>'+t(pre+'S')+'</label><input data-p="'+i+'" data-f="S" class="num" placeholder="'+esc(autoS(p)===null?'':t('autoPh', nf(autoS(p))))+'" value="'+esc(p.Sset?nf(p.S):'')+'"'+dis+'><div class="hint">'+t('sAutoH')+'</div></div></div><details class="why"><summary>'+t('hardWhy')+'</summary>'+slopeFig(p)+'</details><div class="grid g3" style="margin-top:10px">'+isel('incl','inclQ')+'<div class="hint" style="grid-column:span 2;align-self:end">'+inclExample(p,'L',p.dir==='down'?-1:1)+'</div></div>';
     } else if (kind==='two') {
-      a = '<div class="grid g3"><div><label>'+t('twL')+'</label><div class="grid g2">'+pi('Llo','num')+pi('Lhi','num')+'</div></div><div><label>'+t('twB')+'</label><div class="grid g2">'+pi('Blo','num')+pi('Bhi','num')+'</div></div><div><label>'+t('twS')+'</label><div class="grid g2">'+pi('Slo','num')+pi('Shi','num')+'</div></div></div><div class="grid g3" style="margin-top:10px">'+isel('inclLo','inclLoQ')+isel('inclHi','inclHiQ')+'<div class="hint" style="align-self:end">'+inclExample(p,'Llo',1)+'<br>'+inclExample(p,'Lhi',-1)+'</div></div>';
+      const nomBox = '<div class="explain" style="margin:0 0 10px">'+t('twNomH')+'</div>';
+      const Tn = num(p.T)!==null ? p.T : (num(p.Blo)!==null&&num(p.Bhi)!==null ? +((+p.Blo + +p.Bhi)/2).toFixed(6) : '');
+      const ap = p.appr||'both';
+      a = nomBox+'<div class="grid g3"><div><label>'+t('twT')+'</label><input data-p="'+i+'" data-f="T" class="num" value="'+esc(nf(Tn))+'"'+dis+'><div class="hint">'+t('twTh')+'</div></div>'+
+          '<div><label>'+t('twL')+'</label><div class="grid g2">'+pi('Llo','num')+pi('Lhi','num')+'</div><div class="hint">'+t('twLh')+'</div></div>'+
+          '</div>'+
+          '<div class="grid g3" style="margin-top:10px">'+isel('inclLo','inclLoQ')+isel('inclHi','inclHiQ')+'<div class="hint" style="align-self:end">'+inclExample(p,'Llo',1)+'<br>'+inclExample(p,'Lhi',-1)+'</div></div>'+
+          twoPreview(p);
     }
     const kd = p.kind||(p.mandatory===false?'info':'mand');
-    const typeRow = '<div class="grid g3" style="margin-top:12px"><div><label>'+t('kindQ')+'</label><select data-p="'+i+'" data-f="kind"'+dis+'>'+[['mand','kMand'],['soft','kSoft'],['info','kInfo']].map(o => '<option value="'+o[0]+'"'+(kd===o[0]?' selected':'')+'>'+t(o[1])+'</option>').join('')+'</select></div>'+
-      '<div><label>'+t('impQ')+'</label><div class="grid g2" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)"><select data-p="'+i+'" data-f="imp"'+dis+(kd==='info'?' disabled':'')+'>'+[['decisive','iDec'],['high','iHigh'],['medium','iMed'],['low','iLow'],['minor','iMin']].map(o => '<option value="'+o[0]+'"'+((p.imp||'medium')===o[0]?' selected':'')+'>'+t(o[1])+' ('+nf(HN.IMP[o[0]].toFixed(2))+')</option>').join('')+'</select>'+
-      '<input class="num" data-p="'+i+'" data-f="w" placeholder="'+nf(HN.IMP[p.imp||'medium'].toFixed(2))+'" value="'+esc(nf(p.w))+'" title="'+esc(t('impW'))+'"'+dis+'></div></div>'+
+    const typeRow = '<div class="grid g3" style="margin-top:12px"><div><label>'+t('kindQ')+'</label><select data-p="'+i+'" data-f="rtype"'+dis+'>'+[['mand','kMand'],['soft','kSoft'],['info','kInfoT']].map(o => '<option value="'+o[0]+'"'+(kd===o[0]?' selected':'')+'>'+t(o[1])+'</option>').join('')+'</select></div>'+
+      '<div><label title="'+esc(t('impH2'))+'">'+t('impQ')+' ⓘ</label><div class="grid g2" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)"><select data-p="'+i+'" data-f="imp"'+dis+((kd==='info'||impOff)?' disabled':'')+'>'+[['decisive','iDec'],['high','iHigh'],['medium','iMed'],['low','iLow'],['minor','iMin']].map(o => '<option value="'+o[0]+'"'+((p.imp||'medium')===o[0]?' selected':'')+'>'+t(o[1])+' ('+nf(HN.IMP[o[0]].toFixed(2))+')</option>').join('')+'</select>'+
+      '<input class="num" data-p="'+i+'" data-f="w"'+((kd==='info'||impOff)?' disabled':'')+' placeholder="'+nf(HN.IMP[p.imp||'medium'].toFixed(2))+'" value="'+esc(nf(p.w))+'" title="'+esc(t('impW'))+'"'+dis+'></div><div class="hint">'+(impOff?t('impOff'):t('impH2'))+'</div></div>'+
       '<div><label title="'+esc(t('linkH'))+'">'+t('linkQ')+' ⓘ</label><input data-p="'+i+'" data-f="link" placeholder="'+esc(t('linkP'))+'" value="'+esc(p.link||'')+'"'+dis+'></div></div>';
     h += '<div class="card'+(errs.length&&!L?' bad':'')+'"><div class="head"><b>'+t('param')+' '+(i+1)+'</b>'+(L?'':'<button class="btn small" data-del="'+i+'">'+t('del')+'</button>')+'</div>'+
       '<div class="grid g3"><div><label>'+t('name')+'</label>'+pi('name')+'</div><div><label>'+t('unit')+'</label>'+pi('unit')+'</div><div><label>'+t('dir')+'</label><select data-p="'+i+'" data-f="kind"'+dis+'>'+
@@ -765,11 +873,10 @@ function renderSpec(){
       (a ? '<div style="margin-top:12px">'+a+'</div>' : '')+typeRow+
       '<div class="say"><span class="tag">'+t('sayTag')+'</span>'+esc(readback(p))+'</div>'+
       (errs.length&&!L ? '<div class="err">'+errs.map(esc).join('<br>')+'</div>' : '')+
-      '<details class="adv"'+(p.group||p.u0||p.definition||p.scale==='log'||p.mandatory===false?' open':'')+'><summary>'+t('advanced')+'</summary><div class="grid g3">'+
-        '<div><label>'+t('group')+'</label>'+pi('group')+'</div>'+
-        (p.type==='bool'?'':'<div><label>'+t('u0')+'</label>'+pi('u0','num')+'</div><div><label>'+t('scale')+'</label><select data-p="'+i+'" data-f="scale"'+dis+'><option value="lin"'+(p.scale!=='log'?' selected':'')+'>'+t('lin')+'</option><option value="log"'+(p.scale==='log'?' selected':'')+'>'+t('log')+'</option></select></div>'+
-        '<div><label>'+t('vmin')+'</label>'+pi('vmin','num')+'</div><div><label>'+t('vmax')+'</label>'+pi('vmax','num')+'</div>')+
-        '<div><label>'+t('defn')+'</label>'+pi('definition')+'</div>'+
+      '<details class="adv"'+(p.group||p.u0||p.definition||p.scale==='log'?' open':'')+'><summary>'+t('advanced')+'</summary><div class="grid g3">'+
+        '<div><label>'+t('group')+'</label>'+pi('group')+'<div class="hint">'+t('groupH')+'</div></div>'+
+        (p.type==='bool'?'':'<div><label>'+t('u0')+'</label>'+pi('u0','num')+'<div class="hint">'+t('u0H')+'</div></div><div><label>'+t('scale')+'</label><select data-p="'+i+'" data-f="scale"'+dis+'><option value="lin"'+(p.scale!=='log'?' selected':'')+'>'+t('lin')+'</option><option value="log"'+(p.scale==='log'?' selected':'')+'>'+t('log')+'</option></select><div class="hint">'+t('scaleH')+'</div></div>')+
+        '<div style="grid-column:1/-1"><label>'+t('defn')+'</label>'+pi('definition')+'<div class="hint">'+t('defnH')+'</div></div>'+
       '</div></details></div>';
   });
   if (!L) h += '<div class="row"><button class="btn" id="bAdd">'+t('addParam')+'</button></div>';
@@ -782,29 +889,55 @@ function renderSpec(){
   // weights & beta
   const bl = spec.betaLevel||'balanced';
   h += '<h3>'+t('wT')+'</h3><p class="lead">'+t('wLead')+'</p>'+
-    '<div class="grid g3"><div><label>'+t('betaQ')+'</label><select id="betaSel"'+dis+'>'+[['none','bNone'],['slight','bSlight'],['balanced','bBal'],['strong','bStrong']].map(o => '<option value="'+o[0]+'"'+(bl===o[0]?' selected':'')+'>'+t(o[1])+'</option>').join('')+'</select><div class="hint">'+t('betaH')+'</div></div>'+
-    '<div><label>'+t('betaW')+'</label>'+mi('beta','num')+'</div>'+
-    '<div><label>'+t('methQ')+'</label><select id="wmSel"'+dis+'>'+[['eq','mEq'],['rank','mRank'],['swing','mSwing'],['cost','mCost'],['man','mMan']].map(o => '<option value="'+o[0]+'"'+((spec.wMethod||'eq')===o[0]?' selected':'')+'>'+t(o[1])+'</option>').join('')+'</select><div class="hint">'+t('methH')+'</div></div></div>'+
-    (L?'':'<div class="row"><button class="btn" id="bEqW">'+t('eqBtn')+'</button><button class="btn" id="bRankW">'+t('rankBtn')+'</button></div><div class="hint">'+t('rankH')+'</div>');
+    '<div class="grid g2"><div><label>'+t('betaQ')+'</label><select id="betaSel"'+dis+'>'+[['none','bNone'],['slight','bSlight'],['balanced','bBal'],['strong','bStrong']].map(o => '<option value="'+o[0]+'"'+(bl===o[0]?' selected':'')+'>'+t(o[1])+'</option>').join('')+'</select></div><div class="hint" style="align-self:end">'+t('betaH')+'</div></div>'+
+    '<div class="explain" style="margin-top:10px">'+t('betaEx')+'</div>'+
+    (L?'':'<div class="row"><button class="btn" id="bEqW">'+t('eqBtn')+'</button></div>');
   // simulation
   const sim = HN.simulate(engineSpec(spec));
   if (!sim.length) h += '<h3>'+t('simT')+'</h3><div class="hint">'+t('simNone')+'</div>';
   else { const cols = t('simCols').split('|'); const vt = v => '<span class="'+(v==='ACCEPT'?'acc':v==='REJECT'?'rej':'')+'">'+t('V_'+v)+'</span>';
-    let rows = ''; const byId = {}; sim.forEach(x => { const key = x.id+'|'+x.level; (byId[key] = byId[key] || {name:x.name, level:x.level})[x.ctx] = x; });
-    Object.values(byId).forEach(o => { rows += '<tr><td>'+esc(nm(o.name))+'</td><td>'+t(o.level==='slight'?'sSlight':o.level==='bad'?'sBad':'sWorst')+'</td><td class="mono">'+fmt(o.good.A)+' · '+vt(o.good.verdict)+'</td><td class="mono">'+fmt(o.tight.A)+' · '+vt(o.tight.verdict)+'</td></tr>'; });
+    let rows = ''; const byId = {}; sim.forEach(x => { const key = x.id+'|'+x.level; (byId[key] = byId[key] || {id:x.id, name:x.name, level:x.level})[x.ctx] = x; });
+    Object.values(byId).forEach(o => { const pp = spec.params.find(q => q.id===o.id), dv = o.level==='slight'?-0.25:o.level==='bad'?-0.5:-1, au = pp ? atScore(pp, dv) : null; rows += '<tr><td>'+esc(nm(o.name))+'</td><td>'+t(o.level==='slight'?'sSlight':o.level==='bad'?'sBad':'sWorst')+'</td><td class="mono">'+(au?au.map(r3).join(' / ')+(pp.unit?' '+esc(pp.unit):''):'–')+'</td><td class="mono">'+fmt(o.good.A)+' · '+vt(o.good.verdict)+'</td><td class="mono">'+fmt(o.tight.A)+' · '+vt(o.tight.verdict)+'</td></tr>'; });
     h += '<h3>'+t('simT')+'</h3><p class="lead">'+t('simLead')+'</p><div class="scroll"><table class="dt"><tr>'+cols.map(c => '<th>'+c+'</th>').join('')+'</tr>'+rows+'</table></div>'+
       '<label style="margin-top:10px"><input type="checkbox" id="ackBox" style="width:auto"'+(spec.ack?' checked':'')+dis+'> '+t('simAck')+'</label>'; }
   // uncertainty
   const cov = spec.coverage==='alpha' ? 'fw' : (+spec.k===0?'none':+spec.k===1?'k1':+spec.k===2?'k2':'k2');
   const N = spec.params.filter(p => p.mandatory!==false).length;
   h += '<h3>'+t('uncT')+'</h3><p class="lead">'+t('uncLead')+'</p><select id="covSel" style="max-width:520px"'+dis+'>'+[['none','u_none'],['k1','u_k1'],['k2','u_k2'],['fw','u_fw']].map(o => '<option value="'+o[0]+'"'+(cov===o[0]?' selected':'')+'>'+t(o[1])+'</option>').join('')+'</select>'+
-       '<div class="hint">'+t('kInfo', nf(HN.kUsed(engineSpec(spec)).toFixed(2)))+(spec.coverage==='alpha'?' (N = '+N+')':'')+'</div>';
+       '<div class="hint">'+t('kInfo', nf(HN.kUsed(engineSpec(spec)).toFixed(2)))+'. '+t('kExpl')+(spec.coverage==='alpha'?' (N = '+N+')':'')+'</div>';
   const errs = specErrors();
   if (!L) h += (errs.length ? '<div class="err" style="margin-top:18px"><b>'+t('fixList')+'</b><br>'+errs.map(esc).join('<br>')+'</div>' : '')+
-    '<div class="row" style="margin-top:22px"><button class="btn primary" id="bLock"'+(errs.length?' disabled':'')+'>'+t('lockBtn')+'</button><button class="btn" id="bNew">'+t('newBlank')+'</button><label class="btn" style="margin:0">'+t('imp')+'<input type="file" id="impSpec" accept=".json" style="display:none"></label></div><div class="hint">'+(errs.length?t('fixFirst'):t('lockHint'))+'</div>';
-  else h += '<div class="sendbox"><h3>'+t('sendT')+'</h3><p class="lead" style="margin-bottom:8px">'+t('sendLead')+'</p><div class="row" style="margin:6px 0"><input readonly id="specLinkIn" value="'+esc(specLink())+'"><button class="btn small" id="bCopySpec">'+t('copy')+'</button></div><div class="row"><button class="btn primary" id="bMailSpec">'+t('mail')+'</button><button class="btn" id="bExpSpec">'+t('dlSpec')+'</button><button class="btn" id="bGoSub">'+t('goSub')+'</button><button class="btn" id="bNewVer">'+t('newVer')+'</button></div></div>';
+    '<div class="row" style="margin-top:22px"><button class="btn primary" id="bLock"'+(errs.length?' disabled':'')+'>'+t('lockBtn')+'</button></div><div class="hint">'+(errs.length?t('fixFirst'):t('lockHint'))+'</div>';
+  else h += '<div class="sendbox"><div class="row"><button class="btn primary" id="bGoSub">'+t('goSub')+'</button><button class="btn" id="bNewVer">'+t('newVer')+'</button></div><div class="hint">'+t('lockedHint')+'</div></div>';
   $('#v-spec').innerHTML = h;
   bindSpec();
+}
+function atScore(p, d){ // value(s) in the requirement's own unit where the score equals d
+  const f = (S,L,B) => { S=+S; L=+L; B=+B; return d>=0 ? L + d*(B-L) : L + d*(L-S); };
+  if (p.type==='bool') return null;
+  if (p.type==='two') { if ([p.Slo,p.Llo,p.Blo,p.Bhi,p.Lhi,p.Shi].some(v => num(v)===null)) return null; return [f(p.Slo,p.Llo,p.Blo), f(p.Shi,p.Lhi,p.Bhi)]; }
+  if ([p.S,p.L,p.B].some(v => num(v)===null)) return null; return [f(p.S,p.L,p.B)];
+}
+const r3 = v => nf(+(+v).toFixed(4));
+function unitBand(p, d, kind){ const a = atScore(p, d); if (!a) return '–';
+  if (p.type==='two') return kind==='acc' ? r3(a[0])+' … '+r3(a[1]) : '< '+r3(a[0])+' / > '+r3(a[1]);
+  const up = p.dir!=='down'; return kind==='acc' ? (up?'≥ ':'≤ ')+r3(a[0]) : (up?'< ':'> ')+r3(a[0]); }
+function allBool(){ const m = spec.params.filter(p => (p.kind||(p.mandatory===false?'info':'mand'))!=='info'); return m.length>0 && m.every(p => p.type==='bool'); }
+let CUR_EX = null; try { CUR_EX = sessionStorage.getItem('odn.ex') || null; } catch(e){}
+function exBanner(){ const ex = EX.find(e => e.key===CUR_EX); if (!ex) return '';
+  return '<div class="exbanner"><b>'+t('exNow')+': '+esc(ex[LANG])+'</b><div>'+esc(LANG==='tr'?ex.dtr:ex.den)+'</div></div>'; }
+function specSummary(){
+  const kd = p => p.kind||(p.mandatory===false?'info':'mand'), v = (p,f) => num(p[f])===null ? '–' : nf(p[f]);
+  const rows = spec.params.map(p => { let S='–',L='–',B='–';
+    if (p.type==='two') { S = v(p,'Slo')+' / '+v(p,'Shi'); L = v(p,'Llo')+' … '+v(p,'Lhi'); B = v(p,'Blo')+' … '+v(p,'Bhi'); }
+    else if (p.type==='bool') { L = t('yes'); B = t('yes'); S = t('no'); }
+    else { S = v(p,'S'); L = (p.dir==='down'?'≤ ':'≥ ')+v(p,'L'); B = v(p,'B'); }
+    if (p.type==='two' && num(p.Blo)!==null && +p.Blo===+p.Bhi) B = nf(p.Blo)+' ('+t('nominal')+')';
+    const tA0 = num(spec.tauA), accU = (p.type==='bool'||tA0===null) ? '–' : unitBand(p, tA0, 'acc');
+    return '<tr><td><b>'+esc(nm(p.name))+'</b>'+(p.unit?' <span class="mut">['+esc(p.unit)+']</span>':'')+'</td><td>'+esc(t(kd(p)==='mand'?'tMand':kd(p)==='soft'?'tSoft':'tInfo'))+'</td><td class="mono">'+L+'</td><td class="mono">'+B+'</td><td class="mono">'+(p.type==='one' ? nf(p.S)+(p.Sset?'':' ('+t('auto')+')') : S)+'</td><td class="mono">'+(num(p.u0)===null?'–':'± '+nf(p.u0))+'</td><td class="mono acc">'+accU+'</td></tr>'; }).join('');
+  const tA = num(spec.tauA), tR = num(spec.tauR);
+  const rule = allBool() ? t('ruleBool') : (tA===null&&tR===null) ? t('ruleNone') : (tR!==null && tR<0) ? t('ruleTxtC', tA===null?'–':fmt(tA), fmt(tR)) : t('ruleTxt', tA===null?'–':fmt(tA));
+  return '<div class="sumbox"><b>'+t('sumT')+'</b><table class="dt sum"><tr><th>'+t('sumReq')+'</th><th>'+t('sumType')+'</th><th>'+t('sumL')+'</th><th>'+t('sumB')+'</th><th>'+t('sumS')+'</th><th>'+t('sumU')+'</th><th>'+t('sumAcc')+'</th></tr>'+rows+'</table><div class="hint" style="margin:6px 0 0">'+esc(rule)+'</div></div>';
 }
 function lockBar(){
   if (!spec.lock) return '<div class="lockbar"><b>'+t('draft')+'</b></div>';
@@ -817,8 +950,9 @@ function bindSpec(){
   const reAck = () => { spec.ack = false; re(); };
   document.querySelectorAll('#v-spec [data-m]').forEach(el => el.addEventListener('change', () => { const k = el.dataset.m; spec[k] = (k==='tauA'||k==='tauR'||k==='beta') ? pn(el.value) : el.value; reAck(); }));
   document.querySelectorAll('#v-spec [data-p]').forEach(el => el.addEventListener('change', () => { const p = spec.params[+el.dataset.p], f = el.dataset.f;
-    if (f==='kind') { if (el.value==='up'||el.value==='down') { p.type='one'; p.dir=el.value; } else { p.type=el.value; p.dir=null; } }
-    else if (el.type==='checkbox') p[f] = el.checked; else p[f] = NUMF.includes(f) ? pn(el.value) : el.value; if (f==='imp') p.w = null; if (f==='w' && spec.wMethod==='eq') spec.wMethod='man'; reAck(); }));
+    if (f==='rtype') { p.kind = el.value; p.mandatory = el.value!=='info'; }
+    else if (f==='kind') { if (el.value==='up'||el.value==='down') { p.type='one'; p.dir=el.value; } else { p.type=el.value; p.dir=null; } if (p.type==='two' && num(p.fb)===null) p.fb = 0; }
+    else if (el.type==='checkbox') { p[f] = el.checked; if (f==='hard') syncOne(p); } else p[f] = NUMF.includes(f) ? pn(el.value) : el.value; if (['T','Llo','Lhi'].includes(f) || f==='kind') syncTwo(p); if (f==='S') p.Sset = num(p.S)!==null; if (['L','B','S','scale'].includes(f) || f==='kind') syncOne(p); if (f==='imp') p.w = null; if (f==='w' && spec.wMethod==='eq') spec.wMethod='man'; reAck(); }));
   document.querySelectorAll('#v-spec [data-del]').forEach(el => el.addEventListener('click', () => { spec.params.splice(+el.dataset.del,1); re(); }));
   document.querySelectorAll('#v-spec input[name=pol]').forEach(el => el.addEventListener('change', () => { const v = el.value; spec.policy = v;
     if (v==='comply') Object.assign(spec,{tauA:0,letterA:'I',tauR:0,letterR:'E'});
@@ -833,9 +967,9 @@ function bindSpec(){
   on('bRankW', () => { const ps = spec.params.filter(p => (p.kind||'mand')!=='info'); const n = ps.length; ps.forEach((p,i) => { let w = 0; for (let k = i+1; k <= n; k++) w += 1/k; p.w = +(w/n).toFixed(3); }); spec.wMethod = 'rank'; spec.ack = false; re(); });
   on('covSel', e => { const v = e.target.value; if (v==='fw') { spec.coverage='alpha'; spec.alpha=0.05; } else { spec.coverage='k'; spec.k = v==='none'?0:v==='k1'?1:2; } re(); });
   on('bAdd', () => { spec.params.push(P1('','','',null,null,null)); re(); });
-  on('bNew', () => { spec = blankSpec(); inputs = {}; re(); });
+  on('bNew', () => { if (!confirm(t('clearQ'))) return; spec = blankSpec(); EV = {}; META = {}; CUR_DEC = null; try { sessionStorage.removeItem('odn.dec'); } catch(e){} saveEv(); CUR_EX = null; try { sessionStorage.removeItem('odn.ex'); } catch(e){} inputs = {}; re(); });
   on('bLock', () => { if (specErrors().length) return; if (HN.simulate(engineSpec(spec)).length && !spec.ack) { alert(t('simNeed')); return; } spec.lock = {fingerprint: fingerprint(spec), lockedAt: new Date().toISOString()}; save(); view='sub'; render(); window.scrollTo(0, document.querySelector('nav.steps').offsetTop); });
-  on('bNewVer', () => { const v = parseInt(spec.version,10); spec = JSON.parse(JSON.stringify(spec)); spec.lock = null; spec.version = isNaN(v) ? spec.version+'.1' : String(v+1); re(); });
+  on('bNewVer', () => { CUR_EX = null; try { sessionStorage.removeItem('odn.ex'); } catch(e){} const v = parseInt(spec.version,10); spec = JSON.parse(JSON.stringify(spec)); spec.lock = null; spec.version = isNaN(v) ? spec.version+'.1' : String(v+1); re(); });
   on('bExpSpec', () => download('specification_v'+spec.version+'_'+spec.lock.fingerprint.slice(0,8)+'.json', {kind:'ozkul-specification', spec: body(spec), lock: spec.lock}));
   on('bGoSub', () => { view='sub'; render(); });
   on('bCopySpec', e => { copyText(specLink()); e.target.textContent = t('copied'); });
@@ -848,11 +982,10 @@ function download(name, obj){ const a = document.createElement('a'); a.href = UR
 function readFile(f, cb){ if (!f) return; const r = new FileReader(); r.onload = () => { let o; try { o = JSON.parse(r.result); } catch(e) { alert(t('c_json')); return; } cb(o); }; r.readAsText(f); }
 
 // ---------------- step 2 ----------------
-const saveEv = () => { try { localStorage.setItem('odn.ev', JSON.stringify(EV)); localStorage.setItem('odn.meta', JSON.stringify(META)); } catch(e){} };
+const saveEv = () => { try { sessionStorage.setItem('odn.ev', JSON.stringify(EV)); sessionStorage.setItem('odn.meta', JSON.stringify(META)); } catch(e){} };
 function renderSub(){
-  if (!spec.lock) { $('#v-sub').innerHTML = '<h2>'+t('s2t')+'</h2><div class="lockbar"><div>'+t('noLock')+'</div><label class="btn" style="margin:0">'+t('imp')+'<input type="file" id="impSpec2" accept=".json" style="display:none"></label></div>';
-    document.getElementById('impSpec2').addEventListener('change', e => readFile(e.target.files[0], obj => { if (obj && obj.spec) { spec = Object.assign(JSON.parse(JSON.stringify(obj.spec)), {lock: obj.lock||null}); inputs = {}; save(); render(); } })); return; }
-  let h = '<h2>'+t('s2t')+'</h2><p class="lead">'+t('subLead')+'</p>'+lockBar()+'<div class="result" id="res"></div>'+
+  if (!spec.lock) { $('#v-sub').innerHTML = '<h2>'+t('s2t')+'</h2><div class="lockbar"><div>'+t('noLock')+'</div></div>'; return; }
+  let h = '<h2>'+t('s2t')+'</h2><p class="lead">'+t('subLead')+'</p>'+exBanner()+lockBar()+specSummary()+'<div class="result" id="res"></div>'+
     '<div class="grid g3" style="margin-bottom:14px"><div><label>'+t('contractor')+'</label><input id="contr" value="'+esc(META.contractor||'')+'"></div></div>';
   spec.params.forEach(p => { const v = inputs[p.id] || {}, ev = EV[p.id] || {};
     const u0 = nf(num(p.u0)===null?0:p.u0)+U(p);
@@ -868,22 +1001,14 @@ function renderSub(){
       '<details class="adv"'+((ev.calc||(ev.files||[]).length||v.ev)?' open':'')+'><summary>'+t('evT')+((ev.files||[]).length?' · 📎 '+(ev.files||[]).length:'')+'</summary><div class="grid g2">'+
       '<div><label>'+t('calc')+'</label><textarea data-ec="'+p.id+'" rows="3" placeholder="'+esc(t('calcP'))+'">'+esc(ev.calc||'')+'</textarea>'+
       '<label style="margin-top:8px">'+t('evRef')+'</label><input data-i="'+p.id+'" data-k="ev" value="'+esc(v.ev||'')+'"></div>'+
-      '<div><label>'+t('files')+'</label><input type="file" multiple data-ef="'+p.id+'"><div class="hint">'+t('filesH')+'</div><ul class="files">'+fl+'</ul></div></div></details></div>';
+      '</div></details></div>';
   });
-  h += '<div class="sendbox"><h3>'+t('retT')+'</h3><p class="lead" style="margin-bottom:8px">'+t('retLead')+'</p><div class="row"><button class="btn primary" id="bRep">'+t('dlRep')+'</button><button class="btn" id="bRepMail">'+t('mailRep')+'</button></div><div id="repLink"></div></div><div id="charts"></div>';
+  h += '<div class="sendbox"><div class="row"><button class="btn primary" id="bToVer">'+t('toVer')+'</button></div><div class="hint">'+t('toVerH')+'</div></div><div id="charts"></div>';
   $('#v-sub').innerHTML = h;
-  document.querySelectorAll('#v-sub [data-i]').forEach(el => el.addEventListener(el.tagName==='SELECT'?'change':'input', () => { const id = el.dataset.i; inputs[id] = inputs[id] || {}; inputs[id][el.dataset.k] = el.dataset.k==='ev' ? el.value : pn(el.value); save(); update(); }));
+  document.querySelectorAll('#v-sub [data-i]').forEach(el => el.addEventListener(el.tagName==='SELECT'?'change':'input', () => { const id = el.dataset.i; inputs[id] = inputs[id] || {}; inputs[id][el.dataset.k] = el.dataset.k==='ev' ? el.value : pn(el.value); CUR_DEC = null; try { sessionStorage.removeItem('odn.dec'); } catch(e){} save(); update(); }));
   document.querySelectorAll('#v-sub [data-ec]').forEach(el => el.addEventListener('input', () => { const id = el.dataset.ec; EV[id] = EV[id] || {}; EV[id].calc = el.value; saveEv(); }));
   document.getElementById('contr').addEventListener('input', e => { META.contractor = e.target.value; saveEv(); });
-  document.querySelectorAll('#v-sub [data-ef]').forEach(el => el.addEventListener('change', () => { const id = el.dataset.ef; EV[id] = EV[id] || {}; EV[id].files = EV[id].files || [];
-    const fs = [...el.files]; let left = fs.length;
-    fs.forEach(f => { const r = new FileReader(); r.onload = () => { const b = new Uint8Array(r.result); const sha = HN.sha256(b);
-      let data = null; if (f.size <= 3*1024*1024) { let bin = ''; for (let i = 0; i < b.length; i += 32768) bin += String.fromCharCode.apply(null, b.subarray(i, i+32768)); data = btoa(bin); }
-      EV[id].files.push({name:f.name, size:f.size, type:f.type||'', sha, data}); if (--left === 0) { saveEv(); renderSub(); } }; r.readAsArrayBuffer(f); }); }));
-  document.querySelectorAll('#v-sub [data-rmf]').forEach(el => el.addEventListener('click', () => { EV[el.dataset.rmf].files.splice(+el.dataset.k,1); saveEv(); renderSub(); }));
-  document.getElementById('bRep').addEventListener('click', () => download('report_'+spec.lock.fingerprint.slice(0,8)+'_'+Date.now()+'.json', makeReport()));
-  document.getElementById('bRepMail').addEventListener('click', () => { const rep = makeReport(), r = rep.result; const link = repLinkFor(rep);
-    mailto('', t('mailRepSubj', nm(spec.title), spec.version), t('mailRepBody', t('V_'+r.verdict), fmt(r.H), spec.lock.fingerprint, link ? link+'\n' : '')); });
+  document.getElementById('bToVer').addEventListener('click', () => { view='ver'; render(); window.scrollTo(0, document.querySelector('nav.steps').offsetTop); });
   update();
 }
 function copyText(v){ try { navigator.clipboard.writeText(v); } catch(e) { const i = document.createElement('textarea'); i.value = v; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); } }
@@ -946,15 +1071,17 @@ function update(){
     prox = '<div class="prox"><div class="ttl">'+t('prox')+'</div>'+L.map(x => '<div>· '+esc(x)+'</div>').join('')+'</div>';
   }
   const betaTag = t('wTag', nf((+r.beta).toFixed(2)));
-  $('#res').innerHTML = '<div class="restitle"><b>'+t('resTitle')+'</b><span>'+t('resSub')+'</span></div><div class="notation" aria-label="notation"><div class="lt">'+r.n+'/'+r.N+'</div><div class="H '+(r.H!==null&&r.H<0?'rej':'')+'">'+(r.H===null?'—':fmt(r.H))+'</div><div class="rt">'+rt+'</div><div class="lb">v'+esc(spec.version)+'·'+spec.lock.fingerprint.slice(0,4)+'·'+betaTag+'</div><div class="rb">'+rb+'</div></div>'+
-    '<div class="mini">'+scaleSVG(r.H, tA, tR, 'A', okRows.map(x => x.d))+'</div>'+
-    '<div><div class="verdict '+r.verdict+'">'+t('V_'+r.verdict)+'</div><div class="why">'+(r.reason?esc(t('rs_'+r.reason))+' ':'')+esc(explain(r, s))+'</div>'+(conc?'<div class="warn">'+t('concession')+'</div>':'')+
-    '<div class="hint" style="margin-top:6px">'+t('readN', r.n, r.N, esc(spec.version), spec.lock.fingerprint.slice(0,8))+' · '+t('kInfo', nf((+r.k).toFixed(2)))+' · '+betaTag+'</div></div>'+
-    (r.H!==null?'<div style="grid-column:1/-1;border-top:1px solid var(--page-line);padding-top:10px"><b style="font-size:13.5px">'+t('decT2')+'</b><div class="chart">'+decompSVG(r)+'</div><div class="hint" style="margin:0">'+t('decH')+'</div></div>':'')+
+  if (allBool()) { const ok = r.H!==null && r.H>0;
+    $('#res').innerHTML = '<div class="restitle"><b>'+t('resTitle')+'</b><span>'+t('boolSub')+'</span></div><div class="notation"><div class="lt">'+r.n+'/'+r.N+'</div><div class="H '+(r.H!==null&&r.H<0?'rej':'')+'">'+(r.H===null?'—':fmt(r.H))+'</div><div class="lb">v'+esc(spec.version)+'·'+spec.lock.fingerprint.slice(0,12)+'</div></div>'+
+      '<div><div class="verdict '+(r.H===null?'NOT_APPROVABLE':ok?'ACCEPT':'REJECT')+'">'+(r.H===null?t('V_NOT_APPROVABLE'):ok?t('V_PASS'):t('V_FAIL'))+'</div><div class="why">'+esc(r.H===null?t('why_none'):ok?t('boolOk'):t('boolNo'))+'</div><div class="hint">'+t('boolNote')+'</div></div>';
+    return; }
+  $('#res').innerHTML = '<div class="restitle"><b>'+t('resTitle')+'</b><span>'+t('resSub')+'</span></div><div class="notation" aria-label="notation"><div class="lt">'+r.n+'/'+r.N+'</div><div class="H '+(r.H!==null&&r.H<0?'rej':'')+'">'+(r.H===null?'—':fmt(r.H))+'</div><div class="rt">'+rt+'</div><div class="lb">v'+esc(spec.version)+'·'+spec.lock.fingerprint.slice(0,12)+'·'+betaTag+'</div><div class="rb">'+rb+'</div></div>'+
+    
+    '<div><div class="verdict '+r.verdict+'">'+t('V_'+r.verdict)+'</div><div class="why">'+(r.reason?esc(t('rs_'+r.reason))+' ':'')+esc(explain(r, s))+'</div>'+(conc?'<div class="warn">'+t('concession')+'</div>':'')+softWarn(r)+
+    '<div class="hint" style="margin-top:6px">'+t('readN', r.n, r.N, esc(spec.version), spec.lock.fingerprint.slice(0,12))+' · '+t('kInfo', nf((+r.k).toFixed(2)))+' · '+betaTag+'</div></div>'+
+    '<div class="mini"><b style="font-size:13.5px">'+t('scaleT')+'</b>'+scaleSVG(r.H, tA, tR, 'A', okRows.map(x => tickInfo(x)))+'<div class="hint" style="margin:4px 0 0">'+t((tR!==null&&tR<0)?'scaleCapC':'scaleCap')+'</div>'+unitLines(r, tA)+'</div>'+(r.H!==null?'<div style="grid-column:1/-1;border-top:1px solid var(--page-line);padding-top:10px"><b style="font-size:13.5px">'+t('decT2')+'</b><div class="chart">'+decompSVG(r)+'</div><div class="hint" style="margin:0">'+t('decH')+'</div></div>':'')+
     (r.H!==null&&r.n===r.N?revisionHTML(r, s):'')+prox;
-  const rl = document.getElementById('repLink');
-  if (rl) { const rep = makeReport(), link = repLinkFor(rep); rl.innerHTML = link ? '<div class="hint">'+t('retLink')+'</div><div class="row" style="margin:6px 0 0"><input readonly value="'+esc(link)+'" id="repLinkIn"><button class="btn small" id="bCopyRep">'+t('copy')+'</button></div>' : (Object.keys(EV).length ? '<div class="hint">'+t('retTooBig')+'</div>' : '');
-    const bc = document.getElementById('bCopyRep'); if (bc) bc.addEventListener('click', () => { copyText(link); bc.textContent = t('copied'); }); }
+
   const multi = Object.keys(r.groups).length > 1;
   $('#charts').innerHTML = '<div class="chart">'+scaleSVG(r.H, tA, tR, t('Amark'), r.rows.filter(x => (x.p.kind||(x.p.mandatory===false?'info':'mand'))!=='info' && x.status==='ok').map(x => x.d))+'</div><div class="cap">'+t('scaleCap')+'</div>'+
     '<div class="chart">'+profileSVG(r)+'</div><div class="cap">'+t('profCap')+'</div>'+
@@ -965,42 +1092,93 @@ function update(){
 const C = {ink:'#1C2430', muted:'#6B727C', line:'#D5D8DC', acc:'#0F6E6E', rej:'#B3261E', grey:'#C9CDD2', black:'#2B2B2B', soft:'#F5F6F7'};
 const MONO = 'IBM Plex Mono, monospace';
 function scaleSVG(H, tA, tR, label, ticks, Y){
-  const W=640, x0=30, x1=610, X = v => x0 + (v+1)/2*(x1-x0), y=50, h=22;
-  let s = '<svg viewBox="0 0 '+W+' '+(Y!==undefined&&Y!==null?150:116)+'" width="'+W+'" role="img" aria-label="scale">';
-  if (Y!==undefined && Y!==null) { const xy = X(Y); s += '<path d="M'+(xy-7)+' '+(y+h+44)+' L'+(xy+7)+' '+(y+h+44)+' L'+xy+' '+(y+h+30)+' Z" fill="'+C.acc+'" opacity=".85"/><text x="'+Math.min(W-60,Math.max(60,xy))+'" y="'+(y+h+60)+'" font-size="12" text-anchor="middle" fill="'+C.acc+'" font-family="'+MONO+'">Y '+fmt(Y)+'</text>'; if (H!==null&&H!==undefined) s += '<line x1="'+X(H)+'" x2="'+xy+'" y1="'+(y+h+24)+'" y2="'+(y+h+24)+'" stroke="'+C.muted+'" stroke-dasharray="3 3"/>'; }
-  const lo = tR===null ? -1 : Math.max(-1,tR), hi = tA===null ? 1 : tA;
-  if (tR!==null) s += '<rect x="'+X(-1)+'" y="'+y+'" width="'+Math.max(0,X(lo)-X(-1))+'" height="'+h+'" fill="'+C.black+'"/>';
-  s += '<rect x="'+X(lo)+'" y="'+y+'" width="'+Math.max(0,X(hi)-X(lo))+'" height="'+h+'" fill="'+C.grey+'"/>';
-  if (tA!==null) s += '<rect x="'+X(tA)+'" y="'+(y+.5)+'" width="'+Math.max(0,X(1)-X(tA)-.5)+'" height="'+(h-1)+'" fill="#fff" stroke="'+C.ink+'"/>';
-  [-1,-0.5,0,0.5,1].forEach(v => { s += '<line x1="'+X(v)+'" x2="'+X(v)+'" y1="'+(y+h)+'" y2="'+(y+h+5)+'" stroke="'+C.ink+'"/><text x="'+X(v)+'" y="'+(y+h+18)+'" font-size="11" text-anchor="middle" fill="'+C.ink+'" font-family="'+MONO+'">'+fmt(v)+'</text>'; });
-  if (tR!==null) s += '<line x1="'+X(tR)+'" x2="'+X(tR)+'" y1="'+(y-4)+'" y2="'+(y+h+4)+'" stroke="'+C.rej+'" stroke-width="2.5"/><text x="'+X(tR)+'" y="'+(y+h+34)+'" font-size="11" text-anchor="middle" fill="'+C.rej+'" font-family="'+MONO+'">'+fmt(tR)+'</text>';
-  if (tA!==null && tA!==tR) s += '<line x1="'+X(tA)+'" x2="'+X(tA)+'" y1="'+(y-4)+'" y2="'+(y+h+4)+'" stroke="'+C.acc+'" stroke-width="2.5"/><text x="'+X(tA)+'" y="'+(y+h+34)+'" font-size="11" text-anchor="middle" fill="'+C.acc+'" font-family="'+MONO+'">'+fmt(tA)+'</text>';
-  (ticks||[]).forEach(v => { s += '<line x1="'+X(v)+'" x2="'+X(v)+'" y1="'+(y+h+1)+'" y2="'+(y+h+9)+'" stroke="'+(v<0?C.rej:C.acc)+'" stroke-width="2" opacity=".8"/>'; });
-  if (H!==null && H!==undefined) { const xh = X(H); s += '<path d="M'+(xh-8)+' '+(y-18)+' L'+(xh+8)+' '+(y-18)+' L'+xh+' '+(y-3)+' Z" fill="'+(H<0?C.rej:C.ink)+'"/><text x="'+Math.min(W-40,Math.max(40,xh))+'" y="'+(y-24)+'" font-size="13" font-weight="600" text-anchor="middle" fill="'+C.ink+'" font-family="'+MONO+'">'+(label?esc(label)+' ':'')+fmt(H)+'</text>'; }
+  const W=760, x0=24, x1=736, X = v => x0 + (v+1)/2*(x1-x0), y=46, h=40, F='font-family="'+MONO+'"';
+  const hasY = Y!==undefined && Y!==null, Ht = hasY ? 210 : 176; const NARROW = [];
+  let s = '<svg viewBox="0 0 '+W+' '+Ht+'" width="'+W+'" role="img" aria-label="scale">';
+  const zones = [];
+  if (tR===null && tA===null) zones.push([-1,1,'#E9EBEE',C.ink,t('zAll')]);
+  else {
+    const r0 = tR===null ? -1 : Math.max(-1,tR), a0 = tA===null ? 1 : Math.min(1,tA);
+    if (tR!==null && r0>-1) zones.push([-1,r0,C.black,'#fff',t('zRej')]);
+    if (r0<0) zones.push([r0,Math.min(0,a0),'#F3D9A4','#6B4500',t('zExc')]);
+    if (a0>0) zones.push([Math.max(0,r0),a0,'#D3D7DC',C.ink,t('zRev')]);
+    if (tA!==null) zones.push([a0,1,'#fff',C.acc,t('zAcc')]);
+  }
+  zones.forEach(z => { const a=X(z[0]), b=X(z[1]), w=b-a; if (w<=0) return;
+    s += '<rect x="'+a+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+z[2]+'" stroke="'+C.ink+'" stroke-width=".8"/>';
+    const words = String(z[4]).split('\n');
+    if (w>=170) words.forEach((ln,k) => { s += '<text x="'+(a+w/2)+'" y="'+(y+h/2+5+(k-(words.length-1)/2)*15)+'" font-size="'+(k?11.5:14)+'" font-weight="'+(k?400:600)+'" text-anchor="middle" fill="'+z[3]+'">'+esc(ln)+'</text>'; });
+    else NARROW.push([a+w/2, z, words]); });
+  NARROW.forEach((q,k) => { const lx = q[0], col = q[1][3]==='#fff'?C.ink:q[1][3], side = k%2 ? 1 : -1, tx = lx + side*16;
+    const ty = y+h+78+k*0; s += '<line x1="'+lx+'" x2="'+lx+'" y1="'+(y+h)+'" y2="'+(ty-14)+'" stroke="'+C.muted+'" stroke-width=".8"/><rect x="'+(lx-5)+'" y="'+(ty-20)+'" width="10" height="10" fill="'+q[1][2]+'" stroke="'+C.ink+'" stroke-width=".8"/>';
+    s += '<text x="'+(tx)+'" y="'+(ty-10)+'" font-size="12.5" font-weight="600" text-anchor="'+(side<0?'end':'start')+'" fill="'+col+'">'+esc(q[2].join(' · '))+'</text>'; });
+  [-1,-0.5,0,0.5,1].forEach(v => { s += '<line x1="'+X(v)+'" x2="'+X(v)+'" y1="'+(y+h)+'" y2="'+(y+h+6)+'" stroke="'+C.ink+'"/><text x="'+X(v)+'" y="'+(y+h+22)+'" font-size="13" text-anchor="middle" fill="'+C.ink+'" '+F+'>'+fmt(v)+'</text>'; });
+  s += '<line x1="'+X(0)+'" x2="'+X(0)+'" y1="'+(y-6)+'" y2="'+(y+h+6)+'" stroke="'+C.ink+'" stroke-width="2.5"/><text x="'+X(0)+'" y="'+(y-10)+'" font-size="12" text-anchor="middle" fill="'+C.muted+'">'+(H!==null&&H!==undefined&&Math.abs(H)<0.25?'':esc(t('zLim')))+'</text>';
+  const thr = (v,col,txt,anc) => { const x=X(v); s += '<line x1="'+x+'" x2="'+x+'" y1="'+(y-6)+'" y2="'+(y+h+6)+'" stroke="'+col+'" stroke-width="3"/><line x1="'+x+'" x2="'+x+'" y1="'+(y+h+28)+'" y2="'+(y+h+46)+'" stroke="'+col+'" stroke-width="1"/><text x="'+(x+(anc==='end'?-4:4))+'" y="'+(y+h+44)+'" font-size="12.5" font-weight="600" text-anchor="'+anc+'" fill="'+col+'">'+esc(txt)+' '+fmt(v)+'</text>'; };
+  if (tR!==null && tR>-1 && tR!==0) thr(tR, C.rej, t('zTR'), 'end');
+  if (tA!==null && tA!==tR && tA<1) thr(tA, C.acc, t('zTA'), 'start');
+  (ticks||[]).forEach(o => { const v = typeof o==='object' ? o.d : o, n = typeof o==='object' ? o.n : '', tip = typeof o==='object' && o.tip ? o.tip : (n?n+': ':'')+fmt(v)+' — '+t('dotTip');
+    if (typeof o==='object' && o.warn) { const cx = X(v), cy = y-2; s += '<g style="cursor:help"><title>'+esc(tip)+'</title><path d="M'+cx+' '+(cy-20)+' L'+(cx+12)+' '+cy+' L'+(cx-12)+' '+cy+' Z" fill="#E8890C" stroke="#fff" stroke-width="1.2"/><text x="'+cx+'" y="'+(cy-4)+'" font-size="13" font-weight="700" text-anchor="middle" fill="#fff">!</text><line x1="'+cx+'" x2="'+cx+'" y1="'+cy+'" y2="'+(y+h-2)+'" stroke="#E8890C" stroke-width="1.5" stroke-dasharray="3 2"/></g>'; }
+    else s += '<circle cx="'+X(v)+'" cy="'+(y+h-7)+'" r="5.5" fill="'+(v<0?C.rej:C.acc)+'" stroke="#fff" stroke-width="1.2" style="cursor:help"><title>'+esc(tip)+'</title></circle>'; });
+  if ((ticks||[]).some(o => o && o.warn)) s += '<path d="M'+(x0+380)+' '+(Ht-3)+' L'+(x0+392)+' '+(Ht-3)+' L'+(x0+386)+' '+(Ht-15)+' Z" fill="#E8890C"/><text x="'+(x0+398)+'" y="'+(Ht-5)+'" font-size="12" fill="'+C.muted+'">'+esc(t('triLeg'))+'</text>';
+  if ((ticks||[]).length > 1) s += '<circle cx="'+(x0+6)+'" cy="'+(Ht-9)+'" r="5" fill="'+C.acc+'"/><text x="'+(x0+16)+'" y="'+(Ht-5)+'" font-size="12" fill="'+C.muted+'">'+esc(t('dotLeg'))+'</text>';
+  if (hasY) { const xy = X(Y); s += '<path d="M'+(xy-8)+' '+(Ht-20)+' L'+(xy+8)+' '+(Ht-20)+' L'+xy+' '+(Ht-34)+' Z" fill="'+C.acc+'"/><text x="'+Math.min(W-60,Math.max(60,xy))+'" y="'+(Ht-4)+'" font-size="13" text-anchor="middle" fill="'+C.acc+'" '+F+'>Y '+fmt(Y)+'</text>'; }
+  if (H!==null && H!==undefined) { const xh = X(Math.max(-1,Math.min(1,H)));
+    s += '<line x1="'+xh+'" x2="'+xh+'" y1="'+(y-4)+'" y2="'+(y+h+2)+'" stroke="'+(H<0?C.rej:C.ink)+'" stroke-width="2" stroke-dasharray="3 2"/><path d="M'+(xh-10)+' '+(y-24)+' L'+(xh+10)+' '+(y-24)+' L'+xh+' '+(y-4)+' Z" fill="'+(H<0?C.rej:C.ink)+'"/><text x="'+Math.min(W-70,Math.max(70,xh))+'" y="'+(y-30)+'" font-size="16" font-weight="700" text-anchor="middle" fill="'+(H<0?C.rej:C.ink)+'" '+F+'>'+(label?esc(label)+' ':'')+fmt(H)+'</text>'; }
   return s + '</svg>';
 }
 const short = (s, n) => { s = String(s||''); return s.length>n ? s.slice(0,n-1)+'…' : s; };
 const nm = s => { const p = String(s||'').split(' / '); return p.length===2 ? (LANG==='tr'?p[0]:p[1]) : s; };
+function devInfo(p, x){ // deviation from the ideal (full-score) value and from the limit, in the requirement's own unit
+  const v = num(x.xs!==undefined && typeof x.xs==='number' ? x.xs : null), u = p.unit ? ' '+p.unit : '';
+  let B, L; if (p.type==='two') { B = num(p.Blo); L = (v!==null && v > B) ? num(p.Lhi) : num(p.Llo); } else { B = num(p.B); L = num(p.L); }
+  if (v===null || B===null || L===null) return null;
+  const dI = v - B, dL = v - L, pI = B!==0 ? dI/Math.abs(B)*100 : null, pL = L!==0 ? dL/Math.abs(L)*100 : null;
+  const sg = z => (z>0?'+':z<0?'−':'')+nf(Math.abs(+z.toFixed(4)));
+  return {v, B, L, txtI: sg(dI)+u+(pI===null?'':' ('+sg(+pI.toFixed(1))+' %)'), txtL: sg(dL)+u+(pL===null?'':' ('+sg(+pL.toFixed(1))+' %)'), u};
+}
+function tickInfo(x){
+  const kd = x.p.kind||(x.p.mandatory===false?'info':'mand'), n = nm(x.p.name), di = devInfo(x.p, x);
+  const warn = kd==='soft' && x.d < 0;
+  let tip = n+': '+t('tipScore')+' '+fmt(x.d);
+  if (di) tip += '\n'+t('tipVal', nf(+di.v.toFixed(4))+di.u)+'\n'+t('tipIdeal', nf(di.B)+di.u, di.txtI)+'\n'+t('tipLim', nf(di.L)+di.u, di.txtL);
+  tip += '\n'+(warn ? t('tipWarn') : kd==='soft' ? t('tipSoft') : t('dotTip'));
+  return {d:x.d, n, tip, warn};
+}
+function softWarn(r){
+  const L = r.rows.filter(x => (x.p.kind||'mand')==='soft' && x.status==='ok' && x.d<0);
+  if (!L.length || (r.m!==null && r.m<0)) return '';
+  return '<div class="warn"><b>⚠ '+t('swT')+'</b> '+L.map(x => { const di = devInfo(x.p, x); return esc(nm(x.p.name))+' ('+fmt(x.d)+(di?'; '+t('swIdeal')+' '+di.txtI:'')+')'; }).join(', ')+'. '+t('swTxt')+'</div>';
+}
+function unitLines(r, tA){
+  if (tA===null || tA===0) return '';
+  const L = r.rows.filter(x => x.p.type!=='bool' && (x.p.kind||(x.p.mandatory===false?'info':'mand'))==='mand').map(x => '<li><b>'+esc(nm(x.p.name))+'</b>: '+esc(t('uLine', fmt(tA), unitBand(x.p, tA, 'acc')+(x.p.unit?' '+x.p.unit:''), unitBand(x.p, 0, 'acc')+(x.p.unit?' '+x.p.unit:'')))+'</li>');
+  return L.length ? '<div class="unitbox"><b>'+t('uT')+'</b><ul>'+L.join('')+'</ul><div class="hint" style="margin:2px 0 0">'+t('uNote')+'</div></div>' : '';
+}
 function decompSVG(r){
   if (r.H===null) return '';
-  const W=640, x0=30, x1=610, X = v => x0 + (v+1)/2*(x1-x0), rh=22;
+  const W=780, lab=270, x0=lab+20, x1=W-60, X = v => x0 + (v+1)/2*(x1-x0), rh=30;
   let parts = r.parts.slice();
   if (r.veto) parts = [{key:'veto', label:t('decVeto'), v:-1}];
-  const base = parts.find(p => p.key==='base'), rest = parts.filter(p => p.key!=='base' && p.key!=='veto' && Math.abs(p.v) > 0.0005).sort((a,b) => Math.abs(b.v)-Math.abs(a.v));
+  const base = parts.find(p => p.key==='base'), fl = parts.find(p => p.key==='floor'), rest = parts.filter(p => p.key!=='base' && p.key!=='veto' && p.key!=='floor' && Math.abs(p.v) > 0.0005).sort((a,b) => Math.abs(b.v)-Math.abs(a.v)).concat(fl ? [fl] : []);
   const seq = (r.veto ? parts : (base ? [base] : []).concat(rest));
-  const Ht = 34 + seq.length*rh + 28;
+  const Ht = 20 + (seq.length+1)*rh + 30;
   let s = '<svg viewBox="0 0 '+W+' '+Ht+'" width="'+W+'" role="img" aria-label="decomposition">';
-  [-1,-0.5,0,0.5,1].forEach(v => { s += '<line x1="'+X(v)+'" x2="'+X(v)+'" y1="8" y2="'+(Ht-24)+'" stroke="'+(v===0?C.ink:C.line)+'" stroke-width="'+(v===0?1:0.6)+'"/><text x="'+X(v)+'" y="'+(Ht-8)+'" font-size="11" text-anchor="middle" fill="'+C.muted+'" font-family="'+MONO+'">'+fmt(v)+'</text>'; });
+  [-1,-0.5,0,0.5,1].forEach(v => { s += '<line x1="'+X(v)+'" x2="'+X(v)+'" y1="8" y2="'+(Ht-26)+'" stroke="'+(v===0?C.ink:C.line)+'" stroke-width="'+(v===0?1.5:0.8)+'"/><text x="'+X(v)+'" y="'+(Ht-8)+'" font-size="13" text-anchor="middle" fill="'+C.muted+'" font-family="'+MONO+'">'+fmt(v)+'</text>'; });
   let cur = 0;
-  seq.forEach((p,i) => { const y = 14 + i*rh, a = X(cur), b = X(cur+p.v), xl = Math.min(a,b), w = Math.max(1.5, Math.abs(b-a));
-    const col = p.key==='base' ? (p.v<0?C.rej:C.ink) : (p.v<0?C.rej:C.acc);
-    s += '<rect x="'+xl+'" y="'+y+'" width="'+w+'" height="'+(rh-7)+'" fill="'+col+'" opacity="'+(p.key==='base'?1:0.85)+'"/>';
-    if (i>0) s += '<line x1="'+a+'" x2="'+a+'" y1="'+(y-7)+'" y2="'+y+'" stroke="'+C.muted+'" stroke-dasharray="2 2"/>';
-    const lab = (p.key==='base' ? t('decBase') : p.key==='veto' ? t('decVeto') : nm(p.label)) + '  ' + (p.v>=0?'+':'−') + nf(Math.abs(p.v).toFixed(2));
-    const right = Math.max(a,b), left = xl; const tx = (right+6 < W-150) ? right+6 : left-6;
-    s += '<text x="'+tx+'" y="'+(y+11)+'" font-size="11.5" text-anchor="'+((right+6 < W-150)?'start':'end')+'" fill="'+C.ink+'">'+esc(short(lab,46))+'</text>';
+  seq.forEach((p,i) => { const y = 12 + i*rh, a = X(cur), b = X(cur+p.v), xl = Math.min(a,b), w = Math.max(2, Math.abs(b-a));
+    const col = p.key==='floor' ? '#9AA1A9' : p.key==='base' ? (p.v<0?C.rej:C.ink) : (p.v<0?C.rej:C.acc);
+    s += '<rect x="'+xl+'" y="'+y+'" width="'+w+'" height="'+(rh-9)+'" fill="'+col+'" opacity="'+(p.key==='base'?1:0.9)+'"/>';
+    if (i>0) s += '<line x1="'+a+'" x2="'+a+'" y1="'+(y-9)+'" y2="'+y+'" stroke="'+C.muted+'" stroke-dasharray="2 2"/>';
+    const nmL = p.key==='base' ? t('decBase') : p.key==='veto' ? t('decVeto') : p.key==='floor' ? t('decFloor') : nm(p.label);
+    s += '<text x="'+lab+'" y="'+(y+16)+'" font-size="13.5" text-anchor="end" fill="'+C.ink+'">'+esc(short(nmL,36))+'</text>';
+    const vt = (p.v>=0?'+':'−') + nf(Math.abs(p.v).toFixed(2)), right = Math.max(a,b);
+    s += '<text x="'+(right+6)+'" y="'+(y+16)+'" font-size="13" font-weight="600" fill="'+(p.v<0?C.rej:C.ink)+'" font-family="'+MONO+'">'+vt+'</text>';
     cur += p.v; });
-  const xa = X(Math.max(-1,Math.min(1,cur))); s += '<path d="M'+(xa-7)+' 2 L'+(xa+7)+' 2 L'+xa+' 12 Z" fill="'+(r.H<0?C.rej:C.ink)+'"/>';
+  const yT = 12 + seq.length*rh, xa = X(Math.max(-1,Math.min(1,cur)));
+  s += '<line x1="'+X(-1)+'" x2="'+X(1)+'" y1="'+(yT-3)+'" y2="'+(yT-3)+'" stroke="'+C.ink+'" stroke-width=".8"/>';
+  s += '<text x="'+lab+'" y="'+(yT+17)+'" font-size="14" font-weight="700" text-anchor="end" fill="'+C.ink+'">'+esc(t('decSum'))+'</text>';
+  s += '<path d="M'+(xa-9)+' '+(yT+4)+' L'+(xa+9)+' '+(yT+4)+' L'+xa+' '+(yT+20)+' Z" fill="'+(r.H<0?C.rej:C.ink)+'"/><text x="'+(xa+14)+'" y="'+(yT+18)+'" font-size="14" font-weight="700" fill="'+(r.H<0?C.rej:C.ink)+'" font-family="'+MONO+'">A = '+fmt(r.H)+'</text>';
   return s + '</svg>';
 }
 function profileSVG(r){
@@ -1036,11 +1214,16 @@ function treeSVG(r){
 
 // ---------------- step 3 ----------------
 function renderVer(){
-  $('#v-ver').innerHTML = '<h2>'+t('s3t')+'</h2><p class="lead">'+t('verLead')+'</p><div class="row"><label class="btn primary" style="margin:0">'+t('verFile')+'<input type="file" id="repFile" accept=".json" style="display:none"></label></div>'+
-    '<details class="adv"><summary>'+t('verPaste')+'</summary><textarea class="code" id="repText"></textarea><div class="row"><button class="btn" id="verBtn">'+t('verBtn')+'</button></div></details><div id="verOut"></div><div id="decOut"></div>';
-  if (PENDREP) { const p = PENDREP; PENDREP = null; setTimeout(() => verify(p), 0); }
-  document.getElementById('repFile').addEventListener('change', e => readFile(e.target.files[0], verify));
-  document.getElementById('verBtn').addEventListener('click', () => { let o; try { o = JSON.parse($('#repText').value); } catch(e) { $('#verOut').innerHTML = '<ul class="check"><li><b class="rej">'+t('FAIL')+'</b><span>'+t('c_json')+'</span></li></ul>'; return; } verify(o); });
+  if (!spec.lock) { $('#v-ver').innerHTML = '<h2>'+t('s3t')+'</h2><div class="lockbar"><div>'+t('noLock')+'</div></div>'; return; }
+  const r = HN.evaluate(engineSpec(spec), inputs);
+  LASTREP = {spec: body(spec), lock: spec.lock, inputs: JSON.parse(JSON.stringify(inputs)), evidence: JSON.parse(JSON.stringify(EV)), contractor: META.contractor||''};
+  LASTREP.reportFingerprint = HN.sha256(HN.canon(LASTREP));
+  LASTR = r; LASTOK = fingerprint(spec)===spec.lock.fingerprint && r.n===r.N;
+  $('#v-ver').innerHTML = '<h2>'+t('s3t')+'</h2><p class="lead">'+t('verLead')+'</p>'+exBanner()+lockBar()+
+    '<div class="sumbox"><b>'+t('verSum')+'</b><div class="mono" style="font-size:22px;margin-top:4px">A = '+(r.H===null?'—':fmt(r.H))+' · '+esc(t('V_'+r.verdict))+'</div><div class="hint">'+t('readN', r.n, r.N, esc(spec.version), spec.lock.fingerprint.slice(0,8))+'</div></div>'+
+    '<div id="verOut"></div><div id="decOut"></div>';
+  if (!LASTOK) $('#verOut').innerHTML = '<div class="err">'+(r.n<r.N ? t('verIncomplete', r.N-r.n) : t('altered'))+'</div>';
+  renderDecision();
 }
 let LASTREP = null, LASTOK = false, LASTR = null;
 function renderDecision(){
@@ -1053,13 +1236,13 @@ function renderDecision(){
     h += '<div class="item"><b>'+esc(nm(x.p.name))+'</b> · '+t('valL')+': <span class="mono">'+esc(nf(v.value))+(v.u!==undefined&&v.u!==''?' ± '+esc(nf(v.u)):'')+esc(U(x.p))+'</span> → <span class="mono '+(x.d<0?'rej':'acc')+'">'+(x.status==='ok'?fmt(x.d):'–')+'</span> — '+word(x)+
       (v.ev?'<div class="hint">'+t('evRef')+': '+esc(v.ev)+'</div>':'')+(e.calc?'<div style="margin-top:4px;white-space:pre-wrap">'+esc(e.calc)+'</div>':'')+(files?'<ul class="files">'+files+'</ul>':(!e.calc&&!v.ev?'<div class="hint">'+t('evNone')+'</div>':''))+'</div>'; });
   h += '</div>';
-  if (!LASTOK) { $('#decOut').innerHTML = h+'<div class="err">'+t('verifyFirst')+'</div>'; bindDl(rep); return; }
+  if (!LASTOK) { $('#decOut').innerHTML = h; return; }
   const rec = t('V_'+r.verdict)+' ('+fmt(r.H)+')';
   const opt = (k,lab) => '<label class="opt"><input type="radio" name="dec" value="'+k+'">'+t(lab)+'</label>';
   h += '<div class="decide"><h3>'+t('decT')+'</h3><div class="hint" style="margin:0">'+t('sysRec', rec)+'</div><div class="opts">'+opt('ACCEPT','decAcc')+opt('CONDITIONAL','decCond')+opt('REJECT','decRej')+'</div>'+
     '<div class="grid g2"><div><label>'+t('decNote')+'</label><textarea id="decNote" rows="3"></textarea></div><div><label>'+t('decBy')+'</label><input id="decBy"></div></div>'+
     '<div id="decMsg" class="err"></div><div class="row"><button class="btn primary" id="bDec">'+t('decSave')+'</button></div><div id="decRes"></div></div>';
-  $('#decOut').innerHTML = h; bindDl(rep);
+  $('#decOut').innerHTML = h; (CUR_DEC ? showDec(CUR_DEC) : 0);
   document.querySelectorAll('input[name=dec]').forEach(el => el.addEventListener('change', () => document.querySelectorAll('.decide label.opt').forEach(l => l.classList.toggle('on', l.querySelector('input').checked))));
   document.getElementById('bDec').addEventListener('click', () => {
     const sel = (document.querySelector('input[name=dec]:checked')||{}).value, note = $('#decNote').value.trim(), by = $('#decBy').value.trim();
@@ -1069,12 +1252,14 @@ function renderDecision(){
     $('#decMsg').textContent = '';
     const dec = {kind:'ozkul-decision', createdAt:new Date().toISOString(), decision:sel, note, approvedBy:by, systemVerdict:r.verdict, A:r.H, specFingerprint:rep.lock.fingerprint, reportFingerprint:rep.reportFingerprint, contractor:rep.contractor||''};
     dec.decisionFingerprint = HN.sha256(HN.canon(dec));
-    download('decision_'+rep.lock.fingerprint.slice(0,8)+'_'+Date.now()+'.json', dec);
-    const lab = t(sel==='ACCEPT'?'decAcc':sel==='REJECT'?'decRej':'decCond');
-    $('#decRes').innerHTML = '<div class="bigverdict '+(sel==='REJECT'?'rej':'acc')+'">'+esc(lab)+'</div><div class="hint">'+t('decDone', dec.decisionFingerprint.slice(0,16)+'…')+'</div><div class="row"><button class="btn" id="bDecMail">'+t('decMail')+'</button></div>';
-    document.getElementById('bDecMail').addEventListener('click', () => mailto('', t('decMailSubj', lab, nm(rep.spec.title)), t('decMailBody', lab, note||'–', rep.reportFingerprint, dec.decisionFingerprint)));
+    CUR_DEC = dec; try { sessionStorage.setItem('odn.dec', JSON.stringify(dec)); } catch(e){}
+    showDec(dec);
   });
 }
+let CUR_DEC = null; try { CUR_DEC = JSON.parse(sessionStorage.getItem('odn.dec')||'null'); } catch(e){}
+function showDec(dec){ const el = document.getElementById('decRes'); if (!el) return; const sel = dec.decision;
+  const lab = t(sel==='ACCEPT'?'decAcc':sel==='REJECT'?'decRej':'decCond');
+  el.innerHTML = '<div class="bigverdict '+(sel==='REJECT'?'rej':'acc')+'">'+esc(lab)+'</div><div class="hint">'+t('decDone', dec.decisionFingerprint.slice(0,16)+'…')+(dec.approvedBy?' · '+esc(dec.approvedBy):'')+' · '+new Date(dec.createdAt).toLocaleString(LANG==='tr'?'tr-TR':'en-GB')+'</div><div class="hint">'+t('decSession')+'</div>'; }
 function bindDl(rep){ document.querySelectorAll('[data-dl]').forEach(el => el.addEventListener('click', () => { const f = rep.evidence[el.dataset.dl].files[+el.dataset.k];
   const a = document.createElement('a'); a.href = 'data:'+(f.type||'application/octet-stream')+';base64,'+f.data; a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); })); }
 function verify(rep){
@@ -1101,7 +1286,7 @@ function scienceHTML(){
   const tr = LANG==='tr';
   const blocks = tr ? [
    ['1. Sabit anlamlı, işaretli ölçek','Her koşul −1 ile +1 arasında bir puana çevrilir. 0 her zaman şartnamedeki sınırdır. Bu yüzden işaret her alanda aynı anlamı taşır: A ≥ 0 bütün zorunlu sınırların sağlandığını, A &lt; 0 en az birinin aşıldığını gösterir. (A + 1)/2 dönüşümüyle aynı bilgi 0–1 aralığına da taşınabilir. İşaretli ölçeğin tercih edilmesinin nedeni anlamdır: uygunluk işaretten, derece büyüklükten okunur ve ayrıca bir eşik değerini hatırlamak gerekmez.'],
-   ['Eksi tarafın katma değeri','Eksi değer aşımın derinliğini, yani sınırdan kabul edilemez noktaya giden yolun ne kadarının geçildiğini ölçer. Bu bilgi uygunsuzluk ortaya çıktıktan sonra verilen kararları besler: istisna (sapma) onayı, yeniden işleme önceliği, hiçbir teklifin uymadığı ihalede pazarlık adayı, zaman içinde kötüleşmenin izlenmesi ve aşımın derinliğine bağlı yaptırımlar. İstenirlik indeksinde sınır dışındaki her değer 0 olduğu için bu ayrım kaybolur.'],
+   ['Eksi tarafın katma değeri','Eksi değer aşımın derinliğini, yani sınırdan kabul edilemez noktaya giden yolun ne kadarının geçildiğini ölçer. Bu bilgi uygunsuzluk ortaya çıktıktan sonra verilen kararları besler: sapma onayı (şartlı kabul), yeniden işleme önceliği, hiçbir teklifin uymadığı ihalede pazarlık adayı, zaman içinde kötüleşmenin izlenmesi ve aşımın derinliğine bağlı yaptırımlar. İstenirlik indeksinde sınır dışındaki her değer 0 olduğu için bu ayrım kaybolur.'],
    ['2. Üç çapa ve yön','Şartname sahibi her koşul için yönü (büyük iyi, küçük iyi, aralık, evet/hayır) ve üç çapayı verir: S (−1, kabul edilemez), L (0, sınır), B (+1, doyum). Çapaların sırası beyan edilen yönle uyuşmalıdır, aksi hâlde şartname kilitlenemez.'],
    ['3. Kötü taraf değeri','Ölçülen değer belirsizliği kadar sınıra doğru kaydırılır:<div class="f">x* = x − k·u·sgn(B − L)</div>Çok koşullu işlerde toplam riski α ile sınırlamak için<div class="f">k<sub>N</sub> = Φ<sup>−1</sup>((1 − α)<sup>1/N</sup>)</div>kullanılır.'],
    ['4. Koşul puanı','<div class="f">d = (x* − L)/(B − L)  eğer bu ≥ 0 ise,  aksi hâlde  d = (x* − L)/(L − S)</div>Puan [−1, +1] aralığına kırpılır ve iki basamağa aşağı yuvarlanır. Sınır değeri “hariç” işaretlenmişse tam sınıra eşit değer −0,01 alır (en küçük ihlal adımı). Aralık koşullarında iki tarafın küçüğü, log ölçekte değerlerin logaritması kullanılır.'],
