@@ -17,10 +17,12 @@ communicating multi-parameter specification compliance* (manuscript, 2026).
   re-computes everything from the report.
 
 ## Use
-Open `index.html` in any current browser (works offline, sends no data).
-1. **Write the specification** (owner) – direction, limit, full-score value, unacceptable value, whether the limit value itself is **included** or **excluded**, and the decision rule. Lock it.
-2. **Enter results** (submitter) – values and uncertainties; the decision appears live. Download the report.
-3. **Verify a report** (reviewer) – load the report; every line must say PASS.
+Open `index.html` in any current browser (works offline, sends no data to any server).
+
+1. **Write the specification** (owner) – for each requirement: direction, limit, full-score value, unacceptable value, and whether the limit value itself is **included** or **excluded**. Choose who decides (automatic accept / reject zones or always the owner) and lock it. The **lock code** (SHA-256) identifies this exact version.
+2. **Send it to the contractor** – copy the link or send it by e-mail. The link carries the locked specification; the contractor cannot change the rules.
+3. **Enter results** (contractor) – values, ± measurement uncertainty, calculation notes and evidence files (each file is fingerprinted). The decision number, a scale chart and a *closeness to acceptance* panel update live. Download the report and send it back.
+4. **Review and decide** (owner) – load the report: the tool re-checks both fingerprints, every score and every evidence file, shows the evidence, and records **Accept / Conditional acceptance / Reject** with a justification and a decision code.
 
 All worked examples of the paper are available from the example menu.
 
