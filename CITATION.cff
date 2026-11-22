@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Özkul Decision Number – reference implementation"
+authors:
+  - family-names: "Özkul"
+    given-names: "İskender"
+repository-code: "https://github.com/iskenderozkul/OzkulDecisionNumber"
+url: "https://iskenderozkul.github.io/OzkulDecisionNumber/"
+license: Apache-2.0
+version: "1.2.0"
+date-released: "2026-11-22"
