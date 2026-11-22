@@ -341,21 +341,21 @@ const HN = (function () {
     const m = okM.length ? Math.min.apply(null, okM.map(r => r.d)) : null;
     const veto = okM.some(r => r.d <= -1);
     const critical = false; // reserved, not used
-    let A, parts = [], floored = false;
-    if (veto) { A = -1; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
-    else if (m === null) { A = M; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
+    let A, parts = [], floored = false, branch = null;
+    if (veto) { A = -1; branch = 'veto'; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
+    else if (m === null) { A = M; branch = 'none'; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
     else if (m < 0) { // violation: sign locked negative. A = min( (1-b)m + bM , m(1 - b*max(0,M)) )
       const a1 = (1 - beta) * m + beta * M, Mp = Math.max(0, M), a2 = m * (1 - beta * Mp);
-      if (a1 <= a2) { A = a1; parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
-      else { A = a2; const pos = units.filter(u => M > 0);
+      if (a1 <= a2) { A = a1; branch = '5b1'; parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
+      else { A = a2; branch = '5b2';
         parts = [{ key: 'base', label: 'base', v: m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: M > 0 ? -m * beta * u.wn * u.d : 0, d: u.d, unit: u }))); } }
-    else { A = (1 - beta) * m + beta * M;
+    else { A = (1 - beta) * m + beta * M; branch = '5a';
       parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u })));
       if (A < 0) { // sign rule: penalising requirements may lower A to 0 but never make it negative while every mandatory limit is met
-        const cut = -A; parts.push({ key: 'floor', label: 'floor', v: cut }); floored = true; A = 0; } }
+        const cut = -A; parts.push({ key: 'floor', label: 'floor', v: cut }); floored = true; branch = 'floor'; A = 0; } }
     A = Math.max(-1, Math.min(1, A)); A = floor2(A);
     const binding = m === null ? [] : okM.filter(r => r.d === m).map(r => r.p.name);
-    return { beta, N, n, A, m, M, parts, binding, veto, critical, floored, units };
+    return { beta, N, n, A, m, M, parts, binding, veto, critical, floored, branch, units };
   }
   function decide(s, ag) {
     const tA = num(s.tauA), tR = num(s.tauR);
@@ -376,7 +376,7 @@ const HN = (function () {
     const H = ag.A;
     const reason = H === null ? null : ag.veto ? 'veto' : (ag.m !== null && ag.m < 0) ? 'violation' : (ag.floored ? 'floored' : (rows.some(r => r.status === 'ok' && kindOf(r.p) === 'soft' && r.d < 0) ? 'softpenalty' : 'ok'));
     const nearLimit = rows.filter(r => r.status === 'ok' && kindOf(r.p) === 'mand' && r.d >= 0 && r.d < 0.10).length;
-    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, critical: ag.critical, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
+    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, critical: ag.critical, floored: ag.floored, branch: ag.branch, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
   }
   // scenario simulation for soft requirements: other values at 'typical' (+0.40 / near limit +0.05)
   function simulate(s) {
@@ -1291,7 +1291,7 @@ function scienceHTML(){
    ['3. Kötü taraf değeri','Ölçülen değer belirsizliği kadar sınıra doğru kaydırılır:<div class="f">x* = x − k·u·sgn(B − L)</div>Çok koşullu işlerde toplam riski α ile sınırlamak için<div class="f">k<sub>N</sub> = Φ<sup>−1</sup>((1 − α)<sup>1/N</sup>)</div>kullanılır.'],
    ['4. Koşul puanı','<div class="f">d = (x* − L)/(B − L)  eğer bu ≥ 0 ise,  aksi hâlde  d = (x* − L)/(L − S)</div>Puan [−1, +1] aralığına kırpılır ve iki basamağa aşağı yuvarlanır. Sınır değeri “hariç” işaretlenmişse tam sınıra eşit değer −0,01 alır (en küçük ihlal adımı). Aralık koşullarında iki tarafın küçüğü, log ölçekte değerlerin logaritması kullanılır.'],
    ['5. Karar sayısı','<div class="f">A = (1 − β)·m + β·Σ w<sub>j</sub>d<sub>j</sub>   (m ≥ 0)</div><div class="f">A = min{ (1 − β)·m + β·Σ w<sub>j</sub>d<sub>j</sub> , m·(1 − β·max(0, Σ w<sub>j</sub>d<sub>j</sub>)) }   (m &lt; 0)</div>m en zayıf zorunlu koşulun puanı, w önem ağırlıkları (toplamı 1), β diğer koşulların etkisidir (0–0,75). Zorunlu bir koşul −1 ise A = −1 (veto). İşareti yalnızca zorunlu koşullar belirler (Teorem 2). β = 0 iken A = m olur ve yalnızca en küçük değer kuralı kalır; bu kural simetri, aynı puanların özetinin o puan olması, monotonluk ve şişirilemezlik (koşul eklemek sonucu yükseltemez) ilkelerini aynı anda sağlayan tek fonksiyon en küçük değerdir (makale, Teorem 1). Ağırlıklı ortalama bu son ilkeyi bozar.'],
-   ['6. Karar kuralı','n &lt; N ise onaylanamaz. A ≥ τ<sub>kabul</sub> ise kabul, A ≤ τ<sub>ret</sub> ise ret, arada ise karar vericiye kalır. τ<sub>kabul</sub> ≥ 0 zorunludur: bir sınır ihlali hiçbir eşikle otomatik kabule dönüşemez. τ<sub>ret</sub> &lt; 0 seçilirse sınırı hafifçe aşan iş karar vericiye kalır. Kabul edilirse bu bir istisna onayıdır.'],
+   ['6. Karar kuralı','n &lt; N ise onaylanamaz. A ≥ τ<sub>kabul</sub> <b>ve</b> en zayıf zorunlu koşulun puanı m ≥ τ<sub>kabul</sub> ise otomatik kabul; ikinci şart, iyi sonuçların zayıf bir zorunlu koşulu eşiğin üzerine taşımasını engeller. A ≤ τ<sub>ret</sub> ise otomatik ret; arada ise değerlendirilmesi gerekir (gri bölge). τ<sub>kabul</sub> ≥ 0 zorunludur: bir sınır ihlali hiçbir eşikle otomatik kabule dönüşemez. A &lt; 0 en az bir zorunlu sınırın aşıldığını gösterir; otomatik ret ise τ<sub>ret</sub> eşiğine ve dâhil/hariç kuralına göre verilir. τ<sub>ret</sub> &lt; 0 seçilirse sınırı hafifçe aşan iş karar vericiye kalır; kabul edilirse bu otomatik bir uygunluk değil, gerekçesi yazılması gereken bir istisna kararıdır (sapma onayı).'],
    ['7. Gösterim','Ortada A; sağ üstte τ<sub>kabul</sub>, sağ altta τ<sub>ret</sub>; sol üstte n/N; sol altta sürüm ve şartnamenin parmak izi. Boş bırakılan köşe "tanımlanmamış" demektir.'],
    ['8. Kilit ve doğrulama','Şartname kanonik biçimde yazılır ve SHA-256 parmak izi alınır. Rapor, şartnameyi, girdileri, sonucu ve kendi parmak izini içerir. Doğrulama her şeyi yeniden hesaplar. Parmak izi değişikliği tespit eder, kimin yazdığını kanıtlamaz. Resmî kullanım için dijital imza gerekir.']
   ] : [
@@ -1301,7 +1301,7 @@ function scienceHTML(){
    ['3. Worst-side value','The measured value is moved towards the limit by its uncertainty:<div class="f">x* = x − k·u·sgn(B − L)</div>To keep the total risk over N requirements at α,<div class="f">k<sub>N</sub> = Φ<sup>−1</sup>((1 − α)<sup>1/N</sup>)</div>is used.'],
    ['4. Requirement score','<div class="f">d = (x* − L)/(B − L)  if this is ≥ 0,  otherwise  d = (x* − L)/(L − S)</div>Clipped to [−1, +1] and rounded down to two decimals. If a limit is marked “excluded”, a value exactly at it scores −0.01 (the smallest violation step). Ranges take the smaller side score; log scales use logarithms of values and anchors.'],
    ['5. Decision number','<div class="f">A = (1 − β)·m + β·Σ w<sub>j</sub>d<sub>j</sub>   (m ≥ 0)</div><div class="f">A = min{ (1 − β)·m + β·Σ w<sub>j</sub>d<sub>j</sub> , m·(1 − β·max(0, Σ w<sub>j</sub>d<sub>j</sub>)) }   (m &lt; 0)</div>m is the weakest mandatory score, w the importance weights (sum 1), β the effect of the other requirements (0–0.75). A mandatory score of −1 gives A = −1 (veto). Only mandatory requirements set the sign (Theorem 2). With β = 0, A = m and the minimum is the only function that is symmetric, idempotent, monotone and non-inflatable, i.e. adding requirements can never raise the result (paper, Theorem 1). A weighted mean breaks the last property.'],
-   ['6. Decision rule','If n &lt; N: not approvable. A ≥ τ<sub>acc</sub>: accept; A ≤ τ<sub>rej</sub>: reject; otherwise the decision-maker decides. τ<sub>acc</sub> ≥ 0 is mandatory, so no threshold can turn a violated limit into an automatic acceptance. With τ<sub>rej</sub> &lt; 0, work slightly exceeding a limit is left to the decision-maker; accepting it is a concession.'],
+   ['6. Decision rule','If n &lt; N: not approvable. A ≥ τ<sub>acc</sub> <b>and</b> the weakest mandatory score m ≥ τ<sub>acc</sub>: automatic acceptance; the second condition stops good results from lifting a weak mandatory requirement over the threshold. A ≤ τ<sub>rej</sub>: automatic rejection; otherwise it needs evaluation (grey zone). τ<sub>acc</sub> ≥ 0 is mandatory, so no threshold can turn a violated limit into an automatic acceptance. A &lt; 0 shows that at least one mandatory limit is exceeded; automatic rejection follows the threshold τ<sub>rej</sub> and its inclusive/exclusive letter. With τ<sub>rej</sub> &lt; 0, work slightly exceeding a limit is left to the decision-maker; accepting it is not automatic compliance but an exception that must be justified (concession).'],
    ['7. Notation','Centre: A; top right: τ<sub>acc</sub>; bottom right: τ<sub>rej</sub>; top left: n/N; bottom left: version and specification fingerprint. An empty corner means "not defined".'],
    ['8. Lock and verification','The specification is serialised canonically and fingerprinted with SHA-256. The report contains the specification, inputs, result and its own fingerprint; verification recomputes everything. The fingerprint detects changes; it does not prove authorship. For contractual use, sign it digitally.']
   ];

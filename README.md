@@ -21,8 +21,9 @@ compliance* (manuscript, 2026).
 
 ## Tests
 ```
-node tests/core.test.js     # sign rule, veto, jump at m = 0, rounding, monotonicity, decomposition, kN, SHA-256
-node tests/simulation.js    # simulation of Section 9.1 (fixed seed)
+node tests/core.test.js             # 35 tests: sign rule, veto, jump at m = 0, rounding, monotonicity, decomposition, kN, SHA-256
+node tests/simulation.js            # simulation of Section 9.1, uniform distribution (fixed seed)
+node tests/simulation.js mixture    # sensitivity check with a mixture distribution
 ```
 
 ## Disclaimer / Sorumluluk reddi
