@@ -74,12 +74,15 @@ const HN = (function () {
     if (tA !== null && (tA < 0 || tA > 1)) e.push('Acceptance threshold must lie between 0 and +1 (a violated limit can never be accepted automatically).');
     if (tR !== null && (tR < -1 || tR > 1)) e.push('Rejection threshold must lie between \u22121 and +1.');
     if (tA !== null && tR !== null && tR > tA) e.push('Rejection threshold must not exceed the acceptance threshold.');
+    if (num(s.beta) !== null && (num(s.beta) < 0 || num(s.beta) > 0.75)) e.push('The effect of other requirements (beta) must lie between 0 and 0.75.');
+    (s.params || []).forEach((p, i) => { const w = num(p.w); if (w !== null && w < 0) e.push('Parameter ' + (i + 1) + ': weight cannot be negative.'); });
+    if (!(s.params || []).some(p => (p.kind || (p.mandatory === false ? 'info' : 'mand')) === 'mand')) e.push('At least one requirement must be mandatory.');
     if (s.alpha === null || s.alpha === undefined || s.alpha === '') { if (num(s.k) === null || num(s.k) < 0) e.push('Coverage factor k must be zero or positive.'); }
     else if (!(num(s.alpha) > 0 && num(s.alpha) < 0.5)) e.push('Family-wise risk \u03b1 must lie between 0 and 0.5.');
     return e;
   }
   function kUsed(s) {
-    const N = s.params.filter(p => p.mandatory !== false).length;
+    const N = s.params.filter(p => (p.kind || (p.mandatory === false ? 'info' : 'mand')) !== 'info').length;
     return (s.alpha !== null && s.alpha !== undefined && s.alpha !== '') ? kN(N, +s.alpha) : +s.k;
   }
   function scoreParam(p, inp, k) {
@@ -109,25 +112,85 @@ const HN = (function () {
     if (p.inclHi === 'E' && Math.abs(xh - +p.Lhi) < 1e-12) dh = -0.01;
     return { status: 'ok', d: floor2(Math.min(dl, dh)), xs: dl <= dh ? xl : xh, sideBinding: dl <= dh ? 'lower' : 'upper', u: u };
   }
+  const IMP = { decisive: 1.00, high: 0.75, medium: 0.50, low: 0.25, minor: 0.10 };
+  const BETA = { none: 0, slight: 0.25, balanced: 0.5, strong: 0.75 };
+  const kindOf = p => p.kind || (p.mandatory === false ? 'info' : 'mand');
+  const weightOf = p => { const w = num(p.w); if (w !== null && w >= 0) return w; return IMP[p.imp || 'medium']; };
+  function betaOf(s) { const b = num(s.beta); if (b !== null) return Math.max(0, Math.min(0.75, b)); return BETA[s.betaLevel || 'balanced']; }
+  // core aggregation on a list of {p,d,status,atLimitExcluded}
+  function aggregate(s, rows) {
+    const beta = betaOf(s);
+    const used = rows.filter(r => kindOf(r.p) !== 'info');
+    const mand = used.filter(r => kindOf(r.p) === 'mand');
+    const okU = used.filter(r => r.status === 'ok'), okM = mand.filter(r => r.status === 'ok');
+    const N = used.length, n = okU.length;
+    if (!n) return { beta, N, n, A: null, m: null, M: null, parts: [], binding: [], veto: false, units: [] };
+    // units: linked groups count once (score = min of members, weight = max of members)
+    const units = []; const gmap = {};
+    okU.forEach(r => { const g = (r.p.link || '').trim();
+      if (g) { if (!gmap[g]) { gmap[g] = { key: 'g:' + g, label: g, members: [], d: Infinity, w: 0, mand: false }; units.push(gmap[g]); }
+        const u = gmap[g]; u.members.push(r); if (r.d < u.d) u.d = r.d; u.w = Math.max(u.w, weightOf(r.p)); if (kindOf(r.p) === 'mand') u.mand = true; }
+      else units.push({ key: r.p.id, label: r.p.name, members: [r], d: r.d, w: weightOf(r.p), mand: kindOf(r.p) === 'mand' }); });
+    const W = units.reduce((a, u) => a + u.w, 0) || 1;
+    units.forEach(u => u.wn = u.w / W);
+    const M = units.reduce((a, u) => a + u.wn * u.d, 0);
+    const m = okM.length ? Math.min.apply(null, okM.map(r => r.d)) : null;
+    const veto = okM.some(r => r.d <= -1);
+    let A, parts = [];
+    if (veto) { A = -1; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
+    else if (m === null) { A = M; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
+    else if (m < 0) { // violation: sign locked negative. A = min( (1-b)m + bM , m(1 - b*max(0,M)) )
+      const a1 = (1 - beta) * m + beta * M, Mp = Math.max(0, M), a2 = m * (1 - beta * Mp);
+      if (a1 <= a2) { A = a1; parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
+      else { A = a2; const pos = units.filter(u => M > 0);
+        parts = [{ key: 'base', label: 'base', v: m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: M > 0 ? -m * beta * u.wn * u.d : 0, d: u.d, unit: u }))); } }
+    else { A = (1 - beta) * m + beta * M;
+      parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
+    A = Math.max(-1, Math.min(1, A)); A = floor2(A);
+    const binding = m === null ? [] : okM.filter(r => r.d === m).map(r => r.p.name);
+    return { beta, N, n, A, m, M, parts, binding, veto, units };
+  }
+  function decide(s, ag) {
+    const tA = num(s.tauA), tR = num(s.tauR);
+    if (ag.N === 0) return 'EMPTY';
+    if (ag.n < ag.N) return 'NOT_APPROVABLE';
+    const A = ag.A, mOk = ag.m === null || (s.letterA === 'E' ? ag.m > tA : ag.m >= tA);
+    if (tA !== null && (s.letterA === 'E' ? A > tA : A >= tA) && mOk) return 'ACCEPT';
+    if (tR !== null && (s.letterR === 'E' ? A < tR : A <= tR)) return 'REJECT';
+    return 'DISCRETION';
+  }
   function evaluate(s, inputs) {
     const k = kUsed(s); const rows = []; const groups = {};
     s.params.forEach(p => { const r = scoreParam(p, inputs[p.id], k); r.p = p; rows.push(r); });
-    const mand = rows.filter(r => r.p.mandatory !== false), ok = mand.filter(r => r.status === 'ok');
-    const N = mand.length, n = ok.length;
-    const H = n ? Math.min.apply(null, ok.map(r => r.d)) : null;
-    const binding = H === null ? [] : ok.filter(r => r.d === H).map(r => r.p.name);
-    ok.forEach(r => { const g = r.p.group || 'All parameters'; groups[g] = groups[g] === undefined ? r.d : Math.min(groups[g], r.d); });
-    const tA = num(s.tauA), tR = num(s.tauR);
-    let verdict;
-    if (N === 0) verdict = 'EMPTY';
-    else if (n < N) verdict = 'NOT_APPROVABLE';
-    else if (tA !== null && (s.letterA === 'E' ? H > tA : H >= tA)) verdict = 'ACCEPT';
-    else if (tR !== null && (s.letterR === 'E' ? H < tR : H <= tR)) verdict = 'REJECT';
-    else verdict = 'DISCRETION';
-    const nearLimit = ok.filter(r => r.d >= 0 && r.d < 0.10).length;
-    return { k, rows, N, n, H, binding, groups, verdict, nearLimit, compliant: H === null ? null : H >= 0 };
+    const ag = aggregate(s, rows);
+    rows.filter(r => r.status === 'ok' && kindOf(r.p) !== 'info').forEach(r => { const g = r.p.group || 'All parameters'; groups[g] = groups[g] === undefined ? r.d : Math.min(groups[g], r.d); });
+    const verdict = decide(s, ag);
+    const H = ag.A;
+    const reason = H === null ? null : ag.veto ? 'veto' : (ag.m !== null && ag.m < 0) ? 'violation' : (H < 0 ? 'combined' : (rows.some(r => r.status === 'ok' && kindOf(r.p) === 'soft' && r.d < 0) ? 'softpenalty' : 'ok'));
+    const nearLimit = rows.filter(r => r.status === 'ok' && kindOf(r.p) === 'mand' && r.d >= 0 && r.d < 0.10).length;
+    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
+  }
+  // scenario simulation for soft requirements: other values at 'typical' (+0.40 / near limit +0.05)
+  function simulate(s) {
+    const soft = s.params.filter(p => kindOf(p) === 'soft');
+    const levels = [['slight', -0.25], ['bad', -0.5], ['worst', -1]];
+    const ctx = [['good', 0.40], ['tight', 0.05]];
+    const out = [];
+    soft.forEach(sp => { levels.forEach(([lv, dv]) => { ctx.forEach(([cx, base]) => {
+      const rows = s.params.filter(p => kindOf(p) !== 'info').map(p => ({ p, status: 'ok', d: p.id === sp.id ? dv : base }));
+      const ag = aggregate(s, rows); out.push({ id: sp.id, name: sp.name, level: lv, ctx: cx, d: dv, A: ag.A, verdict: decide(s, ag) }); }); }); });
+    return out;
+  }
+  // sensitivity: perturb each weight by +-20%
+  function sensitivity(s, inputs) {
+    const base = evaluate(s, inputs); if (base.H === null) return { sensitive: false, cases: [] };
+    const cases = [];
+    s.params.forEach(p => { if (kindOf(p) === 'info') return; [0.8, 1.2].forEach(f => {
+      const s2 = JSON.parse(JSON.stringify(s)); const q = s2.params.find(x => x.id === p.id); q.w = weightOf(p) * f;
+      const r = evaluate(s2, inputs); if (r.verdict !== base.verdict) cases.push({ name: p.name, f, verdict: r.verdict, A: r.H }); }); });
+    return { sensitive: cases.length > 0, cases };
   }
   const fmt = v => v === null || v === undefined ? '\u2013' : (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v).toFixed(2);
-  return { sha256, canon, kN, Phi, floor2, scoreParam, evaluate, validateSpec, kUsed, fmt, num };
+  return { sha256, canon, kN, Phi, floor2, scoreParam, evaluate, simulate, sensitivity, aggregate, IMP, BETA, kindOf, weightOf, betaOf, validateSpec, kUsed, fmt, num };
 })();
 if (typeof module !== 'undefined') module.exports = HN;
