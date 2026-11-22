@@ -6,7 +6,7 @@ const HN = (function () {
   const K = PR.map(p => frac32(Math.cbrt(p)));
   const H0 = PR.slice(0, 8).map(p => frac32(Math.sqrt(p)));
   function sha256(str) {
-    const bytes = new TextEncoder().encode(str);
+    const bytes = (typeof str === 'string') ? new TextEncoder().encode(str) : str;
     const l = bytes.length, total = Math.ceil((l + 9) / 64) * 64;
     const m = new Uint8Array(total); m.set(bytes); m[l] = 0x80;
     const dv = new DataView(m.buffer); const bits = l * 8;

@@ -81,21 +81,44 @@ details.adv .grid{margin-top:10px}
 .fp{font-family:var(--page-mono);font-size:12px;word-break:break-all;color:var(--page-ink-2)}
 .acc{color:var(--page-accept)} .rej{color:var(--page-reject)} .mut{color:var(--page-muted)}
 /* result */
-.result{position:sticky;top:0;z-index:2;background:#fff;border:1px solid var(--page-ink);padding:16px 18px;margin-bottom:18px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 26px;align-items:center}
-@media(max-width:760px){.result{grid-template-columns:1fr;position:static}}
+.result{background:#fff;border:1px solid var(--page-ink);padding:16px 18px;margin-bottom:18px;display:grid;grid-template-columns:auto minmax(220px,320px) minmax(0,1fr);gap:10px 26px;align-items:center}
+@media(max-width:900px){.result{grid-template-columns:1fr}}
+.mini svg{width:100%;height:auto;display:block}
+.prox{grid-column:1/-1;border-top:1px solid var(--page-line);padding-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 26px;font-size:13.5px}
+.prox .ttl{grid-column:1/-1;font-weight:600}
+.prox .hint{grid-column:1/-1}
+.explain{background:#EEF3F8;border:1px solid #B9C9DA;border-radius:4px;padding:0 22px;margin:22px 0 26px}
+.explain .intro{padding:20px 0 22px}
+.explain .demo{background:#fff}
+.app{border:2px solid var(--page-ink);border-radius:4px;padding:0 22px 18px;margin-bottom:10px;background:#fff}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:4px 12px;background:#B9C9DA;color:#1E3550;border-radius:0 0 4px 4px}
+.app>.badge{background:var(--page-ink);color:#fff}
+.science{background:#EEF3F8;border-top:1px solid #B9C9DA}
+.chip{display:inline-block;font-family:var(--page-mono);font-size:12.5px;border:1px solid var(--page-line);padding:1px 8px;margin-top:6px;background:#fff;color:var(--page-ink)}
+.sendbox{border:1px dashed var(--page-ink-2);padding:4px 18px 14px;margin:22px 0;background:var(--page-panel)}
+ul.files{list-style:none;padding:0;margin:8px 0 0;font-size:13px} ul.files li{padding:3px 0}
+.evlist{border-top:1px solid var(--page-line);margin:8px 0 16px}
+.evlist .item{padding:10px 0;border-bottom:1px solid var(--page-line-soft);font-size:14px}
+.decide{border:2px solid var(--page-ink);padding:6px 18px 16px;margin-top:18px}
+.decide .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0}
+@media(max-width:720px){.decide .opts{grid-template-columns:1fr}}
+.decide label.opt{border:1px solid var(--page-line);padding:10px 12px;cursor:pointer;margin:0;color:var(--page-ink)}
+.decide label.opt.on{border-color:var(--page-ink);box-shadow:inset 3px 0 0 var(--page-ink)}
+.decide input[type=radio]{width:auto;margin-right:8px}
 .verdict{font-size:22px;font-weight:600;line-height:1.2}
 .verdict.ACCEPT{color:var(--page-accept)} .verdict.REJECT{color:var(--page-reject)} .verdict.DISCRETION{color:var(--page-ink)} .verdict.NOT_APPROVABLE,.verdict.EMPTY{color:var(--page-ink-2)}
 .why{font-size:14px;color:var(--page-ink-2);margin-top:4px}
 .warn{background:var(--page-warn-soft);color:var(--page-warn);padding:8px 12px;font-size:13px;margin-top:8px}
 .notation{display:grid;grid-template-columns:auto auto auto;align-items:center;gap:0 8px}
-.notation .lt,.notation .lb,.notation .rt,.notation .rb{font-family:var(--page-mono);font-size:14px;line-height:1.1}
+.notation .lt,.notation .lb,.notation .rt,.notation .rb{font-family:var(--page-mono);font-size:15px;line-height:1.1}
+.notation .lt,.notation .rt{margin-bottom:16px} .notation .lb,.notation .rb{margin-top:16px}
 .notation .lt,.notation .lb{text-align:right;color:var(--page-ink-2)}
 .notation .H{grid-row:1 / span 2;grid-column:2;font-family:var(--page-mono);font-weight:600;font-size:52px;line-height:1}
 .notation .lt{grid-row:1;grid-column:1;align-self:end} .notation .lb{grid-row:2;grid-column:1;align-self:start}
 .notation .rt{grid-row:1;grid-column:3;align-self:end;color:var(--page-accept)} .notation .rb{grid-row:2;grid-column:3;align-self:start;color:var(--page-reject)}
 .pc{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.2fr);gap:14px;align-items:start}
 @media(max-width:860px){.pc{grid-template-columns:1fr}}
-.pc .inp{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:8px}
+.pc .inp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
 .meter{height:12px;background:var(--page-line-soft);position:relative;margin-top:8px}
 .meter i{position:absolute;top:0;bottom:0}
 .meter .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--page-ink)}
@@ -130,6 +153,7 @@ footer{border-top:1px solid var(--page-line);color:var(--page-muted);font-size:1
 </div></header>
 
 <div class="wrap">
+ <section class="explain"><div class="badge" id="exBadge"></div>
   <div class="intro">
     <div>
       <h1 id="iTitle"></h1>
@@ -145,6 +169,8 @@ footer{border-top:1px solid var(--page-line);color:var(--page-muted);font-size:1
     <div class="demo"><div class="chart" id="demoScale"></div><div class="cap" id="iDemoCap"></div></div>
   </div>
 
+ </section>
+ <section class="app"><div class="badge" id="appBadge"></div>
   <nav class="steps" role="tablist">
     <button role="tab" data-v="spec"><b><span class="no">1</span><span id="s1t"></span></b><span id="s1d"></span></button>
     <button role="tab" data-v="sub"><b><span class="no">2</span><span id="s2t"></span></b><span id="s2d"></span></button>
@@ -154,6 +180,7 @@ footer{border-top:1px solid var(--page-line);color:var(--page-muted);font-size:1
   <section class="view" id="v-spec"></section>
   <section class="view" id="v-sub"></section>
   <section class="view" id="v-ver"></section>
+ </section>
 </div>
 
 <div class="science"><div class="wrap" id="science"></div></div>
@@ -181,7 +208,7 @@ tr:{
  iP2:'Şartnameyi yazan kişi kuralları kilitler. İşi yapan kişi yalnızca bulduğu değerleri girer ve sonucu hemen görür. Hakem ya da onaylayan kişi aynı hesabı tek tıkla tekrar yapabilir.',
  iF1:'tam puan, bundan iyisi fark etmez', iF2:'tam sınırda', iF3:'kesinlikle kabul edilemez', iSign:'<b>Neden eksi var?</b> İşaret “şartnameye uyuyor mu?” sorusunu, büyüklük “ne kadar?” sorusunu cevaplar. Artı ise bütün sınırlar sağlanmıştır ve sayı payın ne kadar olduğunu söyler. Eksi ise en az bir sınır aşılmıştır ve sayı aşımın ne kadar ciddi olduğunu söyler. −0,05 küçük bir düzeltmeyle ya da istisna onayıyla kurtarılabilecek bir iştir, −0,80 baştan ele alınması gereken bir iştir. 0–1 arası bir ölçekte sınır her şartnamede başka bir noktada kalırdı ve bu fark görünmezdi.',
  iDemoCap:'Örnek: kiriş maliyet sınırını aştığı için sonuç −0,40 çıkar ve iş reddedilir. Diğer üç koşulun iyi olması bunu değiştirmez.',
- s1t:'Şartnameyi yaz', s1d:'Şartname sahibi', s2t:'Değerleri gir', s2d:'İşi yapan kişi', s3t:'Raporu doğrula', s3d:'Hakem / onaylayan',
+ s1t:'Şartnameyi yaz', s1d:'Şartname sahibi', s2t:'Değerleri gir', s2d:'İşi yapan kişi', s3t:'Değerlendir ve onayla', s3d:'Şartname sahibi',
  exPick:'Makaledeki bir örneği aç…',
  specLead:'Her koşul için ne istediğinizi düz cümlelerle tanımlayın: hangi yön iyi, sınır ne, hangi değerden sonrası fark etmez, hangi değer kesinlikle kabul edilemez. Alttaki gri kutu, girdiğinizi bir cümle olarak geri okur. Kontrol edip kilitleyin.',
  specTitle:'Şartname adı', version:'Sürüm', owner:'Hazırlayan',
@@ -191,8 +218,24 @@ tr:{
  dnL:'En fazla (sınır)', dnB:'Bu değer veya altı tam puan (daha iyisi fark etmez)', dnS:'Bu değer veya üstü kesinlikle kabul edilemez',
  twL:'İzin verilen aralık', twB:'İdeal aralık (tam puan)', twS:'Kesinlikle kabul edilemez: altı / üstü', from:'en az', to:'en çok',
  advanced:'Ayrıntılar (isteğe bağlı)', group:'Grup (ör. Yapısal, Maliyet)', u0:'Varsayılan ölçüm belirsizliği (±)', vmin:'Geçerli en küçük değer', vmax:'Geçerli en büyük değer', mand:'Zorunlu koşul', defn:'Tanım ve ölçüm yöntemi', scale:'Ölçek', lin:'Doğrusal', log:'Logaritmik (çok geniş aralıklar için)',
+ exBadge:'Açıklama · Yöntemin nasıl çalıştığı. Örnek değerler kullanılır, aşağıdaki işinizle ilgisi yoktur.', appBadge:'Uygulama · Sizin şartnameniz, değerleriniz ve kararınız', sciBadge:'Bilimsel açıklama',
+ lockCode:'Kilit kodu (SHA-256 parmak izi)', lockCodeH:'Bu kod, şartnamenin kilitlendiği andaki hâlini kanıtlar. Şartnamede tek bir harf değişirse kod tamamen değişir.',
+ prox:'Kabule yakınlık (karara katılmaz, yalnızca bilgi)', proxH:'Karar her zaman en zayıf koşula göre verilir; bir koşuldaki fazlalık başka bir koşuldaki eksiği kapatamaz. Bu satırlar işin bütününün kabule ne kadar yakın olduğunu gösterir.',
+ gapA:'Otomatik kabul eşiğine ({0}) kalan: {1}', gapAok:'Otomatik kabul eşiği ({0}) {1} farkla geçildi', gapR:'Otomatik ret eşiğinin ({0}) {1} altında', gapRok:'Otomatik ret eşiğinin ({0}) {1} üstünde',
+ passN:'Sınırı sağlayan koşullar: {0}/{1} (%{2})', okA:'Kabul eşiğini tek başına geçen koşullar: {0}/{1}', avg:'Koşulların ortalama puanı: {0}', worst2:'Sıradaki en zayıf koşul: {0} ({1})',
+ valL:'Bulunan değer', uncL:'± Ölçüm belirsizliği', uncH:'Ölçümünüzün artı/eksi hata payı. Boş bırakırsanız {0} kullanılır. Değer bu pay kadar sınıra doğru kaydırılarak puanlanır, yani belirsizlik sonucu olduğundan iyi gösteremez.',
+ rule:'Koşul: {0}', inclEx:'Dahil: tam {0} girilirse koşul sağlanır ({1}). Hariç: tam {0} girilirse sağlanmaz ({2} gerekir).',
+ contractor:'Yüklenici (firma / kişi)', evT:'Kanıt ve hesaplama', calc:'Hesaplama / açıklama', calcP:'Değeri nasıl bulduğunuzu kısaca yazın', files:'Kanıt dosyaları', filesH:'Rapor, ölçüm tutanağı, hesap tablosu… Her dosyanın parmak izi alınır; şartname sahibi dosyanın değişmediğini görebilir. 3 MB üstü dosyalar rapora gömülmez, yalnızca parmak izi kaydedilir.',
+ sendT:'Yükleniciye gönder', sendLead:'Bu bağlantı kilitli şartnamenin tamamını içerir. Yüklenici bağlantıyı açınca doğrudan değer giriş ekranına gelir ve kuralları değiştiremez. Veri hiçbir sunucuya gitmez, bağlantının içinde taşınır.', copy:'Bağlantıyı kopyala', copied:'Kopyalandı', mail:'E-postayla gönder',
+ mailSubj:'Şartname: {0} (sürüm {1})', mailBody:'Merhaba,\n\nAşağıdaki bağlantıdan şartnameyi açıp bulduğunuz değerleri ve kanıtları girebilirsiniz:\n{0}\n\nKilit kodu: {1}\n',
+ retT:'Şartname sahibine gönder', retLead:'Raporu indirip şartname sahibine gönderin. Değerleriniz, hesaplamalarınız ve kanıt dosyalarınız raporun içindedir.', retLink:'Kanıt dosyası yoksa raporu bağlantı olarak da gönderebilirsiniz:', retTooBig:'Rapor, kanıt dosyaları nedeniyle bağlantı için büyük. Dosya olarak gönderin.', mailRep:'E-postayla bildir',
+ mailRepSubj:'Rapor: {0} (sürüm {1})', mailRepBody:'Merhaba,\n\nŞartname için değerlerimi girdim. Sistemin sonucu: {0} ({1}).\nKilit kodu: {2}\n{3}\nRapor dosyasını ekte gönderiyorum.\n',
+ evNone:'Kanıt eklenmemiş.', fileOk:'dosya değişmemiş', fileBad:'dosya değiştirilmiş', fileNoData:'yalnızca parmak izi', fileOpen:'indir', evRef:'Kanıt no',
+ decT:'Kararınız', sysRec:'Sistemin önerisi (sizin koyduğunuz kurala göre): {0}', decAcc:'Kabul', decCond:'Şartlı kabul (istisna onayı)', decRej:'Ret', decNote:'Gerekçe / not', decBy:'Onaylayan (ad, unvan)', decSave:'Kararı kaydet ve indir',
+ decDiff:'Bu karar sistemin önerisinden farklı ya da bir sınır ihlalini kabul ediyor. Gerekçe yazmanız zorunlu.', decNeed:'Bir karar seçin.', decDone:'Karar kaydedildi. Karar kodu: {0}', decMail:'Kararı yükleniciye e-postayla bildir',
+ decMailSubj:'Karar: {0} · {1}', decMailBody:'Merhaba,\n\nRaporunuz değerlendirildi.\nKarar: {0}\nGerekçe: {1}\nRapor kodu: {2}\nKarar kodu: {3}\n', verifyFirst:'Rapor doğrulamadan geçmediği için karar verilemez.',
  sayTag:'Şöyle okunuyor:', inclQ:'Sınır değerinin kendisi', inclI:'Dahil: tam sınıra eşit değer kabul', inclE:'Hariç: tam sınıra eşit değer ret', inclLoQ:'Alt sınır değeri', inclHiQ:'Üst sınır değeri', rdI:' Tam {0} kabul edilir.', rdE:' Tam {0} kabul edilmez.', w_excl:'Tam sınırda ama sınır hariç tutulmuş: ret', addParam:'+ Koşul ekle', del:'Sil',
- polT:'Karar kuralı', polLead:'Sonuç sayısına göre kararın nasıl verileceğini seçin. Kuralı siz koyarsınız, değerleri giren kişi değiştiremez.',
+ polT:'Karar yetkisi: kararı kim verir?', polLead:'Sonuç sayısına göre kararı sistemin hemen mi vereceğini, yoksa sizin mi değerlendireceğinizi seçin. Otomatik kabul ve ret bölgelerinin dışında kalan her iş size gelir. Son onayı her durumda 3. adımda siz kaydedersiniz.',
  pComply:'Sınırları sağlayan kabul, sağlamayan ret', pComplyD:'Ara bölge yok. En basit kural. Satın alma, kalite kontrol gibi işler için uygundur.',
  pMargin:'Kabul için güvenlik payı iste', pMarginD:'Sınırları sağlayan ama payı yetersiz kalan iş size kalır. Sınırı aşan iş her zaman otomatik ret olur.',
  pTol:'İstisna (sapma onayı) imkânı tanı', pTolD:'Sınırı hafifçe aşan iş otomatik ret olmaz, size kalır. Kabul ederseniz bu bir istisna onayıdır.',
@@ -204,7 +247,7 @@ tr:{
  locked:'Kilitli', draft:'Taslak: henüz kilitlenmedi', altered:'Uyarı: kilitlendikten sonra değiştirilmiş', newVer:'Yeni sürüm aç (kopya)', dlSpec:'Kilitli şartnameyi indir', imp:'Şartname dosyası yükle', newBlank:'Boş şartname', goSub:'Değer girişine geç →', fixFirst:'Kilitlemeden önce kırmızı uyarıları düzeltin.',
  fixList:'Düzeltilmesi gerekenler:',
  noLock:'Önce bir şartname kilitlenmeli. 1. adımda kilitleyin, kilitli bir şartname dosyası yükleyin ya da yukarıdan bir örnek açın.',
- subLead:'Yalnızca bulduğunuz değerleri girin. Sonuç siz yazarken güncellenir. Kuralları değiştiremezsiniz.',
+ subLead:'Yalnızca bulduğunuz değerleri, hesaplamanızı ve kanıtlarınızı girin. Sonuç siz yazarken güncellenir. Kuralları değiştiremezsiniz.',
  value:'Bulunan değer', unc:'± belirsizlik', ev:'Kanıt / rapor no', samples:'Örnek sayısı', yes:'evet', no:'hayır', choose:'seçin',
  w_full:'Tam puan: bundan iyisi kararı değiştirmez', w_ok:'Sınır sağlandı: tam puana giden yolun %{0}\'i', w_zero:'Tam sınırda, pay yok', w_bad:'Sınır aşıldı: kabul edilemez noktaya giden yolun %{0}\'i', w_black:'Kesinlikle kabul edilemez', w_miss:'Değer girilmedi', w_inv:'Geçersiz: {0}', binding:'en zayıf koşul',
  inv_range:'geçerli aralığın dışında', inv_neg:'belirsizlik negatif', inv_log:'log ölçekte pozitif olmalı',
@@ -215,7 +258,7 @@ tr:{
  sev_s:'Hafif aşım: küçük bir düzeltme ya da istisna onayıyla kurtarılabilir.', sev_m:'Belirgin aşım: düzeltme gerekir.', sev_l:'Ciddi aşım: kabul edilemez noktaya yakın, iş baştan ele alınmalı.', sev_x:'Kabul edilemez noktaya ulaşıldı.', concession:'Dikkat: bu iş en az bir sınırı aşıyor. Kabul ederseniz bu bir istisna (sapma) onayı olur ve gerekçesiyle kaydedilmelidir.',
  readN:'{0}/{1} koşul incelendi · sürüm {2} · parmak izi {3}', dlRep:'Raporu indir', dlRepH:'Rapor, kilitli şartnameyi, girdiğiniz değerleri, sonucu ve raporun parmak izini içerir. Hakeme bu dosyayı gönderin.',
  scaleCap:'Siyah: otomatik ret · Gri: karar sizde · Beyaz: otomatik kabul. Bölgeleri şartname sahibi belirler.', profCap:'Her koşul aynı cetvelde. Sonuç, en soldaki çubuktur.', treeCap:'Her kutu, altındakilerin en küçüğüdür. Koyu yol en zayıf koşula gider.',
- verLead:'Size gönderilen rapor dosyasını yükleyin. Araç, şartnamenin ve raporun değiştirilip değiştirilmediğini ve bütün puanları kendisi yeniden hesaplayarak kontrol eder. Matematik bilmeniz gerekmez: hepsi BAŞARILI ise rapor tutarlıdır.',
+ verLead:'Yükleniciden gelen rapor dosyasını yükleyin ya da gelen bağlantıyı açın. Araç önce şartnamenin ve raporun değiştirilmediğini, puanların doğru hesaplandığını kontrol eder. Ardından değerleri ve kanıtları inceleyip kararınızı kaydedersiniz.',
  verFile:'Rapor dosyası seç', verPaste:'veya rapor metnini yapıştırın', verBtn:'Yapıştırılanı doğrula', PASS:'BAŞARILI', FAIL:'HATALI',
  c_notRep:'Bu bir Özkul raporu değil.', c_json:'Metin geçerli JSON değil.', c_spec:'Şartname, kilitlendiği hâliyle aynı (parmak izi tutuyor)', c_specBad:'Şartname kilitlendikten sonra değiştirilmiş (parmak izi tutmuyor)',
  c_rep:'Rapor gönderildikten sonra değiştirilmemiş', c_repBad:'Rapor değiştirilmiş (rapor parmak izi tutmuyor)', c_rules:'Şartname kurallara uygun', c_rulesBad:'Şartname kurallara aykırı: {0}',
@@ -230,7 +273,7 @@ tr:{
  e_dn:'"Küçük olan iyi" seçtiniz. Bu durumda kabul edilemez değer > sınır > tam puan değeri olmalı. Yönü mü değerleri mi yanlış girdiniz?',
  e_two:'Sıra şöyle olmalı: kabul edilemez alt < izin alt < ideal alt ≤ ideal üst < izin üst < kabul edilemez üst.', e_log:'Logaritmik ölçekte değerler pozitif olmalı.', e_none:'En az bir koşul ekleyin.', e_tauA:'Otomatik kabul payı 0 ile 1 arasında olmalı.', e_tauR:'Otomatik ret değeri 0 ile −1 arasında olmalı.',
  sciT:'Bilimsel açıklama', sciLead:'Bu bölüm hakemler ve yöntemi ayrıntısıyla incelemek isteyenler içindir. Tam metin ve ispatlar makalede yer alır.',
- foot:'Özkul Karar Sayısı · başvuru uygulaması v1.2 · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
+ foot:'Özkul Karar Sayısı · başvuru uygulaması v1.3 · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
  kInfo:'k = {0}', defaultTitle:'Yeni şartname'
 },
 en:{
@@ -240,7 +283,7 @@ en:{
  iP2:'The specification owner writes the rules and locks them. The person doing the work only enters the values found and sees the result at once. A reviewer or approver can repeat the whole calculation with one click.',
  iF1:'full score; better makes no difference', iF2:'exactly at the limit', iF3:'unacceptable', iSign:'<b>Why a minus side?</b> The sign answers “does it meet the specification?”, the size answers “by how much?”. Plus means every limit is met and the number is the margin. Minus means at least one limit is exceeded and the number is the depth of the violation. −0.05 can be rescued by a small fix or a concession; −0.80 needs to be rethought. On a 0–1 scale the limit would sit at a different point in every specification and this difference would be hidden.',
  iDemoCap:'Example: a beam exceeds its cost limit, so the result is −0.40 and the work is rejected. Three good results elsewhere do not change this.',
- s1t:'Write the specification', s1d:'Specification owner', s2t:'Enter results', s2d:'Person doing the work', s3t:'Verify a report', s3d:'Reviewer / approver',
+ s1t:'Write the specification', s1d:'Specification owner', s2t:'Enter results', s2d:'Person doing the work', s3t:'Review and decide', s3d:'Specification owner',
  exPick:'Open an example from the paper…',
  specLead:'Describe each requirement in plain terms: which direction is better, where the limit is, beyond which value nothing improves, and which value is unacceptable. The grey box reads your entry back as a sentence. Check it, then lock.',
  specTitle:'Specification name', version:'Version', owner:'Prepared by',
@@ -250,8 +293,24 @@ en:{
  dnL:'At most (limit)', dnB:'This value or lower gets full score', dnS:'This value or higher is unacceptable',
  twL:'Allowed range', twB:'Ideal range (full score)', twS:'Unacceptable: below / above', from:'from', to:'to',
  advanced:'Details (optional)', group:'Group (e.g. Structural, Cost)', u0:'Default measurement uncertainty (±)', vmin:'Smallest valid value', vmax:'Largest valid value', mand:'Mandatory', defn:'Definition and measurement method', scale:'Scale', lin:'Linear', log:'Logarithmic (very wide ranges)',
+ exBadge:'Explanation · how the method works. Example values, not related to your work below.', appBadge:'Application · your specification, values and decision', sciBadge:'Scientific description',
+ lockCode:'Lock code (SHA-256 fingerprint)', lockCodeH:'This code proves the state of the specification when it was locked. If a single character changes, the code changes completely.',
+ prox:'Closeness to acceptance (information only, not part of the decision)', proxH:'The decision always follows the weakest requirement; a surplus on one requirement can never cover a shortfall on another. These lines show how close the work as a whole is to acceptance.',
+ gapA:'Remaining to the automatic-acceptance threshold ({0}): {1}', gapAok:'Automatic-acceptance threshold ({0}) passed by {1}', gapR:'Below the automatic-rejection threshold ({0}) by {1}', gapRok:'Above the automatic-rejection threshold ({0}) by {1}',
+ passN:'Requirements that meet their limit: {0}/{1} ({2} %)', okA:'Requirements that pass the acceptance threshold on their own: {0}/{1}', avg:'Average requirement score: {0}', worst2:'Next weakest requirement: {0} ({1})',
+ valL:'Value found', uncL:'± Measurement uncertainty', uncH:'The plus/minus error of your measurement. If left blank, {0} is used. The value is moved towards the limit by this amount before scoring, so uncertainty can never make the result look better.',
+ rule:'Requirement: {0}', inclEx:'Included: entering exactly {0} meets the requirement ({1}). Excluded: exactly {0} does not ({2} is needed).',
+ contractor:'Contractor (company / person)', evT:'Evidence and calculation', calc:'Calculation / explanation', calcP:'Briefly describe how you obtained the value', files:'Evidence files', filesH:'Report, test record, calculation sheet… Each file is fingerprinted so the owner can see it was not changed. Files above 3 MB are not embedded; only their fingerprint is recorded.',
+ sendT:'Send to the contractor', sendLead:'This link carries the complete locked specification. When the contractor opens it, the value-entry screen opens directly and the rules cannot be changed. No data goes to any server; it travels inside the link.', copy:'Copy link', copied:'Copied', mail:'Send by e-mail',
+ mailSubj:'Specification: {0} (version {1})', mailBody:'Hello,\n\nPlease open the specification with the link below and enter your values and evidence:\n{0}\n\nLock code: {1}\n',
+ retT:'Send to the specification owner', retLead:'Download the report and send it to the specification owner. Your values, calculations and evidence files are inside the report.', retLink:'Without evidence files you can also send the report as a link:', retTooBig:'The report is too large for a link because of the evidence files. Send it as a file.', mailRep:'Notify by e-mail',
+ mailRepSubj:'Report: {0} (version {1})', mailRepBody:'Hello,\n\nI have entered my values for the specification. System result: {0} ({1}).\nLock code: {2}\n{3}\nThe report file is attached.\n',
+ evNone:'No evidence attached.', fileOk:'file unchanged', fileBad:'file altered', fileNoData:'fingerprint only', fileOpen:'download', evRef:'Evidence no.',
+ decT:'Your decision', sysRec:'System recommendation (from the rule you set): {0}', decAcc:'Accept', decCond:'Conditional acceptance (concession)', decRej:'Reject', decNote:'Justification / note', decBy:'Approved by (name, title)', decSave:'Save and download decision',
+ decDiff:'This decision differs from the system recommendation or accepts a violated limit. A justification is required.', decNeed:'Choose a decision.', decDone:'Decision saved. Decision code: {0}', decMail:'Notify the contractor by e-mail',
+ decMailSubj:'Decision: {0} · {1}', decMailBody:'Hello,\n\nYour report has been reviewed.\nDecision: {0}\nJustification: {1}\nReport code: {2}\nDecision code: {3}\n', verifyFirst:'The report did not pass verification, so no decision can be recorded.',
  sayTag:'Reads as:', inclQ:'The limit value itself', inclI:'Included: a value exactly at the limit passes', inclE:'Excluded: a value exactly at the limit fails', inclLoQ:'Lower limit value', inclHiQ:'Upper limit value', rdI:' Exactly {0} passes.', rdE:' Exactly {0} fails.', w_excl:'Exactly at the limit, but the limit is excluded: fails', addParam:'+ Add requirement', del:'Delete',
- polT:'Decision rule', polLead:'Choose how the result is turned into a decision. You set the rule; the person entering values cannot change it.',
+ polT:'Decision authority: who decides?', polLead:'Choose whether the system decides at once from the result or you review it. Everything outside the automatic-accept and automatic-reject zones comes to you. You record the final approval in step 3 in every case.',
  pComply:'Meets all limits = accept, otherwise reject', pComplyD:'No grey zone. The simplest rule; suits purchasing and quality control.',
  pMargin:'Require a safety margin for acceptance', pMarginD:'Work that meets the limits but lacks the margin is left to you. Work that exceeds a limit is always rejected.',
  pTol:'Allow concessions (deviation approval)', pTolD:'Work that slightly exceeds a limit is not rejected automatically; it is left to you. Accepting it is a formal concession.',
@@ -263,7 +322,7 @@ en:{
  locked:'Locked', draft:'Draft — not locked yet', altered:'Warning: changed after locking', newVer:'Open a new version (copy)', dlSpec:'Download locked specification', imp:'Load a specification file', newBlank:'Blank specification', goSub:'Go to entering results →', fixFirst:'Fix the red messages before locking.',
  fixList:'To fix:',
  noLock:'A specification must be locked first. Lock one in step 1, load a locked specification file, or open an example above.',
- subLead:'Enter only the values you found. The result updates as you type. The rules cannot be changed here.',
+ subLead:'Enter only the values you found, your calculation and your evidence. The result updates as you type. The rules cannot be changed here.',
  value:'Value found', unc:'± uncertainty', ev:'Evidence / report no.', samples:'Samples', yes:'yes', no:'no', choose:'choose',
  w_full:'Full score: better would not change the decision', w_ok:'Limit met: {0} % of the way to full score', w_zero:'Exactly at the limit, no margin', w_bad:'Limit exceeded: {0} % of the way to unacceptable', w_black:'Unacceptable', w_miss:'No value yet', w_inv:'Invalid: {0}', binding:'weakest',
  inv_range:'outside the valid range', inv_neg:'negative uncertainty', inv_log:'must be positive on a log scale',
@@ -274,7 +333,7 @@ en:{
  sev_s:'Slight exceedance: a small fix or a concession could rescue it.', sev_m:'Clear exceedance: correction needed.', sev_l:'Severe exceedance: close to unacceptable; rethink the work.', sev_x:'The unacceptable point has been reached.', concession:'Note: this work exceeds at least one limit. Accepting it is a concession (deviation approval) and should be recorded with a justification.',
  readN:'{0}/{1} requirements checked · version {2} · fingerprint {3}', dlRep:'Download report', dlRepH:'The report contains the locked specification, your values, the result and its own fingerprint. Send this file to the reviewer.',
  scaleCap:'Black: automatic reject · Grey: your decision · White: automatic accept. The owner sets the zones.', profCap:'Every requirement on the same ruler. The result is the leftmost bar.', treeCap:'Each box is the minimum of the boxes below it. The dark path leads to the weakest requirement.',
- verLead:'Load the report file you received. The tool checks that neither the specification nor the report was altered and recomputes every score itself. No mathematics needed: if every line says PASS, the report is consistent.',
+ verLead:'Load the report file from the contractor or open the link you received. The tool first checks that neither the specification nor the report was altered and that every score is correct. Then you review values and evidence and record your decision.',
  verFile:'Choose report file', verPaste:'or paste the report text', verBtn:'Verify pasted text', PASS:'PASS', FAIL:'FAIL',
  c_notRep:'This is not an Özkul report.', c_json:'The text is not valid JSON.', c_spec:'Specification is exactly as locked (fingerprint matches)', c_specBad:'Specification changed after locking (fingerprint does not match)',
  c_rep:'Report unchanged since it was produced', c_repBad:'Report was altered (report fingerprint does not match)', c_rules:'Specification follows the rules', c_rulesBad:'Specification breaks the rules: {0}',
@@ -289,7 +348,7 @@ en:{
  e_dn:'You chose "lower is better", so unacceptable > limit > full-score value. Is the direction or a value wrong?',
  e_two:'Order must be: unacceptable low < allowed low < ideal low ≤ ideal high < allowed high < unacceptable high.', e_log:'Values must be positive on a log scale.', e_none:'Add at least one requirement.', e_tauA:'Automatic-acceptance margin must be between 0 and 1.', e_tauR:'Automatic-rejection value must be between 0 and −1.',
  sciT:'Scientific description', sciLead:'This section is for reviewers and readers who want the details. Full text and proofs are in the paper.',
- foot:'Özkul Decision Number · reference implementation v1.2 · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
+ foot:'Özkul Decision Number · reference implementation v1.3 · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
  kInfo:'k = {0}', defaultTitle:'New specification'
 }};
 const t = (k, ...a) => { let s = (T[LANG] && T[LANG][k]) || T.en[k] || k; a.forEach((v, i) => s = s.split('{'+i+'}').join(v)); return s; };
@@ -340,7 +399,17 @@ function body(s){
 }
 const fingerprint = s => HN.sha256(HN.canon(body(s)));
 const engineSpec = s => { const b = body(s); return Object.assign({}, b, {alpha: b.coverage==='alpha' ? b.alpha : null}); };
+let EV = {}; // evidence per parameter: {calc, files:[{name,size,sha,data?}]}
+try { EV = JSON.parse(localStorage.getItem('odn.ev')||'{}') || {}; } catch(e){}
+let META = {}; try { META = JSON.parse(localStorage.getItem('odn.meta')||'{}') || {}; } catch(e){}
 let view = spec.lock ? 'sub' : 'spec';
+let PENDREP = null;
+(function(){ const hsh = location.hash || '';
+  try {
+    if (hsh.startsWith('#spec=')) { const obj = JSON.parse(ub64u(hsh.slice(6))); if (obj && obj.spec) { spec = Object.assign(JSON.parse(JSON.stringify(obj.spec)), {lock: obj.lock||null}); inputs = {}; EV = {}; view = 'sub'; history.replaceState(null,'',location.pathname+location.search); } }
+    else if (hsh.startsWith('#report=')) { PENDREP = JSON.parse(ub64u(hsh.slice(8))); view = 'ver'; history.replaceState(null,'',location.pathname+location.search); }
+  } catch(e) { console.warn('link', e); }
+})();
 
 // ---------------- plain-language helpers ----------------
 const U = p => p.unit ? ' '+p.unit : '';
@@ -387,6 +456,14 @@ function word(x){
   if (d<=-1) return '<span class="rej">'+t('w_black')+'</span>';
   return '<span class="rej">'+t('w_bad', Math.round(-d*100))+'</span>';
 }
+function inclExample(p, f, sgn){
+  const L = num(p[f]); if (L===null) return '';
+  const dec = Math.max(0, ...['S','L','B','Slo','Llo','Blo','Bhi','Lhi','Shi'].map(k => { const v = p[k]; if (v===null||v===undefined||v==='') return 0; const q = String(v).split('.'); return q[1]?q[1].length:0; }));
+  const step = Math.pow(10, -Math.max(dec, 0)) * (dec===0 ? 1 : 1);
+  const next = +(L + sgn*step).toFixed(Math.max(dec,0));
+  const inc = f==='L' ? p.incl : (f==='Llo' ? p.inclLo : p.inclHi);
+  return '<b>'+(inc==='E'?t('inclE').split(':')[0]:t('inclI').split(':')[0])+'</b> · '+t('inclEx', nf(L)+U(p), t('w_zero').toLowerCase(), nf(next)+U(p));
+}
 function meter(d){
   if (d===undefined || d===null) return '<div class="meter"><span class="mid"></span></div>';
   const w = Math.abs(d)*50, l = d>=0 ? 50 : 50-w;
@@ -399,6 +476,7 @@ function paintStatic(){
   $('#brand').innerHTML = esc(t('brand'))+'<small>'+esc(t('brandSmall'))+'</small>';
   ['iTitle','iP1','iP2','iF1','iF2','iF3','iDemoCap','s1t','s1d','s2t','s2d','s3t','s3d'].forEach(k => { const el = document.getElementById(k); if (el) el.textContent = t(k); });
   $('#iSign').innerHTML = t('iSign');
+  $('#exBadge').textContent = t('exBadge'); $('#appBadge').textContent = t('appBadge');
   $('#foot').textContent = t('foot');
   document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l===LANG));
   $('#exSel').innerHTML = '<option value="">'+esc(t('exPick'))+'</option>' + EX.map(e => '<option value="'+e.key+'">'+esc(e[LANG])+'</option>').join('');
@@ -408,7 +486,7 @@ function paintStatic(){
 document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { LANG = b.dataset.l; save(); paintStatic(); render(); }));
 document.querySelectorAll('nav.steps button').forEach(b => b.addEventListener('click', () => { view = b.dataset.v; render(); }));
 $('#exSel').addEventListener('change', e => { const ex = EX.find(x => x.key===e.target.value); if (!ex) return;
-  spec = JSON.parse(JSON.stringify(ex.spec)); spec.lock = {fingerprint: fingerprint(spec), lockedAt: new Date().toISOString()}; inputs = JSON.parse(JSON.stringify(ex.inputs));
+  spec = JSON.parse(JSON.stringify(ex.spec)); spec.lock = {fingerprint: fingerprint(spec), lockedAt: new Date().toISOString()}; inputs = JSON.parse(JSON.stringify(ex.inputs)); EV = {}; saveEv();
   save(); view = 'sub'; render(); e.target.value=''; });
 
 function render(){
@@ -432,9 +510,9 @@ function renderSpec(){
     let a = '';
     const isel = (f, q) => '<div><label>'+t(q)+'</label><select data-p="'+i+'" data-f="'+f+'"'+dis+'><option value="I"'+(p[f]!=='E'?' selected':'')+'>'+t('inclI')+'</option><option value="E"'+(p[f]==='E'?' selected':'')+'>'+t('inclE')+'</option></select></div>';
     if (kind==='up' || kind==='down') { const pre = kind==='up'?'up':'dn';
-      a = '<div class="grid g3"><div><label>'+t(pre+'L')+'</label>'+pi('L','num')+'</div><div><label>'+t(pre+'B')+'</label>'+pi('B','num')+'</div><div><label>'+t(pre+'S')+'</label>'+pi('S','num')+'</div></div><div class="grid g3" style="margin-top:10px">'+isel('incl','inclQ')+'</div>';
+      a = '<div class="grid g3"><div><label>'+t(pre+'L')+'</label>'+pi('L','num')+'</div><div><label>'+t(pre+'B')+'</label>'+pi('B','num')+'</div><div><label>'+t(pre+'S')+'</label>'+pi('S','num')+'</div></div><div class="grid g3" style="margin-top:10px">'+isel('incl','inclQ')+'<div class="hint" style="grid-column:span 2;align-self:end">'+inclExample(p,'L',p.dir==='down'?-1:1)+'</div></div>';
     } else if (kind==='two') {
-      a = '<div class="grid g3"><div><label>'+t('twL')+'</label><div class="grid g2">'+pi('Llo','num')+pi('Lhi','num')+'</div></div><div><label>'+t('twB')+'</label><div class="grid g2">'+pi('Blo','num')+pi('Bhi','num')+'</div></div><div><label>'+t('twS')+'</label><div class="grid g2">'+pi('Slo','num')+pi('Shi','num')+'</div></div></div><div class="grid g3" style="margin-top:10px">'+isel('inclLo','inclLoQ')+isel('inclHi','inclHiQ')+'</div>';
+      a = '<div class="grid g3"><div><label>'+t('twL')+'</label><div class="grid g2">'+pi('Llo','num')+pi('Lhi','num')+'</div></div><div><label>'+t('twB')+'</label><div class="grid g2">'+pi('Blo','num')+pi('Bhi','num')+'</div></div><div><label>'+t('twS')+'</label><div class="grid g2">'+pi('Slo','num')+pi('Shi','num')+'</div></div></div><div class="grid g3" style="margin-top:10px">'+isel('inclLo','inclLoQ')+isel('inclHi','inclHiQ')+'<div class="hint" style="align-self:end">'+inclExample(p,'Llo',1)+'<br>'+inclExample(p,'Lhi',-1)+'</div></div>';
     }
     h += '<div class="card'+(errs.length&&!L?' bad':'')+'"><div class="head"><b>'+t('param')+' '+(i+1)+'</b>'+(L?'':'<button class="btn small" data-del="'+i+'">'+t('del')+'</button>')+'</div>'+
       '<div class="grid g3"><div><label>'+t('name')+'</label>'+pi('name')+'</div><div><label>'+t('unit')+'</label>'+pi('unit')+'</div><div><label>'+t('dir')+'</label><select data-p="'+i+'" data-f="kind"'+dis+'>'+
@@ -465,14 +543,15 @@ function renderSpec(){
   const errs = specErrors();
   if (!L) h += (errs.length ? '<div class="err" style="margin-top:18px"><b>'+t('fixList')+'</b><br>'+errs.map(esc).join('<br>')+'</div>' : '')+
     '<div class="row" style="margin-top:22px"><button class="btn primary" id="bLock"'+(errs.length?' disabled':'')+'>'+t('lockBtn')+'</button><button class="btn" id="bNew">'+t('newBlank')+'</button><label class="btn" style="margin:0">'+t('imp')+'<input type="file" id="impSpec" accept=".json" style="display:none"></label></div><div class="hint">'+(errs.length?t('fixFirst'):t('lockHint'))+'</div>';
-  else h += '<div class="row"><button class="btn primary" id="bGoSub">'+t('goSub')+'</button><button class="btn" id="bNewVer">'+t('newVer')+'</button><button class="btn" id="bExpSpec">'+t('dlSpec')+'</button></div>';
+  else h += '<div class="sendbox"><h3>'+t('sendT')+'</h3><p class="lead" style="margin-bottom:8px">'+t('sendLead')+'</p><div class="row" style="margin:6px 0"><input readonly id="specLinkIn" value="'+esc(specLink())+'"><button class="btn small" id="bCopySpec">'+t('copy')+'</button></div><div class="row"><button class="btn primary" id="bMailSpec">'+t('mail')+'</button><button class="btn" id="bExpSpec">'+t('dlSpec')+'</button><button class="btn" id="bGoSub">'+t('goSub')+'</button><button class="btn" id="bNewVer">'+t('newVer')+'</button></div></div>';
   $('#v-spec').innerHTML = h;
   bindSpec();
 }
 function lockBar(){
   if (!spec.lock) return '<div class="lockbar"><b>'+t('draft')+'</b></div>';
   const ok = fingerprint(spec)===spec.lock.fingerprint;
-  return '<div class="lockbar '+(ok?'ok':'bad')+'"><div><b>'+(ok?t('locked'):t('altered'))+'</b> · '+esc(spec.title)+' · '+t('version')+' '+esc(spec.version)+'</div><div class="fp">SHA-256 '+esc(spec.lock.fingerprint)+'</div></div>';
+  return '<div class="lockbar '+(ok?'ok':'bad')+'"><div><b>'+(ok?t('locked'):t('altered'))+'</b> · '+esc(nm(spec.title))+' · '+t('version')+' '+esc(spec.version)+'</div>'+
+    '<div style="min-width:0"><div class="hint" style="margin:0">'+t('lockCode')+'</div><div class="fp" title="'+esc(t('lockCodeH'))+'">'+esc(spec.lock.fingerprint)+'</div></div></div>';
 }
 function bindSpec(){
   const re = () => { save(); renderSpec(); };
@@ -494,6 +573,8 @@ function bindSpec(){
   on('bNewVer', () => { const v = parseInt(spec.version,10); spec = JSON.parse(JSON.stringify(spec)); spec.lock = null; spec.version = isNaN(v) ? spec.version+'.1' : String(v+1); re(); });
   on('bExpSpec', () => download('specification_v'+spec.version+'_'+spec.lock.fingerprint.slice(0,8)+'.json', {kind:'ozkul-specification', spec: body(spec), lock: spec.lock}));
   on('bGoSub', () => { view='sub'; render(); });
+  on('bCopySpec', e => { copyText(specLink()); e.target.textContent = t('copied'); });
+  on('bMailSpec', () => mailto('', t('mailSubj', nm(spec.title), spec.version), t('mailBody', specLink(), spec.lock.fingerprint)));
   on('impSpec', e => readFile(e.target.files[0], obj => { if (!obj || !/specification$/.test(obj.kind||'') || !obj.spec) { alert(t('c_notRep')); return; }
     spec = Object.assign(JSON.parse(JSON.stringify(obj.spec)), {lock: obj.lock || null}); inputs = {}; save(); view = spec.lock ? 'sub' : 'spec'; render();
     if (spec.lock && fingerprint(spec)!==spec.lock.fingerprint) alert(t('altered')); }));
@@ -502,27 +583,54 @@ function download(name, obj){ const a = document.createElement('a'); a.href = UR
 function readFile(f, cb){ if (!f) return; const r = new FileReader(); r.onload = () => { let o; try { o = JSON.parse(r.result); } catch(e) { alert(t('c_json')); return; } cb(o); }; r.readAsText(f); }
 
 // ---------------- step 2 ----------------
+const saveEv = () => { try { localStorage.setItem('odn.ev', JSON.stringify(EV)); localStorage.setItem('odn.meta', JSON.stringify(META)); } catch(e){} };
 function renderSub(){
   if (!spec.lock) { $('#v-sub').innerHTML = '<h2>'+t('s2t')+'</h2><div class="lockbar"><div>'+t('noLock')+'</div><label class="btn" style="margin:0">'+t('imp')+'<input type="file" id="impSpec2" accept=".json" style="display:none"></label></div>';
     document.getElementById('impSpec2').addEventListener('change', e => readFile(e.target.files[0], obj => { if (obj && obj.spec) { spec = Object.assign(JSON.parse(JSON.stringify(obj.spec)), {lock: obj.lock||null}); inputs = {}; save(); render(); } })); return; }
-  let h = '<h2>'+t('s2t')+'</h2><p class="lead">'+t('subLead')+'</p>'+lockBar()+'<div class="result" id="res"></div>';
-  spec.params.forEach(p => { const v = inputs[p.id] || {};
+  let h = '<h2>'+t('s2t')+'</h2><p class="lead">'+t('subLead')+'</p>'+lockBar()+'<div class="result" id="res"></div>'+
+    '<div class="grid g3" style="margin-bottom:14px"><div><label>'+t('contractor')+'</label><input id="contr" value="'+esc(META.contractor||'')+'"></div></div>';
+  spec.params.forEach(p => { const v = inputs[p.id] || {}, ev = EV[p.id] || {};
+    const u0 = nf(num(p.u0)===null?0:p.u0)+U(p);
     const val = p.type==='bool'
-      ? '<select data-i="'+p.id+'" data-k="value"><option value="">— '+t('choose')+' —</option><option value="yes"'+(v.value==='yes'?' selected':'')+'>'+t('yes')+'</option><option value="no"'+(v.value==='no'?' selected':'')+'>'+t('no')+'</option></select>'
-      : '<div class="inp"><input class="num" data-i="'+p.id+'" data-k="value" value="'+esc(nf(v.value))+'" aria-label="'+esc(t('value'))+'"><input class="num" data-i="'+p.id+'" data-k="u" placeholder="± '+esc(nf(num(p.u0)===null?0:p.u0))+'" value="'+esc(nf(v.u))+'" aria-label="'+esc(t('unc'))+'"></div>';
-    h += '<div class="card"><div class="pc"><div><b>'+esc(nm(p.name))+'</b>'+(p.group?' <span class="mut" style="font-size:13px">· '+esc(p.group)+'</span>':'')+'<div class="mut" style="font-size:13px;margin-top:4px">'+esc(readback(p))+'</div></div>'+
-      '<div><label>'+t('value')+(p.type==='bool'?'':' · '+t('unc'))+(p.unit?' ('+esc(p.unit)+')':'')+'</label>'+val+'<input data-i="'+p.id+'" data-k="ev" style="margin-top:8px" placeholder="'+esc(t('ev'))+'" value="'+esc(v.ev||'')+'"></div>'+
-      '<div id="w-'+p.id+'"></div></div></div>';
+      ? '<label>'+t('valL')+'</label><select data-i="'+p.id+'" data-k="value"><option value="">— '+t('choose')+' —</option><option value="yes"'+(v.value==='yes'?' selected':'')+'>'+t('yes')+'</option><option value="no"'+(v.value==='no'?' selected':'')+'>'+t('no')+'</option></select>'
+      : '<div class="inp"><div><label>'+t('valL')+(p.unit?' ('+esc(p.unit)+')':'')+'</label><input class="num" data-i="'+p.id+'" data-k="value" value="'+esc(nf(v.value))+'"></div>'+
+        '<div><label title="'+esc(t('uncH',u0))+'">'+t('uncL')+' ⓘ</label><input class="num" data-i="'+p.id+'" data-k="u" placeholder="'+esc(u0)+'" value="'+esc(nf(v.u))+'"></div></div>'+
+        '<div class="hint">'+esc(t('uncH',u0))+'</div>';
+    const fl = (ev.files||[]).map((f,k) => '<li>📄 '+esc(f.name)+' · '+Math.ceil(f.size/1024)+' KB · <span class="mono">'+f.sha.slice(0,10)+'…</span>'+(f.data?'':' <span class="mut">('+t('fileNoData')+')</span>')+' <button class="btn small" data-rmf="'+p.id+'" data-k="'+k+'">'+t('del')+'</button></li>').join('');
+    h += '<div class="card"><div class="pc"><div><b>'+esc(nm(p.name))+'</b>'+(p.group?' <span class="mut" style="font-size:13px">· '+esc(p.group)+'</span>':'')+
+      '<div class="mut" style="font-size:13px;margin-top:4px">'+esc(readback(p))+'</div>'+(p.definition?'<div class="hint">'+esc(p.definition)+'</div>':'')+'</div>'+
+      '<div>'+val+'</div><div id="w-'+p.id+'"></div></div>'+
+      '<details class="adv"'+((ev.calc||(ev.files||[]).length||v.ev)?' open':'')+'><summary>'+t('evT')+((ev.files||[]).length?' · 📎 '+(ev.files||[]).length:'')+'</summary><div class="grid g2">'+
+      '<div><label>'+t('calc')+'</label><textarea data-ec="'+p.id+'" rows="3" placeholder="'+esc(t('calcP'))+'">'+esc(ev.calc||'')+'</textarea>'+
+      '<label style="margin-top:8px">'+t('evRef')+'</label><input data-i="'+p.id+'" data-k="ev" value="'+esc(v.ev||'')+'"></div>'+
+      '<div><label>'+t('files')+'</label><input type="file" multiple data-ef="'+p.id+'"><div class="hint">'+t('filesH')+'</div><ul class="files">'+fl+'</ul></div></div></details></div>';
   });
-  h += '<div class="row"><button class="btn primary" id="bRep">'+t('dlRep')+'</button></div><div class="hint" style="margin-bottom:20px">'+t('dlRepH')+'</div><div id="charts"></div>';
+  h += '<div class="sendbox"><h3>'+t('retT')+'</h3><p class="lead" style="margin-bottom:8px">'+t('retLead')+'</p><div class="row"><button class="btn primary" id="bRep">'+t('dlRep')+'</button><button class="btn" id="bRepMail">'+t('mailRep')+'</button></div><div id="repLink"></div></div><div id="charts"></div>';
   $('#v-sub').innerHTML = h;
   document.querySelectorAll('#v-sub [data-i]').forEach(el => el.addEventListener(el.tagName==='SELECT'?'change':'input', () => { const id = el.dataset.i; inputs[id] = inputs[id] || {}; inputs[id][el.dataset.k] = el.dataset.k==='ev' ? el.value : pn(el.value); save(); update(); }));
+  document.querySelectorAll('#v-sub [data-ec]').forEach(el => el.addEventListener('input', () => { const id = el.dataset.ec; EV[id] = EV[id] || {}; EV[id].calc = el.value; saveEv(); }));
+  document.getElementById('contr').addEventListener('input', e => { META.contractor = e.target.value; saveEv(); });
+  document.querySelectorAll('#v-sub [data-ef]').forEach(el => el.addEventListener('change', () => { const id = el.dataset.ef; EV[id] = EV[id] || {}; EV[id].files = EV[id].files || [];
+    const fs = [...el.files]; let left = fs.length;
+    fs.forEach(f => { const r = new FileReader(); r.onload = () => { const b = new Uint8Array(r.result); const sha = HN.sha256(b);
+      let data = null; if (f.size <= 3*1024*1024) { let bin = ''; for (let i = 0; i < b.length; i += 32768) bin += String.fromCharCode.apply(null, b.subarray(i, i+32768)); data = btoa(bin); }
+      EV[id].files.push({name:f.name, size:f.size, type:f.type||'', sha, data}); if (--left === 0) { saveEv(); renderSub(); } }; r.readAsArrayBuffer(f); }); }));
+  document.querySelectorAll('#v-sub [data-rmf]').forEach(el => el.addEventListener('click', () => { EV[el.dataset.rmf].files.splice(+el.dataset.k,1); saveEv(); renderSub(); }));
   document.getElementById('bRep').addEventListener('click', () => download('report_'+spec.lock.fingerprint.slice(0,8)+'_'+Date.now()+'.json', makeReport()));
+  document.getElementById('bRepMail').addEventListener('click', () => { const rep = makeReport(), r = rep.result; const link = repLinkFor(rep);
+    mailto('', t('mailRepSubj', nm(spec.title), spec.version), t('mailRepBody', t('V_'+r.verdict), fmt(r.H), spec.lock.fingerprint, link ? link+'\n' : '')); });
   update();
 }
+function copyText(v){ try { navigator.clipboard.writeText(v); } catch(e) { const i = document.createElement('textarea'); i.value = v; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); } }
+function mailto(to, subj, body){ const a = document.createElement('a'); a.href = 'mailto:'+to+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body); document.body.appendChild(a); a.click(); a.remove(); }
+function b64u(str){ return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function ub64u(str){ return decodeURIComponent(escape(atob(str.replace(/-/g,'+').replace(/_/g,'/')))); }
+const baseURL = () => location.href.split('#')[0];
+function specLink(){ return baseURL()+'#spec='+b64u(JSON.stringify({kind:'ozkul-specification', spec: body(spec), lock: spec.lock})); }
+function repLinkFor(rep){ const hasData = Object.values(rep.evidence||{}).some(e => (e.files||[]).some(f => f.data)); if (hasData) return ''; const u = baseURL()+'#report='+b64u(JSON.stringify(rep)); return u.length < 60000 ? u : ''; }
 function makeReport(){
   const r = HN.evaluate(engineSpec(spec), inputs);
-  const rep = {kind:'ozkul-report', createdAt:new Date().toISOString(), spec:body(spec), lock:spec.lock, inputs:JSON.parse(JSON.stringify(inputs)),
+  const rep = {kind:'ozkul-report', createdAt:new Date().toISOString(), contractor:META.contractor||'', spec:body(spec), lock:spec.lock, inputs:JSON.parse(JSON.stringify(inputs)), evidence:JSON.parse(JSON.stringify(EV)),
     result:{H:r.H, n:r.n, N:r.N, binding:r.binding, verdict:r.verdict, k:r.k, scores:r.rows.map(x => ({id:x.p.id, name:x.p.name, status:x.status, d:x.d===undefined?null:x.d}))}};
   rep.reportFingerprint = HN.sha256(HN.canon(rep)); return rep;
 }
@@ -543,11 +651,31 @@ function update(){
   const tA = num(s.tauA), tR = num(s.tauR);
   const rt = tA===null ? '' : fmt(tA)+(s.letterA==='E'?'E':''), rb = tR===null ? '' : fmt(tR)+(s.letterR==='E'?'E':'');
   const conc = r.verdict==='DISCRETION' && r.H!==null && r.H<0;
+  const okRows = r.rows.filter(x => x.p.mandatory!==false && x.status==='ok');
+  const pass = okRows.filter(x => x.d>=0 && !x.atLimitExcluded).length, Nm = r.N;
+  const sorted = okRows.slice().sort((a,b) => a.d-b.d);
+  const second = sorted.length>1 ? sorted[1] : null;
+  const avgv = okRows.length ? Math.floor(okRows.reduce((a,x)=>a+x.d,0)/okRows.length*100)/100 : null;
+  let prox = '';
+  if (r.H!==null) {
+    const L = [];
+    if (tA!==null) L.push(r.H>=tA ? t('gapAok', fmt(tA), nf(Math.abs(r.H-tA).toFixed(2))) : t('gapA', fmt(tA), nf((tA-r.H).toFixed(2))));
+    if (tR!==null) L.push(r.H<=tR ? t('gapR', fmt(tR), nf(Math.abs(tR-r.H).toFixed(2))) : t('gapRok', fmt(tR), nf((r.H-tR).toFixed(2))));
+    L.push(t('passN', pass, Nm, Nm?Math.round(pass/Nm*100):0));
+    if (tA!==null && tA>0) L.push(t('okA', okRows.filter(x=>x.d>=tA).length, Nm));
+    if (second) L.push(t('worst2', nm(second.p.name), fmt(second.d)));
+    if (avgv!==null) L.push(t('avg', fmt(avgv)));
+    prox = '<div class="prox"><div class="ttl">'+t('prox')+'</div>'+L.map(x => '<div>· '+esc(x)+'</div>').join('')+'<div class="hint">'+t('proxH')+'</div></div>';
+  }
   $('#res').innerHTML = '<div class="notation" aria-label="notation"><div class="lt">'+r.n+'/'+r.N+'</div><div class="H '+(r.H!==null&&r.H<0?'rej':'')+'">'+(r.H===null?'—':fmt(r.H))+'</div><div class="rt">'+rt+'</div><div class="lb">v'+esc(spec.version)+'·'+spec.lock.fingerprint.slice(0,4)+'</div><div class="rb">'+rb+'</div></div>'+
+    '<div class="mini">'+scaleSVG(r.H, tA, tR, null, okRows.map(x => x.d))+'</div>'+
     '<div><div class="verdict '+r.verdict+'">'+t('V_'+r.verdict)+'</div><div class="why">'+esc(explain(r, s))+(r.H!==null&&r.H<0&&r.n===r.N?' '+t(r.H<=-1?'sev_x':r.H>-0.2?'sev_s':r.H>-0.6?'sev_m':'sev_l'):'')+'</div>'+(conc?'<div class="warn">'+t('concession')+'</div>':'')+
-    '<div class="hint" style="margin-top:6px">'+t('readN', r.n, r.N, esc(spec.version), spec.lock.fingerprint.slice(0,8))+' · '+t('kInfo', nf((+r.k).toFixed(2)))+'</div></div>';
+    '<div class="hint" style="margin-top:6px">'+t('readN', r.n, r.N, esc(spec.version), spec.lock.fingerprint.slice(0,8))+' · '+t('kInfo', nf((+r.k).toFixed(2)))+'</div></div>'+prox;
+  const rl = document.getElementById('repLink');
+  if (rl) { const rep = makeReport(), link = repLinkFor(rep); rl.innerHTML = link ? '<div class="hint">'+t('retLink')+'</div><div class="row" style="margin:6px 0 0"><input readonly value="'+esc(link)+'" id="repLinkIn"><button class="btn small" id="bCopyRep">'+t('copy')+'</button></div>' : (Object.keys(EV).length ? '<div class="hint">'+t('retTooBig')+'</div>' : '');
+    const bc = document.getElementById('bCopyRep'); if (bc) bc.addEventListener('click', () => { copyText(link); bc.textContent = t('copied'); }); }
   const multi = Object.keys(r.groups).length > 1;
-  $('#charts').innerHTML = '<div class="chart">'+scaleSVG(r.H, tA, tR)+'</div><div class="cap">'+t('scaleCap')+'</div>'+
+  $('#charts').innerHTML = '<div class="cap" style="margin-top:0">'+t('scaleCap')+'</div>'+
     '<div class="chart">'+profileSVG(r)+'</div><div class="cap">'+t('profCap')+'</div>'+
     (multi ? '<div class="chart">'+treeSVG(r)+'</div><div class="cap">'+t('treeCap')+'</div>' : '');
 }
@@ -555,7 +683,7 @@ function update(){
 // ---------------- drawings ----------------
 const C = {ink:'#1C2430', muted:'#6B727C', line:'#D5D8DC', acc:'#0F6E6E', rej:'#B3261E', grey:'#C9CDD2', black:'#2B2B2B', soft:'#F5F6F7'};
 const MONO = 'IBM Plex Mono, monospace';
-function scaleSVG(H, tA, tR, label){
+function scaleSVG(H, tA, tR, label, ticks){
   const W=640, x0=30, x1=610, X = v => x0 + (v+1)/2*(x1-x0), y=50, h=22;
   let s = '<svg viewBox="0 0 '+W+' 116" width="'+W+'" role="img" aria-label="scale">';
   const lo = tR===null ? -1 : Math.max(-1,tR), hi = tA===null ? 1 : tA;
@@ -565,6 +693,7 @@ function scaleSVG(H, tA, tR, label){
   [-1,-0.5,0,0.5,1].forEach(v => { s += '<line x1="'+X(v)+'" x2="'+X(v)+'" y1="'+(y+h)+'" y2="'+(y+h+5)+'" stroke="'+C.ink+'"/><text x="'+X(v)+'" y="'+(y+h+18)+'" font-size="11" text-anchor="middle" fill="'+C.ink+'" font-family="'+MONO+'">'+fmt(v)+'</text>'; });
   if (tR!==null) s += '<line x1="'+X(tR)+'" x2="'+X(tR)+'" y1="'+(y-4)+'" y2="'+(y+h+4)+'" stroke="'+C.rej+'" stroke-width="2.5"/><text x="'+X(tR)+'" y="'+(y+h+34)+'" font-size="11" text-anchor="middle" fill="'+C.rej+'" font-family="'+MONO+'">'+fmt(tR)+'</text>';
   if (tA!==null && tA!==tR) s += '<line x1="'+X(tA)+'" x2="'+X(tA)+'" y1="'+(y-4)+'" y2="'+(y+h+4)+'" stroke="'+C.acc+'" stroke-width="2.5"/><text x="'+X(tA)+'" y="'+(y+h+34)+'" font-size="11" text-anchor="middle" fill="'+C.acc+'" font-family="'+MONO+'">'+fmt(tA)+'</text>';
+  (ticks||[]).forEach(v => { s += '<line x1="'+X(v)+'" x2="'+X(v)+'" y1="'+(y+h+1)+'" y2="'+(y+h+9)+'" stroke="'+(v<0?C.rej:C.acc)+'" stroke-width="2" opacity=".8"/>'; });
   if (H!==null && H!==undefined) { const xh = X(H); s += '<path d="M'+(xh-8)+' '+(y-18)+' L'+(xh+8)+' '+(y-18)+' L'+xh+' '+(y-3)+' Z" fill="'+(H<0?C.rej:C.ink)+'"/><text x="'+Math.min(W-40,Math.max(40,xh))+'" y="'+(y-24)+'" font-size="13" font-weight="600" text-anchor="middle" fill="'+C.ink+'" font-family="'+MONO+'">'+(label?esc(label)+' ':'')+fmt(H)+'</text>'; }
   return s + '</svg>';
 }
@@ -578,7 +707,7 @@ function profileSVG(r){
     s += '<text x="'+lab+'" y="'+(y+17)+'" font-size="12" text-anchor="end" fill="'+C.ink+'">'+esc(short(nm(x.p.name),30))+'</text>';
     if (x.status==='ok') { const a = X(Math.min(0,x.d)), b = X(Math.max(0,x.d)), bind = r.H!==null && x.d===r.H;
       s += '<rect x="'+a+'" y="'+(y+6)+'" width="'+Math.max(1.5,b-a)+'" height="'+(rh-12)+'" fill="'+(x.d<0?C.rej:C.acc)+'"'+(bind?' stroke="'+C.ink+'" stroke-width="2"':'')+'/>';
-      s += '<text x="'+(x.d>=0?b+5:a-5)+'" y="'+(y+17)+'" font-size="11" text-anchor="'+(x.d>=0?'start':'end')+'" fill="'+C.ink+'" font-family="'+MONO+'">'+fmt(x.d)+'</text>'; }
+      const inside = x.d < -0.8; s += '<text x="'+(x.d>=0?b+5:(inside?a+6:a-5))+'" y="'+(y+17)+'" font-size="11" text-anchor="'+(x.d>=0||inside?'start':'end')+'" fill="'+(inside?'#fff':C.ink)+'" font-family="'+MONO+'">'+fmt(x.d)+'</text>'; }
     else s += '<text x="'+(X(0)+6)+'" y="'+(y+17)+'" font-size="11" fill="'+C.muted+'">–</text>'; });
   s += '<line x1="'+X(0)+'" x2="'+X(0)+'" y1="2" y2="'+(rows.length*rh+6)+'" stroke="'+C.ink+'"/>';
   [-1,0,1].forEach(v => s += '<text x="'+X(v)+'" y="'+(rows.length*rh+22)+'" font-size="11" text-anchor="middle" fill="'+C.muted+'" font-family="'+MONO+'">'+fmt(v)+'</text>');
@@ -604,10 +733,46 @@ function treeSVG(r){
 // ---------------- step 3 ----------------
 function renderVer(){
   $('#v-ver').innerHTML = '<h2>'+t('s3t')+'</h2><p class="lead">'+t('verLead')+'</p><div class="row"><label class="btn primary" style="margin:0">'+t('verFile')+'<input type="file" id="repFile" accept=".json" style="display:none"></label></div>'+
-    '<label>'+t('verPaste')+'</label><textarea class="code" id="repText"></textarea><div class="row"><button class="btn" id="verBtn">'+t('verBtn')+'</button></div><div id="verOut"></div>';
+    '<details class="adv"><summary>'+t('verPaste')+'</summary><textarea class="code" id="repText"></textarea><div class="row"><button class="btn" id="verBtn">'+t('verBtn')+'</button></div></details><div id="verOut"></div><div id="decOut"></div>';
+  if (PENDREP) { const p = PENDREP; PENDREP = null; setTimeout(() => verify(p), 0); }
   document.getElementById('repFile').addEventListener('change', e => readFile(e.target.files[0], verify));
   document.getElementById('verBtn').addEventListener('click', () => { let o; try { o = JSON.parse($('#repText').value); } catch(e) { $('#verOut').innerHTML = '<ul class="check"><li><b class="rej">'+t('FAIL')+'</b><span>'+t('c_json')+'</span></li></ul>'; return; } verify(o); });
 }
+let LASTREP = null, LASTOK = false, LASTR = null;
+function renderDecision(){
+  const rep = LASTREP, r = LASTR; if (!rep) return;
+  const ev = rep.evidence || {};
+  let h = '<h3>'+t('evT')+(rep.contractor?' · '+esc(rep.contractor):'')+'</h3><div class="evlist">';
+  r.rows.forEach(x => { const v = (rep.inputs||{})[x.p.id] || {}, e = ev[x.p.id] || {};
+    const files = (e.files||[]).map((f,k) => { const okf = f.data ? HN.sha256(Uint8Array.from(atob(f.data), c => c.charCodeAt(0)))===f.sha : null;
+      return '<li>📄 '+esc(f.name)+' · <span class="mono">'+f.sha.slice(0,10)+'…</span> '+(okf===null?'<span class="mut">'+t('fileNoData')+'</span>':okf?'<span class="acc">✓ '+t('fileOk')+'</span>':'<span class="rej">✗ '+t('fileBad')+'</span>')+(f.data?' <button class="btn small" data-dl="'+x.p.id+'" data-k="'+k+'">'+t('fileOpen')+'</button>':'')+'</li>'; }).join('');
+    h += '<div class="item"><b>'+esc(nm(x.p.name))+'</b> · '+t('valL')+': <span class="mono">'+esc(nf(v.value))+(v.u!==undefined&&v.u!==''?' ± '+esc(nf(v.u)):'')+esc(U(x.p))+'</span> → <span class="mono '+(x.d<0?'rej':'acc')+'">'+(x.status==='ok'?fmt(x.d):'–')+'</span> — '+word(x)+
+      (v.ev?'<div class="hint">'+t('evRef')+': '+esc(v.ev)+'</div>':'')+(e.calc?'<div style="margin-top:4px;white-space:pre-wrap">'+esc(e.calc)+'</div>':'')+(files?'<ul class="files">'+files+'</ul>':(!e.calc&&!v.ev?'<div class="hint">'+t('evNone')+'</div>':''))+'</div>'; });
+  h += '</div>';
+  if (!LASTOK) { $('#decOut').innerHTML = h+'<div class="err">'+t('verifyFirst')+'</div>'; bindDl(rep); return; }
+  const rec = t('V_'+r.verdict)+' ('+fmt(r.H)+')';
+  const opt = (k,lab) => '<label class="opt"><input type="radio" name="dec" value="'+k+'">'+t(lab)+'</label>';
+  h += '<div class="decide"><h3>'+t('decT')+'</h3><div class="hint" style="margin:0">'+t('sysRec', rec)+'</div><div class="opts">'+opt('ACCEPT','decAcc')+opt('CONDITIONAL','decCond')+opt('REJECT','decRej')+'</div>'+
+    '<div class="grid g2"><div><label>'+t('decNote')+'</label><textarea id="decNote" rows="3"></textarea></div><div><label>'+t('decBy')+'</label><input id="decBy"></div></div>'+
+    '<div id="decMsg" class="err"></div><div class="row"><button class="btn primary" id="bDec">'+t('decSave')+'</button></div><div id="decRes"></div></div>';
+  $('#decOut').innerHTML = h; bindDl(rep);
+  document.querySelectorAll('input[name=dec]').forEach(el => el.addEventListener('change', () => document.querySelectorAll('.decide label.opt').forEach(l => l.classList.toggle('on', l.querySelector('input').checked))));
+  document.getElementById('bDec').addEventListener('click', () => {
+    const sel = (document.querySelector('input[name=dec]:checked')||{}).value, note = $('#decNote').value.trim(), by = $('#decBy').value.trim();
+    if (!sel) { $('#decMsg').textContent = t('decNeed'); return; }
+    const differs = (sel==='ACCEPT' && r.verdict!=='ACCEPT') || (sel==='REJECT' && r.verdict==='ACCEPT') || (sel!=='REJECT' && r.H!==null && r.H<0);
+    if (differs && !note) { $('#decMsg').textContent = t('decDiff'); return; }
+    $('#decMsg').textContent = '';
+    const dec = {kind:'ozkul-decision', createdAt:new Date().toISOString(), decision:sel, note, approvedBy:by, systemVerdict:r.verdict, A:r.H, specFingerprint:rep.lock.fingerprint, reportFingerprint:rep.reportFingerprint, contractor:rep.contractor||''};
+    dec.decisionFingerprint = HN.sha256(HN.canon(dec));
+    download('decision_'+rep.lock.fingerprint.slice(0,8)+'_'+Date.now()+'.json', dec);
+    const lab = t(sel==='ACCEPT'?'decAcc':sel==='REJECT'?'decRej':'decCond');
+    $('#decRes').innerHTML = '<div class="bigverdict '+(sel==='REJECT'?'rej':'acc')+'">'+esc(lab)+'</div><div class="hint">'+t('decDone', dec.decisionFingerprint.slice(0,16)+'…')+'</div><div class="row"><button class="btn" id="bDecMail">'+t('decMail')+'</button></div>';
+    document.getElementById('bDecMail').addEventListener('click', () => mailto('', t('decMailSubj', lab, nm(rep.spec.title)), t('decMailBody', lab, note||'–', rep.reportFingerprint, dec.decisionFingerprint)));
+  });
+}
+function bindDl(rep){ document.querySelectorAll('[data-dl]').forEach(el => el.addEventListener('click', () => { const f = rep.evidence[el.dataset.dl].files[+el.dataset.k];
+  const a = document.createElement('a'); a.href = 'data:'+(f.type||'application/octet-stream')+';base64,'+f.data; a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); })); }
 function verify(rep){
   const out = []; let all = true; const add = (ok, txt) => { all = all && ok; out.push('<li><b class="'+(ok?'acc':'rej')+'">'+t(ok?'PASS':'FAIL')+'</b><span>'+txt+'</span></li>'); };
   if (!rep || !/report$/.test(rep.kind||'') || !rep.spec) { $('#verOut').innerHTML = '<ul class="check"><li><b class="rej">'+t('FAIL')+'</b><span>'+t('c_notRep')+'</span></li></ul>'; return; }
@@ -622,7 +787,9 @@ function verify(rep){
   add(r.n===R.n && r.N===R.N, t('c_n', r.n+'/'+r.N, R.n+'/'+R.N));
   const mis = r.rows.filter(x => { const st = (R.scores||[]).find(y => y.id===x.p.id); return !st || (st.d===null?null:st.d)!==(x.d===undefined?null:x.d); });
   add(!mis.length, mis.length ? t('c_scBad', esc(mis.map(x => nm(x.p.name)).join(', '))) : t('c_sc', r.rows.length));
+  LASTREP = rep; LASTOK = all; LASTR = r;
   $('#verOut').innerHTML = '<div class="bigverdict '+(all?'acc':'rej')+'">'+(all ? t('verOK', t('V_'+r.verdict)+' ('+fmt(r.H)+')') : t('verBad'))+'</div><div class="hint">'+esc(nm(rep.spec.title))+' · '+t('version')+' '+esc(rep.spec.version)+' · '+esc(new Date(rep.createdAt).toLocaleString())+'</div><ul class="check">'+out.join('')+'</ul>';
+  renderDecision();
 }
 
 // ---------------- scientific section ----------------
@@ -649,7 +816,7 @@ function scienceHTML(){
    ['7. Notation','Centre: A; top right: τ<sub>acc</sub>; bottom right: τ<sub>rej</sub>; top left: n/N; bottom left: version and specification fingerprint. An empty corner means "not defined".'],
    ['8. Lock and verification','The specification is serialised canonically and fingerprinted with SHA-256. The report contains the specification, inputs, result and its own fingerprint; verification recomputes everything. The fingerprint detects changes; it does not prove authorship. For contractual use, sign it digitally.']
   ];
-  return '<h2>'+t('sciT')+'</h2><p class="lead">'+t('sciLead')+'</p><div class="sci">'+blocks.map(b => '<div><h3>'+b[0]+'</h3><p>'+b[1]+'</p></div>').join('')+'</div>';
+  return '<div class="badge" style="margin-bottom:14px">'+t('sciBadge')+'</div><h2>'+t('sciT')+'</h2><p class="lead">'+t('sciLead')+'</p><div class="sci">'+blocks.map(b => '<div><h3>'+b[0]+'</h3><p>'+b[1]+'</p></div>').join('')+'</div>';
 }
 
 paintStatic(); render();
