@@ -43,9 +43,9 @@ const HN = (function () {
   function invPhi(p) { let lo = -10, hi = 10; for (let i = 0; i < 100; i++) { const mid = (lo + hi) / 2; if (Phi(mid) < p) lo = mid; else hi = mid; } return (lo + hi) / 2; }
   const kN = (N, alpha) => Math.round(invPhi(Math.pow(1 - alpha, 1 / Math.max(1, N))) * 100) / 100;
   // scoring
-  const floor2 = v => Math.floor(v * 100 + 1e-9) / 100;
+  const floor2 = v => Math.floor(Math.round(v * 1e12) / 1e10) / 100; // round towards -1; the 1e-12 snap removes binary noise only
   const clip = v => Math.max(-1, Math.min(1, v));
-  function side(x, S, L, B) { const t = (x - L) / (B - L); return t >= 0 ? t : (x - L) / (L - S); }
+  function side(x, S, L, B) { if (B === L) return x === L ? 1 : ((x - L) * Math.sign(B - S || 1) >= 0 ? 1 : (x - L) / (L - S)); const t = (x - L) / (B - L); return t >= 0 ? t : (x - L) / (L - S); }
   const num = v => (v === '' || v === null || v === undefined || isNaN(+v)) ? null : +v;
   function validateSpec(s) {
     const e = [];
@@ -65,7 +65,7 @@ const HN = (function () {
       } else if (p.type === 'two') {
         const a = ['Slo', 'Llo', 'Blo', 'Bhi', 'Lhi', 'Shi'].map(k => num(p[k]));
         if (a.some(v => v === null)) e.push(tag + 'all six two-sided anchors are required.');
-        else if (!(a[0] < a[1] && a[1] < a[2] && a[2] <= a[3] && a[3] < a[4] && a[4] < a[5])) e.push(tag + 'two-sided anchors must satisfy S_lo < L_lo < B_lo \u2264 B_hi < L_hi < S_hi.');
+        else if (!(a[0] < a[1] && a[1] <= a[2] && a[2] <= a[3] && a[3] <= a[4] && a[4] < a[5] && a[1] < a[4])) e.push(tag + 'two-sided anchors must satisfy S_lo < L_lo \u2264 B_lo \u2264 B_hi \u2264 L_hi < S_hi.');
         if (p.scale === 'log' && a.some(v => v !== null && v <= 0)) e.push(tag + 'logarithmic scale needs positive anchors.');
       }
       if (num(p.u0) !== null && num(p.u0) < 0) e.push(tag + 'default uncertainty cannot be negative.');
@@ -136,7 +136,8 @@ const HN = (function () {
     const M = units.reduce((a, u) => a + u.wn * u.d, 0);
     const m = okM.length ? Math.min.apply(null, okM.map(r => r.d)) : null;
     const veto = okM.some(r => r.d <= -1);
-    let A, parts = [];
+    const critical = false; // reserved, not used
+    let A, parts = [], floored = false;
     if (veto) { A = -1; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
     else if (m === null) { A = M; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
     else if (m < 0) { // violation: sign locked negative. A = min( (1-b)m + bM , m(1 - b*max(0,M)) )
@@ -145,10 +146,12 @@ const HN = (function () {
       else { A = a2; const pos = units.filter(u => M > 0);
         parts = [{ key: 'base', label: 'base', v: m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: M > 0 ? -m * beta * u.wn * u.d : 0, d: u.d, unit: u }))); } }
     else { A = (1 - beta) * m + beta * M;
-      parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
+      parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u })));
+      if (A < 0) { // sign rule: penalising requirements may lower A to 0 but never make it negative while every mandatory limit is met
+        const cut = -A; parts.push({ key: 'floor', label: 'floor', v: cut }); floored = true; A = 0; } }
     A = Math.max(-1, Math.min(1, A)); A = floor2(A);
     const binding = m === null ? [] : okM.filter(r => r.d === m).map(r => r.p.name);
-    return { beta, N, n, A, m, M, parts, binding, veto, units };
+    return { beta, N, n, A, m, M, parts, binding, veto, critical, floored, units };
   }
   function decide(s, ag) {
     const tA = num(s.tauA), tR = num(s.tauR);
@@ -156,6 +159,7 @@ const HN = (function () {
     if (ag.n < ag.N) return 'NOT_APPROVABLE';
     const A = ag.A, mOk = ag.m === null || (s.letterA === 'E' ? ag.m > tA : ag.m >= tA);
     if (tA !== null && (s.letterA === 'E' ? A > tA : A >= tA) && mOk) return 'ACCEPT';
+    if (ag.critical) return 'REJECT';
     if (tR !== null && (s.letterR === 'E' ? A < tR : A <= tR)) return 'REJECT';
     return 'DISCRETION';
   }
@@ -166,9 +170,9 @@ const HN = (function () {
     rows.filter(r => r.status === 'ok' && kindOf(r.p) !== 'info').forEach(r => { const g = r.p.group || 'All parameters'; groups[g] = groups[g] === undefined ? r.d : Math.min(groups[g], r.d); });
     const verdict = decide(s, ag);
     const H = ag.A;
-    const reason = H === null ? null : ag.veto ? 'veto' : (ag.m !== null && ag.m < 0) ? 'violation' : (H < 0 ? 'combined' : (rows.some(r => r.status === 'ok' && kindOf(r.p) === 'soft' && r.d < 0) ? 'softpenalty' : 'ok'));
+    const reason = H === null ? null : ag.veto ? 'veto' : (ag.m !== null && ag.m < 0) ? 'violation' : (ag.floored ? 'floored' : (rows.some(r => r.status === 'ok' && kindOf(r.p) === 'soft' && r.d < 0) ? 'softpenalty' : 'ok'));
     const nearLimit = rows.filter(r => r.status === 'ok' && kindOf(r.p) === 'mand' && r.d >= 0 && r.d < 0.10).length;
-    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
+    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, critical: ag.critical, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
   }
   // scenario simulation for soft requirements: other values at 'typical' (+0.40 / near limit +0.05)
   function simulate(s) {
@@ -194,3 +198,4 @@ const HN = (function () {
   return { sha256, canon, kN, Phi, floor2, scoreParam, evaluate, simulate, sensitivity, aggregate, IMP, BETA, kindOf, weightOf, betaOf, validateSpec, kUsed, fmt, num };
 })();
 if (typeof module !== 'undefined') module.exports = HN;
+if (typeof session !== 'undefined') session.HN = HN;
