@@ -9,21 +9,19 @@ communicating whether a piece of work meets a multi-parameter specification.
 compliance* (manuscript, 2026).
 
 ## What it does
-- Every requirement is mapped to a score on one fixed ruler: **+1** full score, **0** exactly at the limit,
-  **−1** unacceptable (veto).
+- Every decision-relevant requirement (mandatory or penalising) is mapped to a score on one fixed ruler: **+1** full score, **0** the compliance boundary, and **−1** the unacceptable anchor (veto). An aggregate **A = 0** can also result from the zero floor when penalising requirements lower an otherwise compliant result; the reported reason distinguishes these cases. Information-only requirements are excluded from the score.
 - Requirements are **mandatory**, **penalising** or **information only**.
 - **Sign rule:** A is negative **if and only if** a mandatory limit is violated. Penalising requirements can lower A
-  down to 0 (grey zone, "needs evaluation") but never make it negative.
-- The size of A combines the weakest mandatory score with the importance-weighted average of all scores
-  (share β, shown on the notation). A is exactly the sum of the parts drawn in the contribution bar.
+  down to 0 but never make it negative. Whether a result is automatically accepted or rejected depends on the owner-defined thresholds and their inclusive/exclusive boundary letters; otherwise the owner decides.
+- The size of A combines the weakest mandatory score with the importance-weighted average of decision-relevant
+  requirements (share β, shown on the notation). Completeness n/N counts all mandatory and penalising requirements, not information-only fields. A is exactly the sum of the parts drawn in the contribution bar.
 - The owner **locks** the specification (SHA-256 over a canonical JSON form; 12 characters shown on the notation),
   the submitter only enters values, and the owner confirms the decision.
 
 ## Tests
 ```
-node tests/core.test.js             # 35 tests: sign rule, veto, jump at m = 0, rounding, monotonicity, decomposition, kN, SHA-256
-node tests/simulation.js            # simulation of Section 9.1, uniform distribution (fixed seed)
-node tests/simulation.js mixture    # sensitivity check with a mixture distribution
+node tests/core.test.js     # 20 passing assertions in 10 blocks; see Section 4.6 and Table 10
+node tests/simulation.js    # fixed-seed uniform synthetic simulation of Section 9.1
 ```
 
 ## Disclaimer / Sorumluluk reddi
@@ -61,8 +59,11 @@ Settings → Pages → Source: *Deploy from a branch* → Branch `main`, folder 
 Özkul, İ. (2026). *Özkul Decision Number – reference implementation* [Software].
 https://github.com/iskenderozkul/OzkulDecisionNumber
 
+## Simulation scope
+The 20,000-case run uses a fixed-seed uniform synthetic generator. It is a stress test, not a model of the empirical distribution of engineering specifications. Eq. (5) has zero false passes by Theorem 2(i); the simulation checks the implementation and illustrates the behaviour of the compensatory comparators.
+
 ## Limits
-The fingerprint makes changes detectable; it does not prove authorship. For contractual use, sign it digitally.
+The fingerprint makes changes detectable; it does not prove authorship. For contractual use, sign it digitally. The proposed user study is a protocol only; no participant results are claimed.
 
 ## License
 Apache-2.0
