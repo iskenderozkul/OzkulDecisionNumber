@@ -137,21 +137,21 @@ const HN = (function () {
     const m = okM.length ? Math.min.apply(null, okM.map(r => r.d)) : null;
     const veto = okM.some(r => r.d <= -1);
     const critical = false; // reserved, not used
-    let A, parts = [], floored = false, branch = null;
-    if (veto) { A = -1; branch = 'veto'; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
-    else if (m === null) { A = M; branch = 'none'; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
+    let A, parts = [], floored = false;
+    if (veto) { A = -1; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
+    else if (m === null) { A = M; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
     else if (m < 0) { // violation: sign locked negative. A = min( (1-b)m + bM , m(1 - b*max(0,M)) )
       const a1 = (1 - beta) * m + beta * M, Mp = Math.max(0, M), a2 = m * (1 - beta * Mp);
-      if (a1 <= a2) { A = a1; branch = '5b1'; parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
-      else { A = a2; branch = '5b2';
+      if (a1 <= a2) { A = a1; parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
+      else { A = a2; const pos = units.filter(u => M > 0);
         parts = [{ key: 'base', label: 'base', v: m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: M > 0 ? -m * beta * u.wn * u.d : 0, d: u.d, unit: u }))); } }
-    else { A = (1 - beta) * m + beta * M; branch = '5a';
+    else { A = (1 - beta) * m + beta * M;
       parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u })));
       if (A < 0) { // sign rule: penalising requirements may lower A to 0 but never make it negative while every mandatory limit is met
-        const cut = -A; parts.push({ key: 'floor', label: 'floor', v: cut }); floored = true; branch = 'floor'; A = 0; } }
+        const cut = -A; parts.push({ key: 'floor', label: 'floor', v: cut }); floored = true; A = 0; } }
     A = Math.max(-1, Math.min(1, A)); A = floor2(A);
     const binding = m === null ? [] : okM.filter(r => r.d === m).map(r => r.p.name);
-    return { beta, N, n, A, m, M, parts, binding, veto, critical, floored, branch, units };
+    return { beta, N, n, A, m, M, parts, binding, veto, critical, floored, units };
   }
   function decide(s, ag) {
     const tA = num(s.tauA), tR = num(s.tauR);
@@ -172,7 +172,7 @@ const HN = (function () {
     const H = ag.A;
     const reason = H === null ? null : ag.veto ? 'veto' : (ag.m !== null && ag.m < 0) ? 'violation' : (ag.floored ? 'floored' : (rows.some(r => r.status === 'ok' && kindOf(r.p) === 'soft' && r.d < 0) ? 'softpenalty' : 'ok'));
     const nearLimit = rows.filter(r => r.status === 'ok' && kindOf(r.p) === 'mand' && r.d >= 0 && r.d < 0.10).length;
-    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, critical: ag.critical, floored: ag.floored, branch: ag.branch, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
+    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, critical: ag.critical, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
   }
   // scenario simulation for soft requirements: other values at 'typical' (+0.40 / near limit +0.05)
   function simulate(s) {
