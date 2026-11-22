@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Özkul Karar Sayısı · Özkul Decision Number</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page-ink:#1C2430; --page-ink-2:#3A3F47; --page-muted:#6B727C; --page-line:#D5D8DC; --page-line-soft:#E9EBEE;
+  --page-paper:#FFFFFF; --page-panel:#F5F6F7; --page-accept:#0F6E6E; --page-accept-soft:#E4F0F0;
+  --page-reject:#B3261E; --page-reject-soft:#F7E6E4; --page-warn:#8A5A00; --page-warn-soft:#FBF1DD; --page-grey:#C9CDD2; --page-black:#2B2B2B;
+  --page-sans:'IBM Plex Sans',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  --page-mono:'IBM Plex Mono',ui-monospace,'SF Mono',Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--page-paper);color:var(--page-ink);font-family:var(--page-sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+header{border-bottom:2px solid var(--page-ink)}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 0 12px}
+.brand{font-weight:600;font-size:17px}
+.brand small{font-weight:400;color:var(--page-muted);margin-left:8px;font-size:13px}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lang button{font:inherit;font-size:13px;border:1px solid var(--page-ink);background:#fff;padding:4px 10px;cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--page-ink);color:#fff}
+.lang button+button{border-left:0}
+/* intro */
+.intro{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:36px;padding:34px 0 30px;align-items:center}
+@media(max-width:860px){.intro{grid-template-columns:1fr;gap:20px}}
+.intro h1{font-size:clamp(26px,3.6vw,40px);line-height:1.15;margin:0 0 14px;letter-spacing:-.015em;font-weight:600}
+.intro p{margin:0 0 10px;color:var(--page-ink-2);max-width:560px}
+.facts3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--page-ink);margin-top:18px}
+.facts3 div{padding:10px 12px 0 0}
+.facts3 b{display:block;font-family:var(--page-mono);font-size:22px}
+.facts3 span{font-size:13px;color:var(--page-muted)}
+.demo{border:1px solid var(--page-line);padding:18px}
+.demo .cap{margin-bottom:0}
+/* steps */
+nav.steps{display:flex;border-bottom:1px solid var(--page-line);overflow-x:auto;margin-top:8px}
+nav.steps button{font:inherit;background:none;border:0;border-bottom:3px solid transparent;padding:12px 18px 10px;color:var(--page-muted);cursor:pointer;white-space:nowrap;text-align:left}
+nav.steps button b{display:block;color:inherit;font-size:15px}
+nav.steps button span{font-size:12px}
+nav.steps button[aria-selected=true]{color:var(--page-ink);border-bottom-color:var(--page-ink)}
+nav.steps .no{font-family:var(--page-mono);margin-right:6px}
+section.view{display:none;padding:24px 0 10px} section.view.on{display:block}
+h2{font-size:21px;margin:0 0 6px;font-weight:600}
+h3{font-size:15px;margin:26px 0 10px;font-weight:600}
+p.lead{color:var(--page-ink-2);margin:0 0 18px;max-width:780px}
+label{font-size:13px;color:var(--page-ink-2);display:block;margin-bottom:4px}
+input,select,textarea{font:inherit;font-size:14px;color:var(--page-ink);background:#fff;border:1px solid var(--page-line);border-radius:3px;padding:7px 9px;min-width:0;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--page-ink);outline-offset:-1px}
+input:disabled,select:disabled{background:var(--page-panel);color:var(--page-ink-2);border-color:var(--page-line-soft)}
+input.num{font-family:var(--page-mono);text-align:right}
+.grid{display:grid;gap:12px 16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))} .g3{grid-template-columns:repeat(3,minmax(0,1fr))} .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:720px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.grid>div{min-width:0}
+.card{border:1px solid var(--page-line);border-left:4px solid var(--page-ink);padding:16px 18px;margin:0 0 14px;background:#fff}
+.card.bad{border-left-color:var(--page-reject)}
+.card .head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.card .head b{font-size:15px}
+.say{font-size:14px;margin-top:12px;padding:9px 12px;background:var(--page-panel);color:var(--page-ink)}
+.say .tag{font-size:12px;color:var(--page-muted);display:block}
+.err{color:var(--page-reject);font-size:13px;margin-top:8px}
+.hint{font-size:12px;color:var(--page-muted);margin-top:3px}
+details.adv{margin-top:10px} details.adv summary{cursor:pointer;font-size:13px;color:var(--page-ink-2)}
+details.adv .grid{margin-top:10px}
+.btn{font:inherit;font-weight:500;font-size:14px;border:1px solid var(--page-ink);background:#fff;color:var(--page-ink);border-radius:3px;padding:8px 16px;cursor:pointer;width:auto}
+.btn:hover{background:var(--page-panel)} .btn.primary{background:var(--page-ink);color:#fff} .btn.primary:hover{background:#2E3846}
+.btn.small{padding:4px 10px;font-size:13px} .btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.policy{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:720px){.policy{grid-template-columns:1fr}}
+.policy label.opt{display:block;border:1px solid var(--page-line);padding:12px 14px;cursor:pointer;margin:0;color:var(--page-ink)}
+.policy label.opt.on{border-color:var(--page-ink);box-shadow:inset 3px 0 0 var(--page-ink)}
+.policy input[type=radio]{width:auto;margin-right:8px}
+.policy .d{display:block;font-size:13px;color:var(--page-muted);margin-top:4px}
+.lockbar{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--page-panel);border-left:4px solid var(--page-ink);margin:16px 0}
+.lockbar.ok{border-left-color:var(--page-accept)} .lockbar.bad{border-left-color:var(--page-reject)}
+.fp{font-family:var(--page-mono);font-size:12px;word-break:break-all;color:var(--page-ink-2)}
+.acc{color:var(--page-accept)} .rej{color:var(--page-reject)} .mut{color:var(--page-muted)}
+/* result */
+.result{position:sticky;top:0;z-index:2;background:#fff;border:1px solid var(--page-ink);padding:16px 18px;margin-bottom:18px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 26px;align-items:center}
+@media(max-width:760px){.result{grid-template-columns:1fr;position:static}}
+.verdict{font-size:22px;font-weight:600;line-height:1.2}
+.verdict.ACCEPT{color:var(--page-accept)} .verdict.REJECT{color:var(--page-reject)} .verdict.DISCRETION{color:var(--page-ink)} .verdict.NOT_APPROVABLE,.verdict.EMPTY{color:var(--page-ink-2)}
+.why{font-size:14px;color:var(--page-ink-2);margin-top:4px}
+.warn{background:var(--page-warn-soft);color:var(--page-warn);padding:8px 12px;font-size:13px;margin-top:8px}
+.notation{display:grid;grid-template-columns:auto auto auto;align-items:center;gap:0 8px}
+.notation .lt,.notation .lb,.notation .rt,.notation .rb{font-family:var(--page-mono);font-size:14px;line-height:1.1}
+.notation .lt,.notation .lb{text-align:right;color:var(--page-ink-2)}
+.notation .H{grid-row:1 / span 2;grid-column:2;font-family:var(--page-mono);font-weight:600;font-size:52px;line-height:1}
+.notation .lt{grid-row:1;grid-column:1;align-self:end} .notation .lb{grid-row:2;grid-column:1;align-self:start}
+.notation .rt{grid-row:1;grid-column:3;align-self:end;color:var(--page-accept)} .notation .rb{grid-row:2;grid-column:3;align-self:start;color:var(--page-reject)}
+.pc{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.2fr);gap:14px;align-items:start}
+@media(max-width:860px){.pc{grid-template-columns:1fr}}
+.pc .inp{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:8px}
+.meter{height:12px;background:var(--page-line-soft);position:relative;margin-top:8px}
+.meter i{position:absolute;top:0;bottom:0}
+.meter .mid{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--page-ink)}
+.word{font-size:14px;margin-top:6px}
+.chart{overflow-x:auto} .chart svg{display:block;max-width:100%;height:auto} .chart svg.tree{max-width:none}
+.cap{font-size:12px;color:var(--page-muted);margin:4px 0 16px}
+textarea.code{min-height:110px;font-family:var(--page-mono);font-size:12px}
+.check{list-style:none;padding:0;margin:12px 0}
+.check li{padding:9px 0;border-bottom:1px solid var(--page-line-soft);display:flex;gap:12px}
+.check b{font-family:var(--page-mono);width:52px;flex:none}
+.bigverdict{font-size:20px;font-weight:600;margin:14px 0 4px}
+/* science */
+.science{border-top:2px solid var(--page-ink);margin-top:40px;padding:26px 0 40px;background:#fff}
+.science h2{margin-bottom:4px}
+.sci{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 40px}
+@media(max-width:860px){.sci{grid-template-columns:1fr}}
+.sci h3{margin:22px 0 6px}
+.sci p{margin:0 0 8px;font-size:14px;color:var(--page-ink-2)}
+.f{font-family:var(--page-mono);font-size:13.5px;background:var(--page-panel);padding:8px 12px;margin:6px 0 10px;overflow-x:auto;white-space:nowrap;color:var(--page-ink)}
+footer{border-top:1px solid var(--page-line);color:var(--page-muted);font-size:12px;padding:14px 0 26px}
+.sr{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+  <div class="brand" id="brand"></div>
+  <div class="tools">
+    <label for="exSel" class="sr">Example</label>
+    <select id="exSel" style="width:auto"></select>
+    <div class="lang" role="group" aria-label="Language"><button data-l="tr">TR</button><button data-l="en">EN</button></div>
+  </div>
+</div></header>
+
+<div class="wrap">
+  <div class="intro">
+    <div>
+      <h1 id="iTitle"></h1>
+      <p id="iP1"></p>
+      <p id="iP2"></p>
+      <div class="facts3">
+        <div><b class="acc">+1</b><span id="iF1"></span></div>
+        <div><b>0</b><span id="iF2"></span></div>
+        <div><b class="rej">−1</b><span id="iF3"></span></div>
+      </div>
+      <p id="iSign" style="margin-top:16px;font-size:14px"></p>
+    </div>
+    <div class="demo"><div class="chart" id="demoScale"></div><div class="cap" id="iDemoCap"></div></div>
+  </div>
+
+  <nav class="steps" role="tablist">
+    <button role="tab" data-v="spec"><b><span class="no">1</span><span id="s1t"></span></b><span id="s1d"></span></button>
+    <button role="tab" data-v="sub"><b><span class="no">2</span><span id="s2t"></span></b><span id="s2d"></span></button>
+    <button role="tab" data-v="ver"><b><span class="no">3</span><span id="s3t"></span></b><span id="s3d"></span></button>
+  </nav>
+
+  <section class="view" id="v-spec"></section>
+  <section class="view" id="v-sub"></section>
+  <section class="view" id="v-ver"></section>
+</div>
+
+<div class="science"><div class="wrap" id="science"></div></div>
+<div class="wrap"><footer id="foot"></footer></div>
+
+<script>
+/*CORE*/
+</script>
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const esc = s => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = HN.num;
+let LANG = 'tr'; try { LANG = localStorage.getItem('odn.lang') || 'tr'; } catch(e){}
+const fmt = v => { const s = HN.fmt(v); return LANG==='tr' ? s.replace('.', ',') : s; };
+const nf = v => v===null||v===undefined||v==='' ? '' : (LANG==='tr' ? String(v).replace('.', ',') : String(v));
+const pn = v => { if (v===null||v===undefined) return v; const s = String(v).trim().replace(/\s/g,''); return s.indexOf(',')>=0 && s.indexOf('.')<0 ? s.replace(',', '.') : s.replace(/,/g,''); };
+
+// ---------------- texts ----------------
+const T = {
+tr:{
+ brand:'Özkul Karar Sayısı', brandSmall:'şartname uygunluğunu tek sayıyla göster',
+ iTitle:'Bir işin şartnameye uyup uymadığını tek bir sayı söyler.',
+ iP1:'Şartnamedeki her koşul aynı cetvele çevrilir. Sonuç, en zayıf koşulun puanıdır. Çünkü zincir en zayıf halkası kadar sağlamdır: bir koşuldaki fazlalık, başka bir koşuldaki eksikliği kapatamaz.',
+ iP2:'Şartnameyi yazan kişi kuralları kilitler. İşi yapan kişi yalnızca bulduğu değerleri girer ve sonucu hemen görür. Hakem ya da onaylayan kişi aynı hesabı tek tıkla tekrar yapabilir.',
+ iF1:'tam puan, bundan iyisi fark etmez', iF2:'tam sınırda', iF3:'kesinlikle kabul edilemez', iSign:'<b>Neden eksi var?</b> İşaret “şartnameye uyuyor mu?” sorusunu, büyüklük “ne kadar?” sorusunu cevaplar. Artı ise bütün sınırlar sağlanmıştır ve sayı payın ne kadar olduğunu söyler. Eksi ise en az bir sınır aşılmıştır ve sayı aşımın ne kadar ciddi olduğunu söyler. −0,05 küçük bir düzeltmeyle ya da istisna onayıyla kurtarılabilecek bir iştir, −0,80 baştan ele alınması gereken bir iştir. 0–1 arası bir ölçekte sınır her şartnamede başka bir noktada kalırdı ve bu fark görünmezdi.',
+ iDemoCap:'Örnek: kiriş maliyet sınırını aştığı için sonuç −0,40 çıkar ve iş reddedilir. Diğer üç koşulun iyi olması bunu değiştirmez.',
+ s1t:'Şartnameyi yaz', s1d:'Şartname sahibi', s2t:'Değerleri gir', s2d:'İşi yapan kişi', s3t:'Raporu doğrula', s3d:'Hakem / onaylayan',
+ exPick:'Makaledeki bir örneği aç…',
+ specLead:'Her koşul için ne istediğinizi düz cümlelerle tanımlayın: hangi yön iyi, sınır ne, hangi değerden sonrası fark etmez, hangi değer kesinlikle kabul edilemez. Alttaki gri kutu, girdiğinizi bir cümle olarak geri okur. Kontrol edip kilitleyin.',
+ specTitle:'Şartname adı', version:'Sürüm', owner:'Hazırlayan',
+ param:'Koşul', name:'Koşulun adı', unit:'Birim', dir:'Hangisi iyi?',
+ dUp:'Büyük olan iyi', dDown:'Küçük olan iyi', dTwo:'Bir aralıkta kalmalı', dBool:'Evet / hayır',
+ upL:'En az (sınır)', upB:'Bu değerden sonrası fark etmez (tam puan)', upS:'Bu değer veya altı kesinlikle kabul edilemez',
+ dnL:'En fazla (sınır)', dnB:'Bu değer veya altı tam puan (daha iyisi fark etmez)', dnS:'Bu değer veya üstü kesinlikle kabul edilemez',
+ twL:'İzin verilen aralık', twB:'İdeal aralık (tam puan)', twS:'Kesinlikle kabul edilemez: altı / üstü', from:'en az', to:'en çok',
+ advanced:'Ayrıntılar (isteğe bağlı)', group:'Grup (ör. Yapısal, Maliyet)', u0:'Varsayılan ölçüm belirsizliği (±)', vmin:'Geçerli en küçük değer', vmax:'Geçerli en büyük değer', mand:'Zorunlu koşul', defn:'Tanım ve ölçüm yöntemi', scale:'Ölçek', lin:'Doğrusal', log:'Logaritmik (çok geniş aralıklar için)',
+ sayTag:'Şöyle okunuyor:', inclQ:'Sınır değerinin kendisi', inclI:'Dahil: tam sınıra eşit değer kabul', inclE:'Hariç: tam sınıra eşit değer ret', inclLoQ:'Alt sınır değeri', inclHiQ:'Üst sınır değeri', rdI:' Tam {0} kabul edilir.', rdE:' Tam {0} kabul edilmez.', w_excl:'Tam sınırda ama sınır hariç tutulmuş: ret', addParam:'+ Koşul ekle', del:'Sil',
+ polT:'Karar kuralı', polLead:'Sonuç sayısına göre kararın nasıl verileceğini seçin. Kuralı siz koyarsınız, değerleri giren kişi değiştiremez.',
+ pComply:'Sınırları sağlayan kabul, sağlamayan ret', pComplyD:'Ara bölge yok. En basit kural. Satın alma, kalite kontrol gibi işler için uygundur.',
+ pMargin:'Kabul için güvenlik payı iste', pMarginD:'Sınırları sağlayan ama payı yetersiz kalan iş size kalır. Sınırı aşan iş her zaman otomatik ret olur.',
+ pTol:'İstisna (sapma onayı) imkânı tanı', pTolD:'Sınırı hafifçe aşan iş otomatik ret olmaz, size kalır. Kabul ederseniz bu bir istisna onayıdır.',
+ pManual:'Karar her zaman bende', pManualD:'Otomatik kabul veya ret yok. Sayı yalnızca bilgi verir.',
+ tauA:'Otomatik kabul için en az pay', tauR:'Bu değer veya altı otomatik ret', tauAh:'0 ile 1 arası. Örneğin 0,20, en zayıf koşulda en az %20 pay demektir.', tauRh:'0 ile −1 arası. Örneğin −0,10, sınırın hafif aşılmasına izin verir.',
+ uncT:'Ölçüm belirsizliği', uncLead:'Ölçülen değer, belirsizliği kadar sınıra doğru kaydırılarak değerlendirilir. Böylece belirsizlik sonucu olduğundan iyi göstermez.',
+ u_none:'Hesaba katma (k = 0)', u_k1:'Standart belirsizlik kadar (k = 1)', u_k2:'Yaklaşık %95 güven (k = 2)', u_fw:'Çok koşullu güvenli: toplam risk en fazla %5 (k otomatik)',
+ lockBtn:'Kontrol ettim, şartnameyi kilitle', lockHint:'Kilitlenen şartname değiştirilemez. Değişiklik için yeni sürüm açılır ve yeni bir parmak izi oluşur.',
+ locked:'Kilitli', draft:'Taslak: henüz kilitlenmedi', altered:'Uyarı: kilitlendikten sonra değiştirilmiş', newVer:'Yeni sürüm aç (kopya)', dlSpec:'Kilitli şartnameyi indir', imp:'Şartname dosyası yükle', newBlank:'Boş şartname', goSub:'Değer girişine geç →', fixFirst:'Kilitlemeden önce kırmızı uyarıları düzeltin.',
+ fixList:'Düzeltilmesi gerekenler:',
+ noLock:'Önce bir şartname kilitlenmeli. 1. adımda kilitleyin, kilitli bir şartname dosyası yükleyin ya da yukarıdan bir örnek açın.',
+ subLead:'Yalnızca bulduğunuz değerleri girin. Sonuç siz yazarken güncellenir. Kuralları değiştiremezsiniz.',
+ value:'Bulunan değer', unc:'± belirsizlik', ev:'Kanıt / rapor no', samples:'Örnek sayısı', yes:'evet', no:'hayır', choose:'seçin',
+ w_full:'Tam puan: bundan iyisi kararı değiştirmez', w_ok:'Sınır sağlandı: tam puana giden yolun %{0}\'i', w_zero:'Tam sınırda, pay yok', w_bad:'Sınır aşıldı: kabul edilemez noktaya giden yolun %{0}\'i', w_black:'Kesinlikle kabul edilemez', w_miss:'Değer girilmedi', w_inv:'Geçersiz: {0}', binding:'en zayıf koşul',
+ inv_range:'geçerli aralığın dışında', inv_neg:'belirsizlik negatif', inv_log:'log ölçekte pozitif olmalı',
+ V_ACCEPT:'KABUL', V_REJECT:'RET', V_DISCRETION:'KARAR SİZDE', V_NOT_APPROVABLE:'ONAYLANAMAZ', V_EMPTY:'Zorunlu koşul yok',
+ why_acc:'Bütün koşullar sağlandı. En zayıf koşul: {0} ({1}).', why_rejV:'En az bir koşul sınırı aşıyor: {0} ({1}).', why_rejM:'Sınırlar sağlandı ama {0} ({1}) istenen payın altında ve kural bunu ret sayıyor.',
+ why_dis_pos:'Bütün sınırlar sağlandı ama otomatik kabul için istenen pay yok. En zayıf koşul: {0} ({1}).', why_dis_neg:'{0} sınırı aşıyor ({1}). Kural bu durumu size bırakıyor.',
+ why_na:'{0} zorunlu koşulun değeri eksik ya da geçersiz. Eksik inceleme onaylanamaz.', why_none:'Henüz değer girilmedi.',
+ sev_s:'Hafif aşım: küçük bir düzeltme ya da istisna onayıyla kurtarılabilir.', sev_m:'Belirgin aşım: düzeltme gerekir.', sev_l:'Ciddi aşım: kabul edilemez noktaya yakın, iş baştan ele alınmalı.', sev_x:'Kabul edilemez noktaya ulaşıldı.', concession:'Dikkat: bu iş en az bir sınırı aşıyor. Kabul ederseniz bu bir istisna (sapma) onayı olur ve gerekçesiyle kaydedilmelidir.',
+ readN:'{0}/{1} koşul incelendi · sürüm {2} · parmak izi {3}', dlRep:'Raporu indir', dlRepH:'Rapor, kilitli şartnameyi, girdiğiniz değerleri, sonucu ve raporun parmak izini içerir. Hakeme bu dosyayı gönderin.',
+ scaleCap:'Siyah: otomatik ret · Gri: karar sizde · Beyaz: otomatik kabul. Bölgeleri şartname sahibi belirler.', profCap:'Her koşul aynı cetvelde. Sonuç, en soldaki çubuktur.', treeCap:'Her kutu, altındakilerin en küçüğüdür. Koyu yol en zayıf koşula gider.',
+ verLead:'Size gönderilen rapor dosyasını yükleyin. Araç, şartnamenin ve raporun değiştirilip değiştirilmediğini ve bütün puanları kendisi yeniden hesaplayarak kontrol eder. Matematik bilmeniz gerekmez: hepsi BAŞARILI ise rapor tutarlıdır.',
+ verFile:'Rapor dosyası seç', verPaste:'veya rapor metnini yapıştırın', verBtn:'Yapıştırılanı doğrula', PASS:'BAŞARILI', FAIL:'HATALI',
+ c_notRep:'Bu bir Özkul raporu değil.', c_json:'Metin geçerli JSON değil.', c_spec:'Şartname, kilitlendiği hâliyle aynı (parmak izi tutuyor)', c_specBad:'Şartname kilitlendikten sonra değiştirilmiş (parmak izi tutmuyor)',
+ c_rep:'Rapor gönderildikten sonra değiştirilmemiş', c_repBad:'Rapor değiştirilmiş (rapor parmak izi tutmuyor)', c_rules:'Şartname kurallara uygun', c_rulesBad:'Şartname kurallara aykırı: {0}',
+ c_H:'Sonuç sayısı yeniden hesaplandı: {0} (raporda {1})', c_V:'Karar yeniden hesaplandı: {0} (raporda {1})', c_n:'İnceleme oranı: {0} (raporda {1})', c_sc:'{0} koşulun puanı tek tek tutuyor', c_scBad:'Puanı tutmayan koşullar: {0}',
+ verOK:'Rapor tutarlı. Sonuç: {0}', verBad:'Raporda tutarsızlık var. Kabul etmeyin, kaynağını sorun.',
+ read_up:'Büyük olan iyi. {0} altı sınırı aşar; {1} ve üstü tam puan; {2} ve altı kesinlikle kabul edilemez.',
+ read_dn:'Küçük olan iyi. {0} üstü sınırı aşar; {1} ve altı tam puan; {2} ve üstü kesinlikle kabul edilemez.',
+ read_two:'{0} ile {1} arasında kalmalı. {2}–{3} arası tam puan; {4} ve altı ya da {5} ve üstü kesinlikle kabul edilemez.',
+ read_bool:'Evet ise tam puan (+1), hayır ise kesinlikle kabul edilemez (−1).', read_inc:'Değerleri girin…', read_log:' Logaritmik ölçek.',
+ e_name:'Koşula bir ad verin.', e_need:'Üç değerin hepsini girin.', e_need6:'Altı aralık değerinin hepsini girin.',
+ e_up:'"Büyük olan iyi" seçtiniz. Bu durumda kabul edilemez değer < sınır < tam puan değeri olmalı. Yönü mü değerleri mi yanlış girdiniz?',
+ e_dn:'"Küçük olan iyi" seçtiniz. Bu durumda kabul edilemez değer > sınır > tam puan değeri olmalı. Yönü mü değerleri mi yanlış girdiniz?',
+ e_two:'Sıra şöyle olmalı: kabul edilemez alt < izin alt < ideal alt ≤ ideal üst < izin üst < kabul edilemez üst.', e_log:'Logaritmik ölçekte değerler pozitif olmalı.', e_none:'En az bir koşul ekleyin.', e_tauA:'Otomatik kabul payı 0 ile 1 arasında olmalı.', e_tauR:'Otomatik ret değeri 0 ile −1 arasında olmalı.',
+ sciT:'Bilimsel açıklama', sciLead:'Bu bölüm hakemler ve yöntemi ayrıntısıyla incelemek isteyenler içindir. Tam metin ve ispatlar makalede yer alır.',
+ foot:'Özkul Karar Sayısı · başvuru uygulaması v1.2 · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
+ kInfo:'k = {0}', defaultTitle:'Yeni şartname'
+},
+en:{
+ brand:'Özkul Decision Number', brandSmall:'specification compliance in one number',
+ iTitle:'One number tells you whether a piece of work meets its specification.',
+ iP1:'Every requirement is put on the same ruler, and the result is the score of the weakest requirement. A chain is only as strong as its weakest link, so a surplus on one requirement can never cover a shortfall on another.',
+ iP2:'The specification owner writes the rules and locks them. The person doing the work only enters the values found and sees the result at once. A reviewer or approver can repeat the whole calculation with one click.',
+ iF1:'full score; better makes no difference', iF2:'exactly at the limit', iF3:'unacceptable', iSign:'<b>Why a minus side?</b> The sign answers “does it meet the specification?”, the size answers “by how much?”. Plus means every limit is met and the number is the margin. Minus means at least one limit is exceeded and the number is the depth of the violation. −0.05 can be rescued by a small fix or a concession; −0.80 needs to be rethought. On a 0–1 scale the limit would sit at a different point in every specification and this difference would be hidden.',
+ iDemoCap:'Example: a beam exceeds its cost limit, so the result is −0.40 and the work is rejected. Three good results elsewhere do not change this.',
+ s1t:'Write the specification', s1d:'Specification owner', s2t:'Enter results', s2d:'Person doing the work', s3t:'Verify a report', s3d:'Reviewer / approver',
+ exPick:'Open an example from the paper…',
+ specLead:'Describe each requirement in plain terms: which direction is better, where the limit is, beyond which value nothing improves, and which value is unacceptable. The grey box reads your entry back as a sentence. Check it, then lock.',
+ specTitle:'Specification name', version:'Version', owner:'Prepared by',
+ param:'Requirement', name:'Requirement name', unit:'Unit', dir:'Which is better?',
+ dUp:'Higher is better', dDown:'Lower is better', dTwo:'Must stay within a range', dBool:'Yes / no',
+ upL:'At least (limit)', upB:'Beyond this value nothing improves (full score)', upS:'This value or lower is unacceptable',
+ dnL:'At most (limit)', dnB:'This value or lower gets full score', dnS:'This value or higher is unacceptable',
+ twL:'Allowed range', twB:'Ideal range (full score)', twS:'Unacceptable: below / above', from:'from', to:'to',
+ advanced:'Details (optional)', group:'Group (e.g. Structural, Cost)', u0:'Default measurement uncertainty (±)', vmin:'Smallest valid value', vmax:'Largest valid value', mand:'Mandatory', defn:'Definition and measurement method', scale:'Scale', lin:'Linear', log:'Logarithmic (very wide ranges)',
+ sayTag:'Reads as:', inclQ:'The limit value itself', inclI:'Included: a value exactly at the limit passes', inclE:'Excluded: a value exactly at the limit fails', inclLoQ:'Lower limit value', inclHiQ:'Upper limit value', rdI:' Exactly {0} passes.', rdE:' Exactly {0} fails.', w_excl:'Exactly at the limit, but the limit is excluded: fails', addParam:'+ Add requirement', del:'Delete',
+ polT:'Decision rule', polLead:'Choose how the result is turned into a decision. You set the rule; the person entering values cannot change it.',
+ pComply:'Meets all limits = accept, otherwise reject', pComplyD:'No grey zone. The simplest rule; suits purchasing and quality control.',
+ pMargin:'Require a safety margin for acceptance', pMarginD:'Work that meets the limits but lacks the margin is left to you. Work that exceeds a limit is always rejected.',
+ pTol:'Allow concessions (deviation approval)', pTolD:'Work that slightly exceeds a limit is not rejected automatically; it is left to you. Accepting it is a formal concession.',
+ pManual:'I always decide', pManualD:'No automatic accept or reject. The number only informs.',
+ tauA:'Minimum margin for automatic acceptance', tauR:'This value or lower is rejected automatically', tauAh:'Between 0 and 1. 0.20 means at least 20 % margin on the weakest requirement.', tauRh:'Between 0 and −1. −0.10 tolerates a slight exceedance.',
+ uncT:'Measurement uncertainty', uncLead:'Each measured value is moved towards its limit by its uncertainty before scoring, so uncertainty can never make a result look better than it is.',
+ u_none:'Ignore (k = 0)', u_k1:'One standard uncertainty (k = 1)', u_k2:'About 95 % confidence (k = 2)', u_fw:'Safe for many requirements: total risk at most 5 % (k automatic)',
+ lockBtn:'I have checked it — lock the specification', lockHint:'A locked specification cannot be edited. A change opens a new version with a new fingerprint.',
+ locked:'Locked', draft:'Draft — not locked yet', altered:'Warning: changed after locking', newVer:'Open a new version (copy)', dlSpec:'Download locked specification', imp:'Load a specification file', newBlank:'Blank specification', goSub:'Go to entering results →', fixFirst:'Fix the red messages before locking.',
+ fixList:'To fix:',
+ noLock:'A specification must be locked first. Lock one in step 1, load a locked specification file, or open an example above.',
+ subLead:'Enter only the values you found. The result updates as you type. The rules cannot be changed here.',
+ value:'Value found', unc:'± uncertainty', ev:'Evidence / report no.', samples:'Samples', yes:'yes', no:'no', choose:'choose',
+ w_full:'Full score: better would not change the decision', w_ok:'Limit met: {0} % of the way to full score', w_zero:'Exactly at the limit, no margin', w_bad:'Limit exceeded: {0} % of the way to unacceptable', w_black:'Unacceptable', w_miss:'No value yet', w_inv:'Invalid: {0}', binding:'weakest',
+ inv_range:'outside the valid range', inv_neg:'negative uncertainty', inv_log:'must be positive on a log scale',
+ V_ACCEPT:'ACCEPTED', V_REJECT:'REJECTED', V_DISCRETION:'YOUR DECISION', V_NOT_APPROVABLE:'NOT APPROVABLE', V_EMPTY:'No mandatory requirements',
+ why_acc:'All requirements are met. Weakest: {0} ({1}).', why_rejV:'At least one requirement exceeds its limit: {0} ({1}).', why_rejM:'Limits are met, but {0} ({1}) is below the required margin and the rule treats this as rejection.',
+ why_dis_pos:'All limits are met, but the margin required for automatic acceptance is missing. Weakest: {0} ({1}).', why_dis_neg:'{0} exceeds its limit ({1}). The rule leaves this case to you.',
+ why_na:'{0} mandatory requirement(s) missing or invalid. An incomplete review cannot be approved.', why_none:'No values entered yet.',
+ sev_s:'Slight exceedance: a small fix or a concession could rescue it.', sev_m:'Clear exceedance: correction needed.', sev_l:'Severe exceedance: close to unacceptable; rethink the work.', sev_x:'The unacceptable point has been reached.', concession:'Note: this work exceeds at least one limit. Accepting it is a concession (deviation approval) and should be recorded with a justification.',
+ readN:'{0}/{1} requirements checked · version {2} · fingerprint {3}', dlRep:'Download report', dlRepH:'The report contains the locked specification, your values, the result and its own fingerprint. Send this file to the reviewer.',
+ scaleCap:'Black: automatic reject · Grey: your decision · White: automatic accept. The owner sets the zones.', profCap:'Every requirement on the same ruler. The result is the leftmost bar.', treeCap:'Each box is the minimum of the boxes below it. The dark path leads to the weakest requirement.',
+ verLead:'Load the report file you received. The tool checks that neither the specification nor the report was altered and recomputes every score itself. No mathematics needed: if every line says PASS, the report is consistent.',
+ verFile:'Choose report file', verPaste:'or paste the report text', verBtn:'Verify pasted text', PASS:'PASS', FAIL:'FAIL',
+ c_notRep:'This is not an Özkul report.', c_json:'The text is not valid JSON.', c_spec:'Specification is exactly as locked (fingerprint matches)', c_specBad:'Specification changed after locking (fingerprint does not match)',
+ c_rep:'Report unchanged since it was produced', c_repBad:'Report was altered (report fingerprint does not match)', c_rules:'Specification follows the rules', c_rulesBad:'Specification breaks the rules: {0}',
+ c_H:'Result recomputed: {0} (report says {1})', c_V:'Decision recomputed: {0} (report says {1})', c_n:'Completeness: {0} (report says {1})', c_sc:'All {0} requirement scores match', c_scBad:'Scores that do not match: {0}',
+ verOK:'Report is consistent. Result: {0}', verBad:'The report is inconsistent. Do not accept it; ask for its source.',
+ read_up:'Higher is better. Below {0} fails the limit; {1} or more scores full; {2} or less is unacceptable.',
+ read_dn:'Lower is better. Above {0} fails the limit; {1} or less scores full; {2} or more is unacceptable.',
+ read_two:'Must stay between {0} and {1}. {2}–{3} scores full; {4} or less, or {5} or more, is unacceptable.',
+ read_bool:'Yes scores full (+1); no is unacceptable (−1).', read_inc:'Enter the values…', read_log:' Logarithmic scale.',
+ e_name:'Give the requirement a name.', e_need:'Enter all three values.', e_need6:'Enter all six range values.',
+ e_up:'You chose "higher is better", so unacceptable < limit < full-score value. Is the direction or a value wrong?',
+ e_dn:'You chose "lower is better", so unacceptable > limit > full-score value. Is the direction or a value wrong?',
+ e_two:'Order must be: unacceptable low < allowed low < ideal low ≤ ideal high < allowed high < unacceptable high.', e_log:'Values must be positive on a log scale.', e_none:'Add at least one requirement.', e_tauA:'Automatic-acceptance margin must be between 0 and 1.', e_tauR:'Automatic-rejection value must be between 0 and −1.',
+ sciT:'Scientific description', sciLead:'This section is for reviewers and readers who want the details. Full text and proofs are in the paper.',
+ foot:'Özkul Decision Number · reference implementation v1.2 · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
+ kInfo:'k = {0}', defaultTitle:'New specification'
+}};
+const t = (k, ...a) => { let s = (T[LANG] && T[LANG][k]) || T.en[k] || k; a.forEach((v, i) => s = s.split('{'+i+'}').join(v)); return s; };
+
+// ---------------- examples ----------------
+let uid = 0; const newId = () => 'p' + Date.now().toString(36) + (uid++);
+const P1 = (g,name,unit,S,L,B,o) => Object.assign({id:newId(),group:g,name,unit,type:'one',dir:(B!==null&&L!==null&&B<L)?'down':'up',scale:'lin',S,L,B,u0:null,vmin:null,vmax:null,mandatory:true,definition:''},o||{});
+const base = (title, params, o) => Object.assign({title, version:'1', owner:'Özkul (makale, Bölüm 8)', policy:'tol', coverage:'k', k:1, alpha:0.05, tauA:0.6, letterA:'I', tauR:-0.2, letterR:'I', params, lock:null}, o||{});
+function examples(){
+  const E = [];
+  {const p=[{id:newId(),group:'',name:'Cevap doğru mu? / Answer correct',unit:'',type:'bool',scale:'lin',mandatory:true,definition:'5 + 3 = ?'}];
+   E.push({key:'edu',tr:'Eğitim: 5 + 3 = 8',en:'Education: 5 + 3 = 8',spec:base('5 + 3',p),inputs:{[p[0].id]:{value:'yes'}}});}
+  {const p=[Object.assign(P1('','Çap / Diameter','mm'),{type:'two',dir:null,S:null,L:null,B:null,Slo:19.80,Llo:19.90,Blo:19.95,Bhi:20.05,Lhi:20.10,Shi:20.20,u0:0.03})];
+   E.push({key:'cnc',tr:'İmalat: torna çapı',en:'Machining: turned diameter',spec:base('Ø20 mil / shaft',p),inputs:{[p[0].id]:{value:20.04,u:0.03,n:5,ev:'CMM-0412'}}});}
+  {const p=[P1('Yapısal','Sehim / Deflection','mm',15,10,5),P1('Yapısal','Güvenlik katsayısı / Safety factor','',1.0,1.5,2.0),P1('Yapısal','Gerilme / Stress','MPa',250,200,150),P1('Maliyet','Maliyet / Cost','bin TL',150,100,70)];
+   E.push({key:'beam',tr:'Kiriş (maliyet yüzünden ret)',en:'Beam (rejected on cost)',spec:base('Kiriş / Beam',p),inputs:{[p[0].id]:{value:8},[p[1].id]:{value:1.80},[p[2].id]:{value:180},[p[3].id]:{value:120}}});}
+  {const p=[P1('','Sağlık durumu SOH / State of health','%',60,70,85,{u0:2}),P1('','Hücre gerilim farkı / Cell imbalance','mV',100,50,20,{u0:5})];
+   E.push({key:'bat',tr:'Batarya sağlığı',en:'Battery health',spec:base('Batarya / Battery',p),inputs:{[p[0].id]:{value:78,u:2},[p[1].id]:{value:35,u:5}}});}
+  {const p=[P1('Getiri','Sharpe oranı / Sharpe ratio','',0.3,0.5,1.5),P1('Risk','Maks. düşüş / Max drawdown','%',40,30,10),P1('Risk','Oynaklık / Volatility','%',35,25,12),P1('Getiri','Yıllık getiri / Annual return','%',0,5,15)];
+   E.push({key:'fin',tr:'Portföy riski',en:'Portfolio risk',spec:base('Portföy / Portfolio',p),inputs:{[p[0].id]:{value:1.2},[p[1].id]:{value:18},[p[2].id]:{value:14},[p[3].id]:{value:22}}});}
+  {const p=[P1('Kalite','Doğruluk / Accuracy','%',85,90,97),P1('Kalite','Duyarlılık / Recall','%',80,88,95),P1('Hizmet','Gecikme / Latency','ms',400,200,100)];
+   E.push({key:'ai',tr:'Yapay zekâ modeli (gecikme yüzünden ret)',en:'ML model (rejected on latency)',spec:base('Model',p),inputs:{[p[0].id]:{value:96},[p[1].id]:{value:93},[p[2].id]:{value:800}}});}
+  {const p=[P1('Yapısal','Gerilme / Stress','MPa',420,350,250),P1('Yapısal','Sehim / Deflection','mm',600,500,300),P1('Yapısal','Burkulma / Buckling','',0.9,1.0,1.5),
+     P1('Dinamik','Çırpınma payı / Flutter margin','%',0,15,35),P1('Dinamik','Mod ayrımı / Mode separation','%',5,10,25),
+     P1('Yorulma','Yorulma ömrü / Fatigue life','uçuş',60000,100000,300000,{scale:'log'}),P1('Yorulma','Hasar toleransı / Damage tolerance','uçuş',2000,4000,8000),
+     P1('Kütle ve maliyet','Kütle / Mass','kg',5200,5000,4600),P1('Kütle ve maliyet','Maliyet / Cost','M€',30,25,20)];
+   const v=[315,396,1.09,23.2,14.05,114200,5200,4912,22.75]; const inp={}; p.forEach((q,i)=>inp[q.id]={value:v[i]});
+   E.push({key:'wing',tr:'Uçak kanadı (temsilî, ağaç)',en:'Aircraft wing (illustrative, tree)',spec:base('Kanat / Wing',p),inputs:inp});}
+  {const p=[P1('','Depolama / Storage','GB',256,512,1024),P1('','Fiyat / Price','TL',50000,40000,30000)];
+   const sp=base('Dizüstü alımı / Laptop purchase',p,{policy:'comply',tauA:0,letterA:'I',tauR:0,letterR:'E'});
+   [['A',512,32000],['B',1024,38000],['C',2048,46000]].forEach(o => E.push({key:'pc'+o[0],tr:'Bilgisayar alımı: teklif '+o[0],en:'Laptop purchase: offer '+o[0],spec:sp,inputs:{[p[0].id]:{value:o[1]},[p[1].id]:{value:o[2]}}}));}
+  return E;
+}
+const EX = examples();
+
+// ---------------- state ----------------
+const blankSpec = () => base(t('defaultTitle'), [P1('','','',null,null,null)], {owner:'', policy:'comply', tauA:0, letterA:'I', tauR:0, letterR:'E', coverage:'k', k:2});
+let spec, inputs = {};
+try { const s = JSON.parse(localStorage.getItem('odn.spec')||'null'); spec = s && s.params ? s : null; inputs = JSON.parse(localStorage.getItem('odn.inputs')||'{}')||{}; } catch(e){}
+if (!spec) { const ex = EX.find(e => e.key==='beam'); spec = JSON.parse(JSON.stringify(ex.spec)); inputs = JSON.parse(JSON.stringify(ex.inputs)); spec.lock = null; }
+const save = () => { try { localStorage.setItem('odn.spec', JSON.stringify(spec)); localStorage.setItem('odn.inputs', JSON.stringify(inputs)); localStorage.setItem('odn.lang', LANG); } catch(e){} };
+const NUMF = ['S','L','B','Slo','Llo','Blo','Bhi','Lhi','Shi','u0','vmin','vmax'];
+function body(s){
+  return {title:s.title||'', version:String(s.version||''), owner:s.owner||'', policy:s.policy||'custom', coverage:s.coverage, k:num(s.k), alpha:num(s.alpha),
+    tauA:num(s.tauA), letterA:s.letterA||'I', tauR:num(s.tauR), letterR:s.letterR||'I',
+    params:s.params.map(p => { const q = {id:p.id, group:p.group||'', name:p.name||'', unit:p.unit||'', type:p.type, dir:p.type==='one'?(p.dir||null):null, scale:p.scale||'lin', mandatory:p.mandatory!==false, definition:p.definition||'', incl:p.type==='one'?(p.incl||'I'):null, inclLo:p.type==='two'?(p.inclLo||'I'):null, inclHi:p.type==='two'?(p.inclHi||'I'):null};
+      NUMF.forEach(f => q[f] = num(p[f])); return q; })};
+}
+const fingerprint = s => HN.sha256(HN.canon(body(s)));
+const engineSpec = s => { const b = body(s); return Object.assign({}, b, {alpha: b.coverage==='alpha' ? b.alpha : null}); };
+let view = spec.lock ? 'sub' : 'spec';
+
+// ---------------- plain-language helpers ----------------
+const U = p => p.unit ? ' '+p.unit : '';
+function readback(p){
+  const has = (...k) => k.every(f => num(p[f])!==null), v = f => nf(p[f])+U(p);
+  if (p.type==='bool') return t('read_bool');
+  const lg = p.scale==='log' ? t('read_log') : '';
+  if (p.type==='two') return has('Slo','Llo','Blo','Bhi','Lhi','Shi') ? t('read_two', v('Llo'), v('Lhi'), nf(p.Blo), v('Bhi'), v('Slo'), v('Shi'))+t(p.inclLo==='E'?'rdE':'rdI', v('Llo'))+t(p.inclHi==='E'?'rdE':'rdI', v('Lhi'))+lg : t('read_inc');
+  if (!has('S','L','B')) return t('read_inc');
+  return (p.dir==='down' ? t('read_dn', v('L'), v('B'), v('S')) : t('read_up', v('L'), v('B'), v('S')))+t(p.incl==='E'?'rdE':'rdI', v('L'))+lg;
+}
+function paramErrors(p){
+  const e = [], n = f => num(p[f]);
+  if (!p.name) e.push(t('e_name'));
+  if (p.type==='one') {
+    const S=n('S'), L=n('L'), B=n('B');
+    if ([S,L,B].some(x => x===null)) e.push(t('e_need'));
+    else if (p.dir==='down' ? !(S>L && L>B) : !(S<L && L<B)) e.push(t(p.dir==='down'?'e_dn':'e_up'));
+    if (p.scale==='log' && [S,L,B].some(x => x!==null && x<=0)) e.push(t('e_log'));
+  } else if (p.type==='two') {
+    const a = ['Slo','Llo','Blo','Bhi','Lhi','Shi'].map(n);
+    if (a.some(x => x===null)) e.push(t('e_need6'));
+    else if (!(a[0]<a[1] && a[1]<a[2] && a[2]<=a[3] && a[3]<a[4] && a[4]<a[5])) e.push(t('e_two'));
+  }
+  return e;
+}
+function specErrors(){
+  const e = []; if (!spec.params.length) e.push(t('e_none'));
+  spec.params.forEach((p,i) => paramErrors(p).forEach(m => e.push((p.name||t('param')+' '+(i+1))+': '+m)));
+  const a = num(spec.tauA), r = num(spec.tauR);
+  if (a!==null && (a<0 || a>1)) e.push(t('e_tauA'));
+  if (r!==null && (r<-1 || r>1)) e.push(t('e_tauR'));
+  if (!e.length) HN.validateSpec(engineSpec(spec)).forEach(m => e.push(m));
+  return e;
+}
+function word(x){
+  if (x.status==='missing') return '<span class="mut">'+t('w_miss')+'</span>';
+  if (x.status==='invalid') { const k = /range/.test(x.reason)?'inv_range':/negative/.test(x.reason)?'inv_neg':'inv_log'; return '<span class="rej">'+t('w_inv', t(k))+'</span>'; }
+  const d = x.d;
+  if (x.atLimitExcluded) return '<span class="rej">'+t('w_excl')+'</span>';
+  if (d>=1) return '<span class="acc">'+t('w_full')+'</span>';
+  if (d>0) return '<span class="acc">'+t('w_ok', Math.round(d*100))+'</span>';
+  if (d===0) return '<span>'+t('w_zero')+'</span>';
+  if (d<=-1) return '<span class="rej">'+t('w_black')+'</span>';
+  return '<span class="rej">'+t('w_bad', Math.round(-d*100))+'</span>';
+}
+function meter(d){
+  if (d===undefined || d===null) return '<div class="meter"><span class="mid"></span></div>';
+  const w = Math.abs(d)*50, l = d>=0 ? 50 : 50-w;
+  return '<div class="meter"><i style="left:'+l+'%;width:'+w+'%;background:'+(d<0?'var(--page-reject)':'var(--page-accept)')+'"></i><span class="mid"></span></div>';
+}
+
+// ---------------- static texts ----------------
+function paintStatic(){
+  document.documentElement.lang = LANG;
+  $('#brand').innerHTML = esc(t('brand'))+'<small>'+esc(t('brandSmall'))+'</small>';
+  ['iTitle','iP1','iP2','iF1','iF2','iF3','iDemoCap','s1t','s1d','s2t','s2d','s3t','s3d'].forEach(k => { const el = document.getElementById(k); if (el) el.textContent = t(k); });
+  $('#iSign').innerHTML = t('iSign');
+  $('#foot').textContent = t('foot');
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l===LANG));
+  $('#exSel').innerHTML = '<option value="">'+esc(t('exPick'))+'</option>' + EX.map(e => '<option value="'+e.key+'">'+esc(e[LANG])+'</option>').join('');
+  $('#demoScale').innerHTML = scaleSVG(-0.40, 0.6, -0.2, LANG==='tr'?'kiriş':'beam');
+  $('#science').innerHTML = scienceHTML();
+}
+document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { LANG = b.dataset.l; save(); paintStatic(); render(); }));
+document.querySelectorAll('nav.steps button').forEach(b => b.addEventListener('click', () => { view = b.dataset.v; render(); }));
+$('#exSel').addEventListener('change', e => { const ex = EX.find(x => x.key===e.target.value); if (!ex) return;
+  spec = JSON.parse(JSON.stringify(ex.spec)); spec.lock = {fingerprint: fingerprint(spec), lockedAt: new Date().toISOString()}; inputs = JSON.parse(JSON.stringify(ex.inputs));
+  save(); view = 'sub'; render(); e.target.value=''; });
+
+function render(){
+  document.querySelectorAll('nav.steps button').forEach(b => b.setAttribute('aria-selected', b.dataset.v===view));
+  document.querySelectorAll('section.view').forEach(s => s.classList.toggle('on', s.id==='v-'+view));
+  if (view==='spec') renderSpec(); else if (view==='sub') renderSub(); else renderVer();
+}
+
+// ---------------- step 1 ----------------
+function renderSpec(){
+  const L = !!spec.lock, dis = L ? ' disabled' : '';
+  const mi = (k, cls) => '<input data-m="'+k+'" class="'+(cls||'')+'" value="'+esc(k==='tauA'||k==='tauR'?nf(spec[k]):spec[k]===null||spec[k]===undefined?'':spec[k])+'"'+dis+'>';
+  let h = '<h2>'+t('s1t')+'</h2><p class="lead">'+t('specLead')+'</p>';
+  h += lockBar();
+  h += '<div class="grid g3"><div><label>'+t('specTitle')+'</label>'+mi('title')+'</div><div><label>'+t('version')+'</label>'+mi('version')+'</div><div><label>'+t('owner')+'</label>'+mi('owner')+'</div></div>';
+  h += '<h3>'+t('param')+'</h3>';
+  spec.params.forEach((p,i) => {
+    const pi = (f, cls) => '<input data-p="'+i+'" data-f="'+f+'" class="'+(cls||'')+'" value="'+esc(NUMF.includes(f)?nf(p[f]):(p[f]||''))+'"'+dis+'>';
+    const kind = p.type==='one' ? (p.dir==='down'?'down':'up') : p.type;
+    const errs = paramErrors(p);
+    let a = '';
+    const isel = (f, q) => '<div><label>'+t(q)+'</label><select data-p="'+i+'" data-f="'+f+'"'+dis+'><option value="I"'+(p[f]!=='E'?' selected':'')+'>'+t('inclI')+'</option><option value="E"'+(p[f]==='E'?' selected':'')+'>'+t('inclE')+'</option></select></div>';
+    if (kind==='up' || kind==='down') { const pre = kind==='up'?'up':'dn';
+      a = '<div class="grid g3"><div><label>'+t(pre+'L')+'</label>'+pi('L','num')+'</div><div><label>'+t(pre+'B')+'</label>'+pi('B','num')+'</div><div><label>'+t(pre+'S')+'</label>'+pi('S','num')+'</div></div><div class="grid g3" style="margin-top:10px">'+isel('incl','inclQ')+'</div>';
+    } else if (kind==='two') {
+      a = '<div class="grid g3"><div><label>'+t('twL')+'</label><div class="grid g2">'+pi('Llo','num')+pi('Lhi','num')+'</div></div><div><label>'+t('twB')+'</label><div class="grid g2">'+pi('Blo','num')+pi('Bhi','num')+'</div></div><div><label>'+t('twS')+'</label><div class="grid g2">'+pi('Slo','num')+pi('Shi','num')+'</div></div></div><div class="grid g3" style="margin-top:10px">'+isel('inclLo','inclLoQ')+isel('inclHi','inclHiQ')+'</div>';
+    }
+    h += '<div class="card'+(errs.length&&!L?' bad':'')+'"><div class="head"><b>'+t('param')+' '+(i+1)+'</b>'+(L?'':'<button class="btn small" data-del="'+i+'">'+t('del')+'</button>')+'</div>'+
+      '<div class="grid g3"><div><label>'+t('name')+'</label>'+pi('name')+'</div><div><label>'+t('unit')+'</label>'+pi('unit')+'</div><div><label>'+t('dir')+'</label><select data-p="'+i+'" data-f="kind"'+dis+'>'+
+      [['up','dUp'],['down','dDown'],['two','dTwo'],['bool','dBool']].map(o => '<option value="'+o[0]+'"'+(kind===o[0]?' selected':'')+'>'+t(o[1])+'</option>').join('')+'</select></div></div>'+
+      (a ? '<div style="margin-top:12px">'+a+'</div>' : '')+
+      '<div class="say"><span class="tag">'+t('sayTag')+'</span>'+esc(readback(p))+'</div>'+
+      (errs.length&&!L ? '<div class="err">'+errs.map(esc).join('<br>')+'</div>' : '')+
+      '<details class="adv"'+(p.group||p.u0||p.definition||p.scale==='log'||p.mandatory===false?' open':'')+'><summary>'+t('advanced')+'</summary><div class="grid g3">'+
+        '<div><label>'+t('group')+'</label>'+pi('group')+'</div>'+
+        (p.type==='bool'?'':'<div><label>'+t('u0')+'</label>'+pi('u0','num')+'</div><div><label>'+t('scale')+'</label><select data-p="'+i+'" data-f="scale"'+dis+'><option value="lin"'+(p.scale!=='log'?' selected':'')+'>'+t('lin')+'</option><option value="log"'+(p.scale==='log'?' selected':'')+'>'+t('log')+'</option></select></div>'+
+        '<div><label>'+t('vmin')+'</label>'+pi('vmin','num')+'</div><div><label>'+t('vmax')+'</label>'+pi('vmax','num')+'</div>')+
+        '<div><label>'+t('defn')+'</label>'+pi('definition')+'</div>'+
+        '<div><label><input type="checkbox" style="width:auto" data-p="'+i+'" data-f="mandatory"'+(p.mandatory!==false?' checked':'')+dis+'> '+t('mand')+'</label></div>'+
+      '</div></details></div>';
+  });
+  if (!L) h += '<div class="row"><button class="btn" id="bAdd">'+t('addParam')+'</button></div>';
+  // policy
+  const pol = spec.policy || 'custom';
+  const opt = (k, title, d, extra) => '<label class="opt'+(pol===k?' on':'')+'"><input type="radio" name="pol" value="'+k+'"'+(pol===k?' checked':'')+dis+'><b>'+t(title)+'</b><span class="d">'+t(d)+'</span>'+(pol===k&&extra?extra:'')+'</label>';
+  const fA = '<div style="margin-top:10px"><label>'+t('tauA')+'</label>'+mi('tauA','num')+'<div class="hint">'+t('tauAh')+'</div></div>';
+  const fR = '<div style="margin-top:8px"><label>'+t('tauR')+'</label>'+mi('tauR','num')+'<div class="hint">'+t('tauRh')+'</div></div>';
+  h += '<h3>'+t('polT')+'</h3><p class="lead">'+t('polLead')+'</p><div class="policy">'+opt('comply','pComply','pComplyD')+opt('margin','pMargin','pMarginD',fA)+opt('tol','pTol','pTolD',fA+fR)+opt('manual','pManual','pManualD')+'</div>';
+  // uncertainty
+  const cov = spec.coverage==='alpha' ? 'fw' : (+spec.k===0?'none':+spec.k===1?'k1':+spec.k===2?'k2':'k2');
+  const N = spec.params.filter(p => p.mandatory!==false).length;
+  h += '<h3>'+t('uncT')+'</h3><p class="lead">'+t('uncLead')+'</p><select id="covSel" style="max-width:520px"'+dis+'>'+[['none','u_none'],['k1','u_k1'],['k2','u_k2'],['fw','u_fw']].map(o => '<option value="'+o[0]+'"'+(cov===o[0]?' selected':'')+'>'+t(o[1])+'</option>').join('')+'</select>'+
+       '<div class="hint">'+t('kInfo', nf(HN.kUsed(engineSpec(spec)).toFixed(2)))+(spec.coverage==='alpha'?' (N = '+N+')':'')+'</div>';
+  const errs = specErrors();
+  if (!L) h += (errs.length ? '<div class="err" style="margin-top:18px"><b>'+t('fixList')+'</b><br>'+errs.map(esc).join('<br>')+'</div>' : '')+
+    '<div class="row" style="margin-top:22px"><button class="btn primary" id="bLock"'+(errs.length?' disabled':'')+'>'+t('lockBtn')+'</button><button class="btn" id="bNew">'+t('newBlank')+'</button><label class="btn" style="margin:0">'+t('imp')+'<input type="file" id="impSpec" accept=".json" style="display:none"></label></div><div class="hint">'+(errs.length?t('fixFirst'):t('lockHint'))+'</div>';
+  else h += '<div class="row"><button class="btn primary" id="bGoSub">'+t('goSub')+'</button><button class="btn" id="bNewVer">'+t('newVer')+'</button><button class="btn" id="bExpSpec">'+t('dlSpec')+'</button></div>';
+  $('#v-spec').innerHTML = h;
+  bindSpec();
+}
+function lockBar(){
+  if (!spec.lock) return '<div class="lockbar"><b>'+t('draft')+'</b></div>';
+  const ok = fingerprint(spec)===spec.lock.fingerprint;
+  return '<div class="lockbar '+(ok?'ok':'bad')+'"><div><b>'+(ok?t('locked'):t('altered'))+'</b> · '+esc(spec.title)+' · '+t('version')+' '+esc(spec.version)+'</div><div class="fp">SHA-256 '+esc(spec.lock.fingerprint)+'</div></div>';
+}
+function bindSpec(){
+  const re = () => { save(); renderSpec(); };
+  document.querySelectorAll('#v-spec [data-m]').forEach(el => el.addEventListener('change', () => { const k = el.dataset.m; spec[k] = (k==='tauA'||k==='tauR') ? pn(el.value) : el.value; re(); }));
+  document.querySelectorAll('#v-spec [data-p]').forEach(el => el.addEventListener('change', () => { const p = spec.params[+el.dataset.p], f = el.dataset.f;
+    if (f==='kind') { if (el.value==='up'||el.value==='down') { p.type='one'; p.dir=el.value; } else { p.type=el.value; p.dir=null; } }
+    else if (el.type==='checkbox') p[f] = el.checked; else p[f] = NUMF.includes(f) ? pn(el.value) : el.value; re(); }));
+  document.querySelectorAll('#v-spec [data-del]').forEach(el => el.addEventListener('click', () => { spec.params.splice(+el.dataset.del,1); re(); }));
+  document.querySelectorAll('#v-spec input[name=pol]').forEach(el => el.addEventListener('change', () => { const v = el.value; spec.policy = v;
+    if (v==='comply') Object.assign(spec,{tauA:0,letterA:'I',tauR:0,letterR:'E'});
+    if (v==='margin') Object.assign(spec,{tauA:num(spec.tauA)>0?spec.tauA:0.2,letterA:'I',tauR:0,letterR:'E'});
+    if (v==='tol') Object.assign(spec,{tauA:num(spec.tauA)!==null&&num(spec.tauA)>=0?spec.tauA:0.2,letterA:'I',tauR:num(spec.tauR)!==null&&num(spec.tauR)<0?spec.tauR:-0.1,letterR:'I'});
+    if (v==='manual') Object.assign(spec,{tauA:null,tauR:null}); re(); }));
+  const on = (id, fn) => { const e = document.getElementById(id); if (e) e.addEventListener(e.type==='file'?'change':(e.tagName==='SELECT'?'change':'click'), fn); };
+  on('covSel', e => { const v = e.target.value; if (v==='fw') { spec.coverage='alpha'; spec.alpha=0.05; } else { spec.coverage='k'; spec.k = v==='none'?0:v==='k1'?1:2; } re(); });
+  on('bAdd', () => { spec.params.push(P1('','','',null,null,null)); re(); });
+  on('bNew', () => { spec = blankSpec(); inputs = {}; re(); });
+  on('bLock', () => { if (specErrors().length) return; spec.lock = {fingerprint: fingerprint(spec), lockedAt: new Date().toISOString()}; save(); view='sub'; render(); window.scrollTo(0, document.querySelector('nav.steps').offsetTop); });
+  on('bNewVer', () => { const v = parseInt(spec.version,10); spec = JSON.parse(JSON.stringify(spec)); spec.lock = null; spec.version = isNaN(v) ? spec.version+'.1' : String(v+1); re(); });
+  on('bExpSpec', () => download('specification_v'+spec.version+'_'+spec.lock.fingerprint.slice(0,8)+'.json', {kind:'ozkul-specification', spec: body(spec), lock: spec.lock}));
+  on('bGoSub', () => { view='sub'; render(); });
+  on('impSpec', e => readFile(e.target.files[0], obj => { if (!obj || !/specification$/.test(obj.kind||'') || !obj.spec) { alert(t('c_notRep')); return; }
+    spec = Object.assign(JSON.parse(JSON.stringify(obj.spec)), {lock: obj.lock || null}); inputs = {}; save(); view = spec.lock ? 'sub' : 'spec'; render();
+    if (spec.lock && fingerprint(spec)!==spec.lock.fingerprint) alert(t('altered')); }));
+}
+function download(name, obj){ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'})); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+function readFile(f, cb){ if (!f) return; const r = new FileReader(); r.onload = () => { let o; try { o = JSON.parse(r.result); } catch(e) { alert(t('c_json')); return; } cb(o); }; r.readAsText(f); }
+
+// ---------------- step 2 ----------------
+function renderSub(){
+  if (!spec.lock) { $('#v-sub').innerHTML = '<h2>'+t('s2t')+'</h2><div class="lockbar"><div>'+t('noLock')+'</div><label class="btn" style="margin:0">'+t('imp')+'<input type="file" id="impSpec2" accept=".json" style="display:none"></label></div>';
+    document.getElementById('impSpec2').addEventListener('change', e => readFile(e.target.files[0], obj => { if (obj && obj.spec) { spec = Object.assign(JSON.parse(JSON.stringify(obj.spec)), {lock: obj.lock||null}); inputs = {}; save(); render(); } })); return; }
+  let h = '<h2>'+t('s2t')+'</h2><p class="lead">'+t('subLead')+'</p>'+lockBar()+'<div class="result" id="res"></div>';
+  spec.params.forEach(p => { const v = inputs[p.id] || {};
+    const val = p.type==='bool'
+      ? '<select data-i="'+p.id+'" data-k="value"><option value="">— '+t('choose')+' —</option><option value="yes"'+(v.value==='yes'?' selected':'')+'>'+t('yes')+'</option><option value="no"'+(v.value==='no'?' selected':'')+'>'+t('no')+'</option></select>'
+      : '<div class="inp"><input class="num" data-i="'+p.id+'" data-k="value" value="'+esc(nf(v.value))+'" aria-label="'+esc(t('value'))+'"><input class="num" data-i="'+p.id+'" data-k="u" placeholder="± '+esc(nf(num(p.u0)===null?0:p.u0))+'" value="'+esc(nf(v.u))+'" aria-label="'+esc(t('unc'))+'"></div>';
+    h += '<div class="card"><div class="pc"><div><b>'+esc(nm(p.name))+'</b>'+(p.group?' <span class="mut" style="font-size:13px">· '+esc(p.group)+'</span>':'')+'<div class="mut" style="font-size:13px;margin-top:4px">'+esc(readback(p))+'</div></div>'+
+      '<div><label>'+t('value')+(p.type==='bool'?'':' · '+t('unc'))+(p.unit?' ('+esc(p.unit)+')':'')+'</label>'+val+'<input data-i="'+p.id+'" data-k="ev" style="margin-top:8px" placeholder="'+esc(t('ev'))+'" value="'+esc(v.ev||'')+'"></div>'+
+      '<div id="w-'+p.id+'"></div></div></div>';
+  });
+  h += '<div class="row"><button class="btn primary" id="bRep">'+t('dlRep')+'</button></div><div class="hint" style="margin-bottom:20px">'+t('dlRepH')+'</div><div id="charts"></div>';
+  $('#v-sub').innerHTML = h;
+  document.querySelectorAll('#v-sub [data-i]').forEach(el => el.addEventListener(el.tagName==='SELECT'?'change':'input', () => { const id = el.dataset.i; inputs[id] = inputs[id] || {}; inputs[id][el.dataset.k] = el.dataset.k==='ev' ? el.value : pn(el.value); save(); update(); }));
+  document.getElementById('bRep').addEventListener('click', () => download('report_'+spec.lock.fingerprint.slice(0,8)+'_'+Date.now()+'.json', makeReport()));
+  update();
+}
+function makeReport(){
+  const r = HN.evaluate(engineSpec(spec), inputs);
+  const rep = {kind:'ozkul-report', createdAt:new Date().toISOString(), spec:body(spec), lock:spec.lock, inputs:JSON.parse(JSON.stringify(inputs)),
+    result:{H:r.H, n:r.n, N:r.N, binding:r.binding, verdict:r.verdict, k:r.k, scores:r.rows.map(x => ({id:x.p.id, name:x.p.name, status:x.status, d:x.d===undefined?null:x.d}))}};
+  rep.reportFingerprint = HN.sha256(HN.canon(rep)); return rep;
+}
+function explain(r, s){
+  const b = r.binding.map(nm).join(', '), hv = fmt(r.H), tA = num(s.tauA);
+  if (r.verdict==='EMPTY') return '';
+  if (r.n===0 && r.verdict==='NOT_APPROVABLE') return t('why_none');
+  if (r.verdict==='NOT_APPROVABLE') return t('why_na', r.N-r.n);
+  if (r.verdict==='ACCEPT') return t('why_acc', b, hv);
+  if (r.verdict==='REJECT') return r.H<0 ? t('why_rejV', b, hv) : t('why_rejM', b, hv);
+  return r.H<0 ? t('why_dis_neg', b, hv) : t('why_dis_pos', b, hv);
+}
+function update(){
+  const s = engineSpec(spec), r = HN.evaluate(s, inputs);
+  r.rows.forEach(x => { const el = document.getElementById('w-'+x.p.id); if (!el) return;
+    const bind = x.status==='ok' && r.binding.includes(x.p.name);
+    el.innerHTML = '<div class="mono '+(x.status==='ok'&&x.d<0?'rej':'')+'" style="font-size:20px;font-weight:600">'+(x.status==='ok'?fmt(x.d):'–')+(bind?' <span style="font-size:12px;font-weight:500;border:1px solid currentColor;padding:1px 6px">'+t('binding')+'</span>':'')+'</div>'+meter(x.status==='ok'?x.d:null)+'<div class="word">'+word(x)+'</div>'; });
+  const tA = num(s.tauA), tR = num(s.tauR);
+  const rt = tA===null ? '' : fmt(tA)+(s.letterA==='E'?'E':''), rb = tR===null ? '' : fmt(tR)+(s.letterR==='E'?'E':'');
+  const conc = r.verdict==='DISCRETION' && r.H!==null && r.H<0;
+  $('#res').innerHTML = '<div class="notation" aria-label="notation"><div class="lt">'+r.n+'/'+r.N+'</div><div class="H '+(r.H!==null&&r.H<0?'rej':'')+'">'+(r.H===null?'—':fmt(r.H))+'</div><div class="rt">'+rt+'</div><div class="lb">v'+esc(spec.version)+'·'+spec.lock.fingerprint.slice(0,4)+'</div><div class="rb">'+rb+'</div></div>'+
+    '<div><div class="verdict '+r.verdict+'">'+t('V_'+r.verdict)+'</div><div class="why">'+esc(explain(r, s))+(r.H!==null&&r.H<0&&r.n===r.N?' '+t(r.H<=-1?'sev_x':r.H>-0.2?'sev_s':r.H>-0.6?'sev_m':'sev_l'):'')+'</div>'+(conc?'<div class="warn">'+t('concession')+'</div>':'')+
+    '<div class="hint" style="margin-top:6px">'+t('readN', r.n, r.N, esc(spec.version), spec.lock.fingerprint.slice(0,8))+' · '+t('kInfo', nf((+r.k).toFixed(2)))+'</div></div>';
+  const multi = Object.keys(r.groups).length > 1;
+  $('#charts').innerHTML = '<div class="chart">'+scaleSVG(r.H, tA, tR)+'</div><div class="cap">'+t('scaleCap')+'</div>'+
+    '<div class="chart">'+profileSVG(r)+'</div><div class="cap">'+t('profCap')+'</div>'+
+    (multi ? '<div class="chart">'+treeSVG(r)+'</div><div class="cap">'+t('treeCap')+'</div>' : '');
+}
+
+// ---------------- drawings ----------------
+const C = {ink:'#1C2430', muted:'#6B727C', line:'#D5D8DC', acc:'#0F6E6E', rej:'#B3261E', grey:'#C9CDD2', black:'#2B2B2B', soft:'#F5F6F7'};
+const MONO = 'IBM Plex Mono, monospace';
+function scaleSVG(H, tA, tR, label){
+  const W=640, x0=30, x1=610, X = v => x0 + (v+1)/2*(x1-x0), y=50, h=22;
+  let s = '<svg viewBox="0 0 '+W+' 116" width="'+W+'" role="img" aria-label="scale">';
+  const lo = tR===null ? -1 : Math.max(-1,tR), hi = tA===null ? 1 : tA;
+  if (tR!==null) s += '<rect x="'+X(-1)+'" y="'+y+'" width="'+Math.max(0,X(lo)-X(-1))+'" height="'+h+'" fill="'+C.black+'"/>';
+  s += '<rect x="'+X(lo)+'" y="'+y+'" width="'+Math.max(0,X(hi)-X(lo))+'" height="'+h+'" fill="'+C.grey+'"/>';
+  if (tA!==null) s += '<rect x="'+X(tA)+'" y="'+(y+.5)+'" width="'+Math.max(0,X(1)-X(tA)-.5)+'" height="'+(h-1)+'" fill="#fff" stroke="'+C.ink+'"/>';
+  [-1,-0.5,0,0.5,1].forEach(v => { s += '<line x1="'+X(v)+'" x2="'+X(v)+'" y1="'+(y+h)+'" y2="'+(y+h+5)+'" stroke="'+C.ink+'"/><text x="'+X(v)+'" y="'+(y+h+18)+'" font-size="11" text-anchor="middle" fill="'+C.ink+'" font-family="'+MONO+'">'+fmt(v)+'</text>'; });
+  if (tR!==null) s += '<line x1="'+X(tR)+'" x2="'+X(tR)+'" y1="'+(y-4)+'" y2="'+(y+h+4)+'" stroke="'+C.rej+'" stroke-width="2.5"/><text x="'+X(tR)+'" y="'+(y+h+34)+'" font-size="11" text-anchor="middle" fill="'+C.rej+'" font-family="'+MONO+'">'+fmt(tR)+'</text>';
+  if (tA!==null && tA!==tR) s += '<line x1="'+X(tA)+'" x2="'+X(tA)+'" y1="'+(y-4)+'" y2="'+(y+h+4)+'" stroke="'+C.acc+'" stroke-width="2.5"/><text x="'+X(tA)+'" y="'+(y+h+34)+'" font-size="11" text-anchor="middle" fill="'+C.acc+'" font-family="'+MONO+'">'+fmt(tA)+'</text>';
+  if (H!==null && H!==undefined) { const xh = X(H); s += '<path d="M'+(xh-8)+' '+(y-18)+' L'+(xh+8)+' '+(y-18)+' L'+xh+' '+(y-3)+' Z" fill="'+(H<0?C.rej:C.ink)+'"/><text x="'+Math.min(W-40,Math.max(40,xh))+'" y="'+(y-24)+'" font-size="13" font-weight="600" text-anchor="middle" fill="'+C.ink+'" font-family="'+MONO+'">'+(label?esc(label)+' ':'')+fmt(H)+'</text>'; }
+  return s + '</svg>';
+}
+const short = (s, n) => { s = String(s||''); return s.length>n ? s.slice(0,n-1)+'…' : s; };
+const nm = s => { const p = String(s||'').split(' / '); return p.length===2 ? (LANG==='tr'?p[0]:p[1]) : s; };
+function profileSVG(r){
+  const rows = r.rows.filter(x => x.p.mandatory!==false), rh = 26, W=640, lab=200, x0=lab+12, x1=W-50, X = v => x0 + (v+1)/2*(x1-x0);
+  const Ht = rows.length*rh + 30;
+  let s = '<svg viewBox="0 0 '+W+' '+Ht+'" width="'+W+'" role="img" aria-label="profile"><rect x="'+X(-1)+'" y="4" width="'+(X(0)-X(-1))+'" height="'+(rows.length*rh)+'" fill="'+C.soft+'"/>';
+  rows.forEach((x,i) => { const y = 4 + i*rh;
+    s += '<text x="'+lab+'" y="'+(y+17)+'" font-size="12" text-anchor="end" fill="'+C.ink+'">'+esc(short(nm(x.p.name),30))+'</text>';
+    if (x.status==='ok') { const a = X(Math.min(0,x.d)), b = X(Math.max(0,x.d)), bind = r.H!==null && x.d===r.H;
+      s += '<rect x="'+a+'" y="'+(y+6)+'" width="'+Math.max(1.5,b-a)+'" height="'+(rh-12)+'" fill="'+(x.d<0?C.rej:C.acc)+'"'+(bind?' stroke="'+C.ink+'" stroke-width="2"':'')+'/>';
+      s += '<text x="'+(x.d>=0?b+5:a-5)+'" y="'+(y+17)+'" font-size="11" text-anchor="'+(x.d>=0?'start':'end')+'" fill="'+C.ink+'" font-family="'+MONO+'">'+fmt(x.d)+'</text>'; }
+    else s += '<text x="'+(X(0)+6)+'" y="'+(y+17)+'" font-size="11" fill="'+C.muted+'">–</text>'; });
+  s += '<line x1="'+X(0)+'" x2="'+X(0)+'" y1="2" y2="'+(rows.length*rh+6)+'" stroke="'+C.ink+'"/>';
+  [-1,0,1].forEach(v => s += '<text x="'+X(v)+'" y="'+(rows.length*rh+22)+'" font-size="11" text-anchor="middle" fill="'+C.muted+'" font-family="'+MONO+'">'+fmt(v)+'</text>');
+  return s + '</svg>';
+}
+function treeSVG(r){
+  const ok = r.rows.filter(x => x.p.mandatory!==false), groups = {};
+  ok.forEach(x => { const g = x.p.group || '–'; (groups[g] = groups[g] || []).push(x); });
+  const gn = Object.keys(groups), leaves = []; gn.forEach(g => groups[g].forEach(x => leaves.push({g, x})));
+  const bw = 118, gap = 10, W = Math.max(640, leaves.length*(bw+gap)+20), Ht = 230, root = r.H, lx = i => 10 + bw/2 + i*(bw+gap);
+  const gval = g => { const v = groups[g].filter(x => x.status==='ok').map(x => x.d); return v.length ? Math.min.apply(null, v) : null; };
+  const node = (x, y, name, v, bold) => '<rect x="'+(x-bw/2)+'" y="'+y+'" width="'+bw+'" height="38" rx="3" fill="#fff" stroke="'+(bold?C.ink:C.line)+'" stroke-width="'+(bold?2:1)+'"/><text x="'+x+'" y="'+(y+15)+'" font-size="10.5" text-anchor="middle" fill="'+C.muted+'">'+esc(short(name,19))+'</text><text x="'+x+'" y="'+(y+31)+'" font-size="12" font-weight="600" text-anchor="middle" fill="'+(v===null?C.muted:v<0?C.rej:C.acc)+'" font-family="'+MONO+'">'+(v===null?'–':fmt(v))+'</text>';
+  let s = '<svg class="tree" viewBox="0 0 '+W+' '+Ht+'" width="'+W+'" role="img" aria-label="tree">', i = 0; const gx = {};
+  gn.forEach(g => { const n = groups[g].length; gx[g] = (lx(i)+lx(i+n-1))/2; i += n; });
+  gn.forEach(g => { const b = root!==null && gval(g)===root; s += '<line x1="'+W/2+'" y1="46" x2="'+gx[g]+'" y2="94" stroke="'+(b?C.ink:C.line)+'" stroke-width="'+(b?2:1)+'"/>'; });
+  leaves.forEach((L, j) => { const b = root!==null && L.x.status==='ok' && L.x.d===root && gval(L.g)===root; s += '<line x1="'+gx[L.g]+'" y1="132" x2="'+lx(j)+'" y2="178" stroke="'+(b?C.ink:C.line)+'" stroke-width="'+(b?2:1)+'"/>'; });
+  s += node(W/2, 8, nm(spec.title), root, true);
+  gn.forEach(g => s += node(gx[g], 94, g, gval(g), root!==null && gval(g)===root));
+  leaves.forEach((L, j) => s += node(lx(j), 178, nm(L.x.p.name), L.x.status==='ok'?L.x.d:null, root!==null && L.x.status==='ok' && L.x.d===root));
+  return s + '</svg>';
+}
+
+// ---------------- step 3 ----------------
+function renderVer(){
+  $('#v-ver').innerHTML = '<h2>'+t('s3t')+'</h2><p class="lead">'+t('verLead')+'</p><div class="row"><label class="btn primary" style="margin:0">'+t('verFile')+'<input type="file" id="repFile" accept=".json" style="display:none"></label></div>'+
+    '<label>'+t('verPaste')+'</label><textarea class="code" id="repText"></textarea><div class="row"><button class="btn" id="verBtn">'+t('verBtn')+'</button></div><div id="verOut"></div>';
+  document.getElementById('repFile').addEventListener('change', e => readFile(e.target.files[0], verify));
+  document.getElementById('verBtn').addEventListener('click', () => { let o; try { o = JSON.parse($('#repText').value); } catch(e) { $('#verOut').innerHTML = '<ul class="check"><li><b class="rej">'+t('FAIL')+'</b><span>'+t('c_json')+'</span></li></ul>'; return; } verify(o); });
+}
+function verify(rep){
+  const out = []; let all = true; const add = (ok, txt) => { all = all && ok; out.push('<li><b class="'+(ok?'acc':'rej')+'">'+t(ok?'PASS':'FAIL')+'</b><span>'+txt+'</span></li>'); };
+  if (!rep || !/report$/.test(rep.kind||'') || !rep.spec) { $('#verOut').innerHTML = '<ul class="check"><li><b class="rej">'+t('FAIL')+'</b><span>'+t('c_notRep')+'</span></li></ul>'; return; }
+  const sOk = rep.lock && HN.sha256(HN.canon(rep.spec))===rep.lock.fingerprint; add(sOk, t(sOk?'c_spec':'c_specBad'));
+  const copy = JSON.parse(JSON.stringify(rep)), stated = copy.reportFingerprint; delete copy.reportFingerprint;
+  const rOk = HN.sha256(HN.canon(copy))===stated; add(rOk, t(rOk?'c_rep':'c_repBad'));
+  const s = Object.assign({}, rep.spec, {alpha: rep.spec.coverage==='alpha' ? rep.spec.alpha : null});
+  const ve = HN.validateSpec(s); add(!ve.length, ve.length ? t('c_rulesBad', esc(ve.join(' '))) : t('c_rules'));
+  const r = HN.evaluate(s, rep.inputs||{}), R = rep.result||{};
+  add(r.H===R.H, t('c_H', fmt(r.H), fmt(R.H)));
+  add(r.verdict===R.verdict, t('c_V', t('V_'+r.verdict), esc(R.verdict?t('V_'+R.verdict):'–')));
+  add(r.n===R.n && r.N===R.N, t('c_n', r.n+'/'+r.N, R.n+'/'+R.N));
+  const mis = r.rows.filter(x => { const st = (R.scores||[]).find(y => y.id===x.p.id); return !st || (st.d===null?null:st.d)!==(x.d===undefined?null:x.d); });
+  add(!mis.length, mis.length ? t('c_scBad', esc(mis.map(x => nm(x.p.name)).join(', '))) : t('c_sc', r.rows.length));
+  $('#verOut').innerHTML = '<div class="bigverdict '+(all?'acc':'rej')+'">'+(all ? t('verOK', t('V_'+r.verdict)+' ('+fmt(r.H)+')') : t('verBad'))+'</div><div class="hint">'+esc(nm(rep.spec.title))+' · '+t('version')+' '+esc(rep.spec.version)+' · '+esc(new Date(rep.createdAt).toLocaleString())+'</div><ul class="check">'+out.join('')+'</ul>';
+}
+
+// ---------------- scientific section ----------------
+function scienceHTML(){
+  const tr = LANG==='tr';
+  const blocks = tr ? [
+   ['1. Sabit anlamlı, işaretli ölçek','Her koşul −1 ile +1 arasında bir puana çevrilir. 0 her zaman şartnamedeki sınırdır. Bu yüzden işaret her alanda aynı anlamı taşır: A ≥ 0 bütün zorunlu sınırların sağlandığını, A &lt; 0 en az birinin aşıldığını gösterir. (A + 1)/2 dönüşümüyle aynı bilgi 0–1 aralığına da taşınabilir. İşaretli ölçeğin tercih edilmesinin nedeni anlamdır: uygunluk işaretten, derece büyüklükten okunur ve ayrıca bir eşik değerini hatırlamak gerekmez.'],
+   ['Eksi tarafın katma değeri','Eksi değer aşımın derinliğini, yani sınırdan kabul edilemez noktaya giden yolun ne kadarının geçildiğini ölçer. Bu bilgi uygunsuzluk ortaya çıktıktan sonra verilen kararları besler: istisna (sapma) onayı, yeniden işleme önceliği, hiçbir teklifin uymadığı ihalede pazarlık adayı, zaman içinde kötüleşmenin izlenmesi ve aşımın derinliğine bağlı yaptırımlar. İstenirlik indeksinde sınır dışındaki her değer 0 olduğu için bu ayrım kaybolur.'],
+   ['2. Üç çapa ve yön','Şartname sahibi her koşul için yönü (büyük iyi, küçük iyi, aralık, evet/hayır) ve üç çapayı verir: S (−1, kabul edilemez), L (0, sınır), B (+1, doyum). Çapaların sırası beyan edilen yönle uyuşmalıdır, aksi hâlde şartname kilitlenemez.'],
+   ['3. Kötü taraf değeri','Ölçülen değer belirsizliği kadar sınıra doğru kaydırılır:<div class="f">x* = x − k·u·sgn(B − L)</div>Çok koşullu işlerde toplam riski α ile sınırlamak için<div class="f">k<sub>N</sub> = Φ<sup>−1</sup>((1 − α)<sup>1/N</sup>)</div>kullanılır.'],
+   ['4. Koşul puanı','<div class="f">d = (x* − L)/(B − L)  eğer bu ≥ 0 ise,  aksi hâlde  d = (x* − L)/(L − S)</div>Puan [−1, +1] aralığına kırpılır ve iki basamağa aşağı yuvarlanır. Sınır değeri “hariç” işaretlenmişse tam sınıra eşit değer −0,01 alır (en küçük ihlal adımı). Aralık koşullarında iki tarafın küçüğü, log ölçekte değerlerin logaritması kullanılır.'],
+   ['5. Karar sayısı','<div class="f">A = min d<sub>i</sub>  (bütün zorunlu koşullar)</div>Simetri, aynı puanların özetinin o puan olması, monotonluk ve şişirilemezlik (koşul eklemek sonucu yükseltemez) ilkelerini aynı anda sağlayan tek fonksiyon en küçük değerdir (makale, Teorem 1). Ağırlıklı ortalama bu son ilkeyi bozar.'],
+   ['6. Karar kuralı','n &lt; N ise onaylanamaz. A ≥ τ<sub>kabul</sub> ise kabul, A ≤ τ<sub>ret</sub> ise ret, arada ise karar vericiye kalır. τ<sub>kabul</sub> ≥ 0 zorunludur: bir sınır ihlali hiçbir eşikle otomatik kabule dönüşemez. τ<sub>ret</sub> &lt; 0 seçilirse sınırı hafifçe aşan iş karar vericiye kalır. Kabul edilirse bu bir istisna onayıdır.'],
+   ['7. Gösterim','Ortada A; sağ üstte τ<sub>kabul</sub>, sağ altta τ<sub>ret</sub>; sol üstte n/N; sol altta sürüm ve şartnamenin parmak izi. Boş bırakılan köşe "tanımlanmamış" demektir.'],
+   ['8. Kilit ve doğrulama','Şartname kanonik biçimde yazılır ve SHA-256 parmak izi alınır. Rapor, şartnameyi, girdileri, sonucu ve kendi parmak izini içerir. Doğrulama her şeyi yeniden hesaplar. Parmak izi değişikliği tespit eder, kimin yazdığını kanıtlamaz. Resmî kullanım için dijital imza gerekir.']
+  ] : [
+   ['1. Signed, fixed-meaning scale','Every requirement is mapped to a score between −1 and +1, and 0 is always the limit in the specification. The sign therefore means the same in every domain: A ≥ 0 means every mandatory limit is met, A &lt; 0 means at least one is exceeded. (A + 1)/2 maps the same information onto 0–1; the signed form is chosen for meaning: compliance is read from the sign and degree from the size, with no reference value to remember.'],
+   ['What the minus side adds','A negative value measures the depth of a violation: how much of the way from the limit to the unacceptable point has been covered. This supports decisions taken after non-compliance is known: concessions, rework priority, renegotiation when no offer complies, monitoring of worsening trends and penalties proportional to the violation. Desirability indices set every out-of-range value to 0 and lose this distinction.'],
+   ['2. Three anchors and direction','For each requirement the owner states its direction (higher better, lower better, range, yes/no) and three anchors: S (−1, unacceptable), L (0, limit), B (+1, saturation). The anchor order must agree with the declared direction, otherwise the specification cannot be locked.'],
+   ['3. Worst-side value','The measured value is moved towards the limit by its uncertainty:<div class="f">x* = x − k·u·sgn(B − L)</div>To keep the total risk over N requirements at α,<div class="f">k<sub>N</sub> = Φ<sup>−1</sup>((1 − α)<sup>1/N</sup>)</div>is used.'],
+   ['4. Requirement score','<div class="f">d = (x* − L)/(B − L)  if this is ≥ 0,  otherwise  d = (x* − L)/(L − S)</div>Clipped to [−1, +1] and rounded down to two decimals. If a limit is marked “excluded”, a value exactly at it scores −0.01 (the smallest violation step). Ranges take the smaller side score; log scales use logarithms of values and anchors.'],
+   ['5. Decision number','<div class="f">A = min d<sub>i</sub>  (all mandatory requirements)</div>The minimum is the only function that is symmetric, idempotent, monotone and non-inflatable, i.e. adding requirements can never raise the result (paper, Theorem 1). A weighted mean breaks the last property.'],
+   ['6. Decision rule','If n &lt; N: not approvable. A ≥ τ<sub>acc</sub>: accept; A ≤ τ<sub>rej</sub>: reject; otherwise the decision-maker decides. τ<sub>acc</sub> ≥ 0 is mandatory, so no threshold can turn a violated limit into an automatic acceptance. With τ<sub>rej</sub> &lt; 0, work slightly exceeding a limit is left to the decision-maker; accepting it is a concession.'],
+   ['7. Notation','Centre: A; top right: τ<sub>acc</sub>; bottom right: τ<sub>rej</sub>; top left: n/N; bottom left: version and specification fingerprint. An empty corner means "not defined".'],
+   ['8. Lock and verification','The specification is serialised canonically and fingerprinted with SHA-256. The report contains the specification, inputs, result and its own fingerprint; verification recomputes everything. The fingerprint detects changes; it does not prove authorship. For contractual use, sign it digitally.']
+  ];
+  return '<h2>'+t('sciT')+'</h2><p class="lead">'+t('sciLead')+'</p><div class="sci">'+blocks.map(b => '<div><h3>'+b[0]+'</h3><p>'+b[1]+'</p></div>').join('')+'</div>';
+}
+
+paintStatic(); render();
+})();
+</script>
+</body>
+</html>
