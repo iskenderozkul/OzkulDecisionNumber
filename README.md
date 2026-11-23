@@ -1,6 +1,6 @@
 # Özkul Decision Number
 
-Reference implementation (version 1.8.1) of the **Özkul Decision Number (A)**, a signed, saturating summary of
+Reference implementation (version 1.0) of the **Özkul Decision Number (A)**, a signed, saturating summary of
 whether a piece of work meets a multi-requirement specification. Its sign cannot be inflated while a mandatory limit is violated.
 
 **Try it online:** https://iskenderozkul.github.io/OzkulDecisionNumber/
@@ -28,7 +28,8 @@ node tests/simulation.js    # fixed-seed synthetic simulation of Section 9.1 (th
 This software and the method are provided **"as is", without warranty of any kind**. The software and its
 calculations may contain errors. Verifying the results, making decisions and all consequences of those decisions
 are **entirely the user's responsibility**; the author accepts no liability. Check results independently, especially
-for safety-critical decisions. See also the warranty and liability sections of the Apache-2.0 licence.
+for safety-critical decisions. The tool is a decision-support and presentation layer: it does not replace
+regulatory or contractual conformity, certification or approval procedures, and it is not an official record or approval system. See also the warranty and liability sections of the Apache-2.0 licence.
 
 Bu yazılım ve yöntem **olduğu gibi, herhangi bir garanti olmaksızın** sunulmaktadır. Yazılımda ve hesaplarda hata
 bulunabilir. Sonuçların doğrulanması, kararların verilmesi ve bunlardan doğacak her türlü sonuç **tamamen kullanıcının
