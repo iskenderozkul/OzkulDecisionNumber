@@ -66,7 +66,7 @@ If you use the method, please cite the paper; if you use this software, please a
 
 **Paper**
 
-Özkul, İ. *The Özkul Decision Number: a signed, decomposable summary of multi-requirement specification compliance*. Manuscript.
+Özkul, İ. (2026). *The Özkul Decision Number: a signed, decomposable summary of multi-requirement specification compliance*. Manuscript.
 
 ```bibtex
 @unpublished{ozkul2026decisionnumber,
