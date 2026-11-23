@@ -1,11 +1,12 @@
-cff-version: 1.7.0
+cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "Özkul Decision Number – reference implementation"
 authors:
   - family-names: "Özkul"
     given-names: "İskender"
+    orcid: "https://orcid.org/0000-0003-4255-0564"
 repository-code: "https://github.com/iskenderozkul/OzkulDecisionNumber"
 url: "https://iskenderozkul.github.io/OzkulDecisionNumber/"
 license: Apache-2.0
-version: 1.7.0
+version: 1.8.1
 date-released: "2026-11-22"
