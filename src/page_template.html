@@ -308,7 +308,7 @@ tr:{
  e_two:'Değerler sırası yanlış: alt sınır ≤ ideal değer ≤ üst sınır olmalı ve alt sınır üst sınırdan küçük olmalı (ör. 19,90 ≤ 20,00 ≤ 20,10).', e_log:'Logaritmik ölçekte değerler pozitif olmalı.', e_u0big:'Varsayılan ölçüm belirsizliği, sınır ile tam puan değeri arasındaki farktan büyük: ölçüm yöntemi bu koşulu ayırt edemez. Belirsizliği ya da değerleri kontrol edin.', e_none:'En az bir koşul ekleyin.', e_tauA:'Otomatik kabul payı 0 ile 1 arasında olmalı.', e_tauR:'Otomatik ret eşiği −1 ile +1 arasında olmalı; τacc de tanımlıysa τrej, τacc değerini aşmamalı.',
  sciT:'Bilimsel açıklama', sciLead:'Bu bölüm hakemler ve yöntemi ayrıntısıyla incelemek isteyenler içindir. Tam metin ve ispatlar makalede yer alır.',
  disc:'Sorumluluk reddi: Bu uygulama ve yöntem olduğu gibi, herhangi bir garanti olmaksızın sunulmaktadır. Yazılımda ve hesaplarda hata bulunabilir. Sonuçların doğrulanması, kararların verilmesi ve bunlardan doğacak her türlü sonuç tamamen kullanıcının sorumluluğundadır; yazar hiçbir sorumluluk kabul etmez. Güvenlik açısından kritik kararlarda sonuçları bağımsız olarak kontrol edin.',
- foot:'Özkul Karar Sayısı · başvuru uygulaması v1.7 · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
+ foot:'Özkul Karar Sayısı · başvuru uygulaması v1.8.1 · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
  kInfo:'k = {0}', defaultTitle:'Yeni şartname'
 },
 en:{
@@ -403,7 +403,7 @@ en:{
  e_two:'Wrong order of values: lower limit ≤ ideal value ≤ upper limit, and the lower limit must be below the upper limit (e.g. 19.90 ≤ 20.00 ≤ 20.10).', e_log:'Values must be positive on a log scale.', e_u0big:'The default measurement uncertainty is larger than the gap between the limit and the full-score value: the measurement cannot tell good from bad here. Check the uncertainty or the values.', e_none:'Add at least one requirement.', e_tauA:'Automatic-acceptance margin must be between 0 and 1.', e_tauR:'The automatic-rejection threshold must be between −1 and +1; if τacc is specified, τrej must not exceed τacc.',
  sciT:'Scientific description', sciLead:'This section is for reviewers and readers who want the details. Full text and proofs are in the paper.',
  disc:'Disclaimer: This tool and method are provided as is, without warranty of any kind. The software and its calculations may contain errors. Verifying the results, making decisions and all consequences of them are entirely the user\u2019s responsibility; the author accepts no liability. Check results independently for safety-critical decisions.',
- foot:'Özkul Decision Number · reference implementation v1.7 · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
+ foot:'Özkul Decision Number · reference implementation v1.8.1 · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
  kInfo:'k = {0}', defaultTitle:'New specification'
 }};
 const t = (k, ...a) => { let s = (T[LANG] && T[LANG][k]) || T.en[k] || k; a.forEach((v, i) => s = s.split('{'+i+'}').join(v)); return s; };
@@ -1019,7 +1019,7 @@ function renderVer(){
   LASTREP.reportFingerprint = HN.sha256(HN.canon(LASTREP));
   LASTR = r; LASTOK = fingerprint(spec)===spec.lock.fingerprint && r.n===r.N;
   $('#v-ver').innerHTML = '<h2>'+t('s3t')+'</h2><p class="lead">'+t('verLead')+'</p>'+exBanner()+lockBar()+
-    '<div class="sumbox"><b>'+t('verSum')+'</b><div class="mono" style="font-size:22px;margin-top:4px">A = '+(r.H===null?'—':fmt(r.H))+' · '+esc(t('V_'+r.verdict))+'</div><div class="hint">'+t('readN', r.n, r.N, esc(spec.version), spec.lock.fingerprint.slice(0,8))+'</div></div>'+
+    '<div class="sumbox"><b>'+t('verSum')+'</b><div class="mono" style="font-size:22px;margin-top:4px">A = '+(r.H===null?'—':fmt(r.H))+' · '+esc(t('V_'+r.verdict))+'</div><div class="hint">'+t('readN', r.n, r.N, esc(spec.version), spec.lock.fingerprint.slice(0,12))+'</div></div>'+
     '<div id="verOut"></div><div id="decOut"></div>';
   if (!LASTOK) $('#verOut').innerHTML = '<div class="err">'+(r.n<r.N ? t('verIncomplete', r.N-r.n) : t('altered'))+'</div>';
   renderDecision();

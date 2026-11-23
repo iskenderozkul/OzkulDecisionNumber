@@ -41,7 +41,8 @@ const HN = (function () {
     const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return s * y; }
   const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
   function invPhi(p) { let lo = -10, hi = 10; for (let i = 0; i < 100; i++) { const mid = (lo + hi) / 2; if (Phi(mid) < p) lo = mid; else hi = mid; } return (lo + hi) / 2; }
-  const kN = (N, alpha) => Math.round(invPhi(Math.pow(1 - alpha, 1 / Math.max(1, N))) * 100) / 100;
+  // Bonferroni family-wise coverage factor k = Phi^-1(1 - alpha/N_eff), rounded upwards to two decimals (Eq. 7, Table 5)
+  const kN = (N, alpha) => N > 0 ? Math.ceil(Math.round(invPhi(1 - alpha / N) * 1e6) / 1e4) / 100 : 0;
   // scoring
   const floor2 = v => Math.floor(Math.round(v * 1e12) / 1e10) / 100; // round towards -1; the 1e-12 snap removes binary noise only
   const clip = v => Math.max(-1, Math.min(1, v));
@@ -68,6 +69,8 @@ const HN = (function () {
         else if (!(a[0] < a[1] && a[1] <= a[2] && a[2] <= a[3] && a[3] <= a[4] && a[4] < a[5] && a[1] < a[4])) e.push(tag + 'two-sided anchors must satisfy S_lo < L_lo \u2264 B_lo \u2264 B_hi \u2264 L_hi < S_hi.');
         if (p.scale === 'log' && a.some(v => v !== null && v <= 0)) e.push(tag + 'logarithmic scale needs positive anchors.');
       }
+      if (['one', 'two', 'bool'].indexOf(p.type) < 0) e.push(tag + 'unsupported requirement type.');
+      if (['mand', 'soft', 'info'].indexOf(p.kind || (p.mandatory === false ? 'info' : 'mand')) < 0) e.push(tag + 'unsupported requirement kind.');
       if (num(p.u0) !== null && num(p.u0) < 0) e.push(tag + 'default uncertainty cannot be negative.');
     });
     const tA = num(s.tauA), tR = num(s.tauR);
@@ -77,19 +80,24 @@ const HN = (function () {
     if (num(s.beta) !== null && (num(s.beta) < 0 || num(s.beta) > 0.75)) e.push('The effect of other requirements (beta) must lie between 0 and 0.75.');
     (s.params || []).forEach((p, i) => { const w = num(p.w); if (w !== null && w < 0) e.push('Parameter ' + (i + 1) + ': weight cannot be negative.'); });
     if (!(s.params || []).some(p => (p.kind || (p.mandatory === false ? 'info' : 'mand')) === 'mand')) e.push('At least one requirement must be mandatory.');
+    { const rel = (s.params || []).filter(p => (p.kind || (p.mandatory === false ? 'info' : 'mand')) !== 'info');
+      const wOf = p => { const w = num(p.w); return (w !== null && w >= 0) ? w : ({ decisive: 1, high: 0.75, medium: 0.5, low: 0.25, minor: 0.1 })[p.imp || 'medium']; };
+      if (rel.length && !(rel.reduce((a, p) => a + (wOf(p) || 0), 0) > 0)) e.push('The total weight of the decision-relevant requirements must be positive.'); }
     if (s.alpha === null || s.alpha === undefined || s.alpha === '') { if (num(s.k) === null || num(s.k) < 0) e.push('Coverage factor k must be zero or positive.'); }
     else if (!(num(s.alpha) > 0 && num(s.alpha) < 0.5)) e.push('Family-wise risk \u03b1 must lie between 0 and 0.5.');
     return e;
   }
+  // effective one-sided tail-event count: one-sided = 1, two-sided = 2, yes/no and information-only = 0 (Section 6.3)
+  function tailCount(p) { if ((p.kind || (p.mandatory === false ? 'info' : 'mand')) === 'info') return 0; return p.type === 'two' ? 2 : p.type === 'one' ? 1 : 0; }
+  const nEff = s => (s.params || []).reduce((a, p) => a + tailCount(p), 0);
   function kUsed(s) {
-    const N = s.params.filter(p => (p.kind || (p.mandatory === false ? 'info' : 'mand')) !== 'info').length;
-    return (s.alpha !== null && s.alpha !== undefined && s.alpha !== '') ? kN(N, +s.alpha) : +s.k;
+    return (s.alpha !== null && s.alpha !== undefined && s.alpha !== '') ? kN(nEff(s), +s.alpha) : +s.k;
   }
   function scoreParam(p, inp, k) {
     inp = inp || {};
     if (p.type === 'bool') {
-      if (inp.value === 'yes') return { status: 'ok', d: 1, xs: 'yes' };
-      if (inp.value === 'no') return { status: 'ok', d: -1, xs: 'no' };
+      if (inp.value === 'yes') return { status: 'ok', d: 1, raw: 1, xs: 'yes' };
+      if (inp.value === 'no') return { status: 'ok', d: -1, raw: -1, xs: 'no' };
       return { status: 'missing' };
     }
     const x = num(inp.value); if (x === null) return { status: 'missing' };
@@ -100,9 +108,10 @@ const HN = (function () {
     if (p.type === 'one') {
       const S = +p.S, L = +p.L, B = +p.B, dir = Math.sign(B - L), xs = x - k * u * dir;
       if (p.scale === 'log' && xs <= 0) return { status: 'invalid', reason: 'non-positive value on a log scale' };
-      let d1 = floor2(clip(side(T(xs), T(S), T(L), T(B))));
+      const raw = clip(side(T(xs), T(S), T(L), T(B)));
+      let d1 = floor2(raw);
       if (p.incl === 'E' && Math.abs(xs - L) < 1e-12) d1 = -0.01;
-      return { status: 'ok', d: d1, xs: xs, u: u, atLimitExcluded: p.incl === 'E' && Math.abs(xs - L) < 1e-12 };
+      return { status: 'ok', d: d1, raw: raw, xs: xs, u: u, atLimitExcluded: p.incl === 'E' && Math.abs(xs - L) < 1e-12 };
     }
     const xl = x - k * u, xh = x + k * u;
     if (p.scale === 'log' && xl <= 0) return { status: 'invalid', reason: 'non-positive value on a log scale' };
@@ -110,7 +119,7 @@ const HN = (function () {
     let dh = clip(side(T(xh), T(+p.Shi), T(+p.Lhi), T(+p.Bhi)));
     if (p.inclLo === 'E' && Math.abs(xl - +p.Llo) < 1e-12) dl = -0.01;
     if (p.inclHi === 'E' && Math.abs(xh - +p.Lhi) < 1e-12) dh = -0.01;
-    return { status: 'ok', d: floor2(Math.min(dl, dh)), xs: dl <= dh ? xl : xh, sideBinding: dl <= dh ? 'lower' : 'upper', u: u };
+    return { status: 'ok', d: floor2(Math.min(dl, dh)), raw: Math.min(dl, dh), xs: dl <= dh ? xl : xh, sideBinding: dl <= dh ? 'lower' : 'upper', u: u };
   }
   const IMP = { decisive: 1.00, high: 0.75, medium: 0.50, low: 0.25, minor: 0.10 };
   const BETA = { none: 0, slight: 0.25, balanced: 0.5, strong: 0.75 };
@@ -124,34 +133,36 @@ const HN = (function () {
     const mand = used.filter(r => kindOf(r.p) === 'mand');
     const okU = used.filter(r => r.status === 'ok'), okM = mand.filter(r => r.status === 'ok');
     const N = used.length, n = okU.length;
-    if (!n) return { beta, N, n, A: null, m: null, M: null, parts: [], binding: [], veto: false, units: [] };
+    // no decision number is produced until every decision-relevant requirement has valid data (Definition 8, rule 1)
+    if (!n || n < N) return { beta, N, n, A: null, m: null, M: null, parts: [], binding: [], veto: false, floored: false, branch: null, units: [] };
     // units: linked groups count once (score = min of members, weight = max of members)
     const units = []; const gmap = {};
     okU.forEach(r => { const g = (r.p.link || '').trim();
       if (g) { if (!gmap[g]) { gmap[g] = { key: 'g:' + g, label: g, members: [], d: Infinity, w: 0, mand: false }; units.push(gmap[g]); }
         const u = gmap[g]; u.members.push(r); if (r.d < u.d) u.d = r.d; u.w = Math.max(u.w, weightOf(r.p)); if (kindOf(r.p) === 'mand') u.mand = true; }
       else units.push({ key: r.p.id, label: r.p.name, members: [r], d: r.d, w: weightOf(r.p), mand: kindOf(r.p) === 'mand' }); });
-    const W = units.reduce((a, u) => a + u.w, 0) || 1;
+    const W = units.reduce((a, u) => a + u.w, 0);
+    if (!(W > 0)) return { beta, N, n, A: null, m: null, M: null, parts: [], binding: [], veto: false, floored: false, branch: null, units: [], invalid: 'zero total weight' };
     units.forEach(u => u.wn = u.w / W);
     const M = units.reduce((a, u) => a + u.wn * u.d, 0);
     const m = okM.length ? Math.min.apply(null, okM.map(r => r.d)) : null;
-    const veto = okM.some(r => r.d <= -1);
-    const critical = false; // reserved, not used
-    let A, parts = [], floored = false;
-    if (veto) { A = -1; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
-    else if (m === null) { A = M; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
+    // veto only when a mandatory requirement has actually reached its unacceptable anchor (before display rounding)
+    const veto = okM.some(r => (r.raw !== undefined ? r.raw : r.d) <= -1);
+    let A, parts = [], floored = false, branch = null;
+    if (veto) { A = -1; branch = 'veto'; parts = [{ key: 'veto', label: 'veto', v: -1 }]; }
+    else if (m === null) { A = M; branch = 'none'; parts = units.map(u => ({ key: u.key, label: u.label, v: u.wn * u.d, d: u.d, unit: u })); }
     else if (m < 0) { // violation: sign locked negative. A = min( (1-b)m + bM , m(1 - b*max(0,M)) )
       const a1 = (1 - beta) * m + beta * M, Mp = Math.max(0, M), a2 = m * (1 - beta * Mp);
-      if (a1 <= a2) { A = a1; parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
-      else { A = a2; const pos = units.filter(u => M > 0);
+      if (a1 <= a2) { A = a1; branch = '5b1'; parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u }))); }
+      else { A = a2; branch = '5b2';
         parts = [{ key: 'base', label: 'base', v: m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: M > 0 ? -m * beta * u.wn * u.d : 0, d: u.d, unit: u }))); } }
-    else { A = (1 - beta) * m + beta * M;
+    else { A = (1 - beta) * m + beta * M; branch = '5a';
       parts = [{ key: 'base', label: 'base', v: (1 - beta) * m, d: m }].concat(units.map(u => ({ key: u.key, label: u.label, v: beta * u.wn * u.d, d: u.d, unit: u })));
       if (A < 0) { // sign rule: penalising requirements may lower A to 0 but never make it negative while every mandatory limit is met
-        const cut = -A; parts.push({ key: 'floor', label: 'floor', v: cut }); floored = true; A = 0; } }
+        const cut = -A; parts.push({ key: 'floor', label: 'floor', v: cut }); floored = true; branch = 'floor'; A = 0; } }
     A = Math.max(-1, Math.min(1, A)); A = floor2(A);
     const binding = m === null ? [] : okM.filter(r => r.d === m).map(r => r.p.name);
-    return { beta, N, n, A, m, M, parts, binding, veto, critical, floored, units };
+    return { beta, N, n, A, m, M, parts, binding, veto, floored, branch, units };
   }
   function decide(s, ag) {
     const tA = num(s.tauA), tR = num(s.tauR);
@@ -159,7 +170,6 @@ const HN = (function () {
     if (ag.n < ag.N) return 'NOT_APPROVABLE';
     const A = ag.A, mOk = ag.m === null || (s.letterA === 'E' ? ag.m > tA : ag.m >= tA);
     if (tA !== null && (s.letterA === 'E' ? A > tA : A >= tA) && mOk) return 'ACCEPT';
-    if (ag.critical) return 'REJECT';
     if (tR !== null && (s.letterR === 'E' ? A < tR : A <= tR)) return 'REJECT';
     return 'DISCRETION';
   }
@@ -169,10 +179,10 @@ const HN = (function () {
     const ag = aggregate(s, rows);
     rows.filter(r => r.status === 'ok' && kindOf(r.p) !== 'info').forEach(r => { const g = r.p.group || 'All parameters'; groups[g] = groups[g] === undefined ? r.d : Math.min(groups[g], r.d); });
     const verdict = decide(s, ag);
-    const H = ag.A;
+    const H = ag.A; // H is kept as an alias of A for the user interface
     const reason = H === null ? null : ag.veto ? 'veto' : (ag.m !== null && ag.m < 0) ? 'violation' : (ag.floored ? 'floored' : (rows.some(r => r.status === 'ok' && kindOf(r.p) === 'soft' && r.d < 0) ? 'softpenalty' : 'ok'));
     const nearLimit = rows.filter(r => r.status === 'ok' && kindOf(r.p) === 'mand' && r.d >= 0 && r.d < 0.10).length;
-    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, critical: ag.critical, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
+    return { k, rows, N: ag.N, n: ag.n, H, A: H, m: ag.m, M: ag.M, beta: ag.beta, parts: ag.parts, units: ag.units, binding: ag.binding, veto: ag.veto, floored: ag.floored, branch: ag.branch, reason, groups, verdict, nearLimit, compliant: ag.m === null ? null : ag.m >= 0 };
   }
   // scenario simulation for soft requirements: other values at 'typical' (+0.40 / near limit +0.05)
   function simulate(s) {
@@ -195,7 +205,7 @@ const HN = (function () {
     return { sensitive: cases.length > 0, cases };
   }
   const fmt = v => v === null || v === undefined ? '\u2013' : (v > 0 ? '+' : v < 0 ? '\u2212' : '') + Math.abs(v).toFixed(2);
-  return { sha256, canon, kN, Phi, floor2, scoreParam, evaluate, simulate, sensitivity, aggregate, IMP, BETA, kindOf, weightOf, betaOf, validateSpec, kUsed, fmt, num };
+  return { sha256, canon, kN, nEff, tailCount, Phi, floor2, scoreParam, evaluate, simulate, sensitivity, aggregate, IMP, BETA, kindOf, weightOf, betaOf, validateSpec, kUsed, fmt, num };
 })();
 if (typeof module !== 'undefined') module.exports = HN;
 if (typeof session !== 'undefined') session.HN = HN;
