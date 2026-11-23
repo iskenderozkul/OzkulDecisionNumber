@@ -307,8 +307,8 @@ tr:{
  e_dn:'Değerler sırası yanlış. Üst sınırlı koşulda: tam puan değeri < üst sınır < kabul edilemez değer olmalı (ör. 5 < 10 < 15).',
  e_two:'Değerler sırası yanlış: alt sınır ≤ ideal değer ≤ üst sınır olmalı ve alt sınır üst sınırdan küçük olmalı (ör. 19,90 ≤ 20,00 ≤ 20,10).', e_log:'Logaritmik ölçekte değerler pozitif olmalı.', e_u0big:'Varsayılan ölçüm belirsizliği, sınır ile tam puan değeri arasındaki farktan büyük: ölçüm yöntemi bu koşulu ayırt edemez. Belirsizliği ya da değerleri kontrol edin.', e_none:'En az bir koşul ekleyin.', e_tauA:'Otomatik kabul payı 0 ile 1 arasında olmalı.', e_tauR:'Otomatik ret eşiği −1 ile +1 arasında olmalı; τacc de tanımlıysa τrej, τacc değerini aşmamalı.',
  sciT:'Bilimsel açıklama', sciLead:'Bu bölüm hakemler ve yöntemi ayrıntısıyla incelemek isteyenler içindir. Tam metin ve ispatlar makalede yer alır.',
- disc:'Sorumluluk reddi: Bu uygulama ve yöntem olduğu gibi, herhangi bir garanti olmaksızın sunulmaktadır. Yazılımda ve hesaplarda hata bulunabilir. Sonuçların doğrulanması, kararların verilmesi ve bunlardan doğacak her türlü sonuç tamamen kullanıcının sorumluluğundadır; yazar hiçbir sorumluluk kabul etmez. Güvenlik açısından kritik kararlarda sonuçları bağımsız olarak kontrol edin.',
- foot:'Özkul Karar Sayısı · başvuru uygulaması v1.8.1 · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
+ disc:'Sorumluluk reddi: Bu uygulama ve yöntem olduğu gibi, herhangi bir garanti olmaksızın sunulmaktadır. Yazılımda ve hesaplarda hata bulunabilir. Sonuçların doğrulanması, kararların verilmesi ve bunlardan doğacak her türlü sonuç tamamen kullanıcının sorumluluğundadır; yazar hiçbir sorumluluk kabul etmez. Güvenlik açısından kritik kararlarda sonuçları bağımsız olarak kontrol edin. Bu araç bir karar destek ve sunum katmanıdır; mevzuat veya sözleşmenin gerektirdiği uygunluk, sertifikasyon ve onay yordamlarının yerine geçmez ve resmî bir kayıt ya da onay sistemi değildir (kanıt dosyası, rapor dışa aktarma ve dijital imza yoktur).',
+ foot:'Özkul Karar Sayısı · başvuru uygulaması v1.0 · karar destek aracıdır; nihai onay sorumluluğu insandadır · tek dosya, çevrimdışı çalışır, hiçbir veri gönderilmez · İ. Özkul, “The Özkul Decision Number” (makale taslağı).',
  kInfo:'k = {0}', defaultTitle:'Yeni şartname'
 },
 en:{
@@ -402,8 +402,8 @@ en:{
  e_dn:'Wrong order of values. For an upper limit: full-score value < upper limit < unacceptable value (e.g. 5 < 10 < 15).',
  e_two:'Wrong order of values: lower limit ≤ ideal value ≤ upper limit, and the lower limit must be below the upper limit (e.g. 19.90 ≤ 20.00 ≤ 20.10).', e_log:'Values must be positive on a log scale.', e_u0big:'The default measurement uncertainty is larger than the gap between the limit and the full-score value: the measurement cannot tell good from bad here. Check the uncertainty or the values.', e_none:'Add at least one requirement.', e_tauA:'Automatic-acceptance margin must be between 0 and 1.', e_tauR:'The automatic-rejection threshold must be between −1 and +1; if τacc is specified, τrej must not exceed τacc.',
  sciT:'Scientific description', sciLead:'This section is for reviewers and readers who want the details. Full text and proofs are in the paper.',
- disc:'Disclaimer: This tool and method are provided as is, without warranty of any kind. The software and its calculations may contain errors. Verifying the results, making decisions and all consequences of them are entirely the user\u2019s responsibility; the author accepts no liability. Check results independently for safety-critical decisions.',
- foot:'Özkul Decision Number · reference implementation v1.8.1 · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
+ disc:'Disclaimer: This tool and method are provided as is, without warranty of any kind. The software and its calculations may contain errors. Verifying the results, making decisions and all consequences of them are entirely the user\u2019s responsibility; the author accepts no liability. Check results independently for safety-critical decisions. This tool is a decision-support and presentation layer; it does not replace the conformity, certification or approval procedures required by regulation or contract, and it is not an official record or approval system (no evidence files, report export or digital signature).',
+ foot:'Özkul Decision Number · reference implementation v1.0 · decision-support tool; final approval rests with the human approver · single file, works offline, sends no data · İ. Özkul, “The Özkul Decision Number” (manuscript).',
  kInfo:'k = {0}', defaultTitle:'New specification'
 }};
 const t = (k, ...a) => { let s = (T[LANG] && T[LANG][k]) || T.en[k] || k; a.forEach((v, i) => s = s.split('{'+i+'}').join(v)); return s; };
@@ -611,7 +611,7 @@ function meter(d){
 // ---------------- static texts ----------------
 function paintStatic(){
   document.documentElement.lang = LANG;
-  $('#brand').innerHTML = esc(t('brand'))+' <span style="font-size:12px;font-weight:600;padding:1px 7px;border:1px solid currentColor;border-radius:10px;opacity:.75;vertical-align:middle">'+(LANG==='tr'?'sürüm ':'version ')+'1.7</span><small>'+esc(t('brandSmall'))+'</small>';
+  $('#brand').innerHTML = esc(t('brand'))+' <span style="font-size:12px;font-weight:600;padding:1px 7px;border:1px solid currentColor;border-radius:10px;opacity:.75;vertical-align:middle">'+(LANG==='tr'?'sürüm ':'version ')+'1.0</span><small>'+esc(t('brandSmall'))+'</small>';
   ['iTitle','iP1','iF1','iF2','iF3','s1t','s1d','s2t','s2d','s3t','s3d'].forEach(k => { const el = document.getElementById(k); if (el) el.textContent = t(k); });
   $('#iSign').innerHTML = t('iSign'); $('#iDemoCap').innerHTML = t('iDemoCap'); $('#iP2').innerHTML = t('iP2'); $('#iUse').innerHTML = t('iUse');
   $('#exBadge').textContent = t('exBadge'); $('#appBadge').textContent = t('appBadge');
