@@ -5,8 +5,7 @@ whether a piece of work meets a multi-requirement specification. Its sign cannot
 
 **Try it online:** https://iskenderozkul.github.io/OzkulDecisionNumber/
 
-**Paper:** İ. Özkul, *The Özkul Decision Number: a signed, decomposable summary of multi-requirement specification
-compliance* (manuscript, 2026).
+**Paper:** Özkul, İ. (2026). *The Özkul Decision Number: a signed, decomposable summary of multi-requirement specification compliance*. Manuscript.
 
 ## What it does
 - Every decision-relevant requirement (mandatory or penalising) is mapped to a score on one fixed ruler: **+1** full score, **0** the compliance boundary, and **−1** the unacceptable anchor (veto). An aggregate **A = 0** can also result from the zero floor when penalising requirements lower an otherwise compliant result; the reported reason distinguishes these cases. Information-only requirements are excluded from the score.
@@ -63,8 +62,37 @@ All worked examples of the paper are available from the example menu.
 Settings → Pages → Source: *Deploy from a branch* → Branch `main`, folder `/ (root)` → Save.
 
 ## Cite
-Özkul, İ. (2026). *Özkul Decision Number – reference implementation* [Software].
+If you use the method, please cite the paper; if you use this software, please also cite the reference implementation.
+
+**Paper**
+
+Özkul, İ. *The Özkul Decision Number: a signed, decomposable summary of multi-requirement specification compliance*. Manuscript.
+
+```bibtex
+@unpublished{ozkul2026decisionnumber,
+  author = {{\"O}zkul, {\.I}skender},
+  title  = {The Özkul Decision Number: a signed, decomposable summary of multi-requirement specification compliance},
+  note   = {Manuscript},
+  year   = {2026}
+}
+```
+
+**Software**
+
+Özkul, İ. (2026). *Özkul Decision Number – reference implementation* (Version 1.0.0) [Software].
 https://github.com/iskenderozkul/OzkulDecisionNumber
+
+```bibtex
+@software{ozkul2026software,
+  author  = {{\"O}zkul, {\.I}skender},
+  title   = {{\"O}zkul Decision Number -- reference implementation},
+  version = {1.0.0},
+  year    = {2026},
+  url     = {https://github.com/iskenderozkul/OzkulDecisionNumber}
+}
+```
+
+GitHub also shows a "Cite this repository" button generated from `CITATION.cff`, which points to the paper as the preferred citation.
 
 ## Simulation scope
 Three fixed-seed generators of 20,000 synthetic specifications each are run: U (shallow violations, uniform 0.85–2.15), D (deep violations, uniform 0.20–2.00) and N (typical margins, normal mean 1.45, sd 0.30). They are stress tests, not models of the empirical distribution of engineering specifications. Eq. (5) has zero false passes and zero false fails by Theorem 2(i); the simulation checks the implementation and quantifies how often the compensatory comparators err and how easily padding flips them.

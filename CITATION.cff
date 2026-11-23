@@ -1,12 +1,24 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite both the paper and the software as below."
 title: "Özkul Decision Number – reference implementation"
+type: software
 authors:
   - family-names: "Özkul"
     given-names: "İskender"
     orcid: "https://orcid.org/0000-0003-4255-0564"
+    affiliation: "Mersin University"
 repository-code: "https://github.com/iskenderozkul/OzkulDecisionNumber"
 url: "https://iskenderozkul.github.io/OzkulDecisionNumber/"
 license: Apache-2.0
 version: 1.0.0
 date-released: "2026-11-23"
+preferred-citation:
+  type: unpublished
+  title: "The Özkul Decision Number: a signed, decomposable summary of multi-requirement specification compliance"
+  authors:
+    - family-names: "Özkul"
+      given-names: "İskender"
+      orcid: "https://orcid.org/0000-0003-4255-0564"
+      affiliation: "Mersin University"
+  year: 
+  notes: "Manuscript"
